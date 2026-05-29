@@ -8,10 +8,12 @@ import { Explore } from './pages/Explore'
 import { Map } from './pages/Map'
 import { Marketplace } from './pages/Marketplace'
 import { Messages } from './pages/Messages'
+import { Clubs } from './pages/Clubs'
 import { Profile } from './pages/Profile'
 import { MyBikes } from './pages/MyBikes'
 import { Settings } from './pages/Settings'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { Toaster } from './components/ui/sonner'
 
 function App() {
   return (
@@ -29,11 +31,13 @@ function App() {
           <Route path="map" element={<Map />} />
           <Route path="marketplace" element={<Marketplace />} />
           <Route path="messages" element={<Messages />} />
+          <Route path="clubs" element={<Clubs />} />
           <Route path="profile" element={<Profile />} />
           <Route path="my-bikes" element={<MyBikes />} />
           <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
+      <Toaster richColors position="top-right" />
     </BrowserRouter>
   )
 }

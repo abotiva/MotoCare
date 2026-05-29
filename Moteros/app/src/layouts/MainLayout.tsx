@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
   Bell,
@@ -13,12 +13,15 @@ import {
   ShoppingBag,
   LogOut,
   User,
+  Users,
   X,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { InstallPrompt } from '@/components/InstallPrompt'
 import { MotoCareLogo } from '@/components/MotoCareLogo'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuth } from '@/contexts/AuthContext'
+import { supabase } from '@/lib/supabase'
 
 const navItems = [
   { path: '/app/home', icon: Home, label: 'Inicio' },
@@ -26,6 +29,7 @@ const navItems = [
   { path: '/app/map', icon: MapIcon, label: 'Rutas' },
   { path: '/app/marketplace', icon: ShoppingBag, label: 'Tienda' },
   { path: '/app/messages', icon: MessageCircle, label: 'Comunidad' },
+  { path: '/app/clubs', icon: Users, label: 'Clubes' },
 ]
 
 const sidebarItems = [
@@ -34,16 +38,49 @@ const sidebarItems = [
   { path: '/app/settings', icon: Settings, label: 'Ajustes' },
 ]
 
+function initials(name: string | null | undefined, email: string | undefined) {
+  const source = name || email || 'MC'
+  return source
+    .split(/[\s@._-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('')
+}
+
 export function MainLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
-  const { profile, signOut } = useAuth()
+  const [unreadNotifications, setUnreadNotifications] = useState(0)
+  const { user, profile, signOut } = useAuth()
   const location = useLocation()
+
+  const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Motero MotoCare'
+  const username = profile?.username || user?.email?.split('@')[0] || 'motocare'
+  const avatarFallback = initials(profile?.full_name, user?.email)
 
   const pageTitle =
     navItems.find((item) => item.path === location.pathname)?.label ||
     sidebarItems.find((item) => item.path === location.pathname)?.label ||
     'Inicio'
+
+  useEffect(() => {
+    if (!supabase || !user) return
+    const client = supabase
+
+    const loadUnreadNotifications = async () => {
+      const { count } = await client
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .is('read_at', null)
+        .lte('scheduled_for', new Date().toISOString())
+
+      setUnreadNotifications(count ?? 0)
+    }
+
+    void loadUnreadNotifications()
+  }, [user?.id, location.pathname])
 
   return (
     <div className="flex min-h-screen bg-moto-dark text-white">
@@ -68,9 +105,6 @@ export function MainLayout() {
             >
               <item.icon className="h-5 w-5" />
               <span className="flex-1">{item.label}</span>
-              {item.path === '/app/messages' && (
-                <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">3</span>
-              )}
             </NavLink>
           ))}
 
@@ -93,14 +127,13 @@ export function MainLayout() {
 
         <div className="border-t border-white/5 p-4">
           <NavLink to="/app/profile" className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-white/5">
-            <img
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=motero1"
-              alt="Perfil"
-              className="h-10 w-10 rounded-full bg-moto-gray"
-            />
+            <Avatar className="h-10 w-10 bg-moto-gray">
+              <AvatarImage src={profile?.avatar_url ?? undefined} />
+              <AvatarFallback>{avatarFallback}</AvatarFallback>
+            </Avatar>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">{profile?.full_name ?? 'Motero MotoCare'}</p>
-              <p className="text-xs text-gray-500">@{profile?.username ?? 'motocare'}</p>
+              <p className="truncate text-sm font-semibold">{displayName}</p>
+              <p className="truncate text-xs text-gray-500">@{username}</p>
             </div>
           </NavLink>
           <button
@@ -143,17 +176,20 @@ export function MainLayout() {
                 </button>
               )}
 
-              <button className="relative rounded-lg p-2 hover:bg-white/5">
+              <NavLink to="/app/home" className="relative rounded-lg p-2 hover:bg-white/5">
                 <Bell className="h-5 w-5 text-gray-400" />
-                <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-moto-orange" />
-              </button>
+                {unreadNotifications > 0 && (
+                  <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-moto-orange px-1 text-[10px] font-bold text-moto-darker">
+                    {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                  </span>
+                )}
+              </NavLink>
 
               <NavLink to="/app/profile" className="lg:hidden">
-                <img
-                  src="https://api.dicebear.com/7.x/avataaars/svg?seed=motero1"
-                  alt="Perfil"
-                  className="h-8 w-8 rounded-full bg-moto-gray"
-                />
+                <Avatar className="h-8 w-8 bg-moto-gray">
+                  <AvatarImage src={profile?.avatar_url ?? undefined} />
+                  <AvatarFallback className="text-xs">{avatarFallback}</AvatarFallback>
+                </Avatar>
               </NavLink>
             </div>
           </div>
@@ -175,11 +211,6 @@ export function MainLayout() {
               >
                 <div className="relative">
                   <item.icon className="h-6 w-6" />
-                  {item.path === '/app/messages' && (
-                    <span className="absolute -right-2 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                      3
-                    </span>
-                  )}
                 </div>
                 <span className="mt-1 text-[10px]">{item.label}</span>
               </NavLink>
@@ -209,9 +240,6 @@ export function MainLayout() {
                 >
                   <item.icon className="h-6 w-6" />
                   <span className="text-lg">{item.label}</span>
-                  {item.path === '/app/messages' && (
-                    <span className="ml-auto rounded-full bg-red-500 px-3 py-1 text-sm font-bold text-white">3</span>
-                  )}
                 </NavLink>
               ))}
               <button
