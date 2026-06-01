@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { AlertTriangle, Bell, Bike, Calendar, CheckCircle2, Compass, Loader2, MessageCircle, Plus, Route, Settings, Wrench } from 'lucide-react'
+import { AlertTriangle, Bell, Bike, Calendar, CheckCircle2, Compass, Loader2, MessageCircle, Plus, Route, Settings, UserPlus, Wrench, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -84,6 +84,14 @@ function notificationDisplay(notification: Notification) {
     return { title: notification.title, message: notification.message, dateLabel }
   }
 
+  if (notification.type === 'club_invite' && notification.club_invitations?.clubs) {
+    return {
+      title: 'Invitacion a club',
+      message: `El club "${notification.club_invitations.clubs.name}" quiere agregarte como miembro.`,
+      dateLabel: notification.club_invitations.clubs.city || 'Club MotoCare',
+    }
+  }
+
   return {
     title: notification.title,
     message: notification.message,
@@ -160,7 +168,7 @@ export function Home() {
       supabase.from('posts').select('id', { count: 'exact', head: true }),
       supabase
         .from('notifications')
-        .select('*, routes:route_id(title, start_date, end_date, status)')
+        .select('*, routes:route_id(title, start_date, end_date, status), club_invitations:club_invitation_id(*, clubs:club_id(id, name, image_url, city))')
         .eq('user_id', user.id)
         .is('read_at', null)
         .lte('scheduled_for', todayIso)
@@ -268,6 +276,41 @@ export function Home() {
     }
   }
 
+  const respondToClubInvite = async (notification: Notification, accepted: boolean) => {
+    if (!supabase || !user || !notification.club_invitation_id || !notification.club_invitations) return
+
+    const status = accepted ? 'accepted' : 'declined'
+    const respondedAt = new Date().toISOString()
+    const { error: invitationError } = await supabase
+      .from('club_invitations')
+      .update({ status, responded_at: respondedAt })
+      .eq('id', notification.club_invitation_id)
+      .eq('invited_user_id', user.id)
+
+    if (invitationError) {
+      toast.error('No pudimos responder la invitacion', { description: invitationError.message })
+      return
+    }
+
+    if (accepted) {
+      const { error: memberError } = await supabase.from('club_members').insert({
+        club_id: notification.club_invitations.club_id,
+        user_id: user.id,
+        role: 'member',
+      })
+
+      if (memberError) {
+        toast.error('La invitacion fue aprobada, pero no pudimos agregarte al club', { description: memberError.message })
+        return
+      }
+    }
+
+    await markNotificationAsRead(notification)
+    toast.success(accepted ? 'Invitacion aprobada' : 'Invitacion rechazada', {
+      description: accepted ? 'Ya apareces como miembro del club.' : 'El club no fue agregado a tu perfil.',
+    })
+  }
+
   if (isLoading) {
     return (
       <div className="grid min-h-[70vh] place-items-center text-moto-orange">
@@ -306,10 +349,10 @@ export function Home() {
       </div>
 
       <div className="mb-5 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-        <MetricCard icon={Bike} label="Motos" value={stats.motorcycles} tone="orange" />
-        <MetricCard icon={Wrench} label="Pendientes" value={stats.pendingReminders} tone="yellow" />
-        <MetricCard icon={Route} label="Mis rutas" value={stats.routes} tone="sky" />
-        <MetricCard icon={MessageCircle} label="Comunidad" value={stats.communityPosts} tone="green" />
+        <MetricCard icon={Bike} label="Motos" value={stats.motorcycles} tone="orange" to="/app/my-bikes" />
+        <MetricCard icon={Wrench} label="Pendientes" value={stats.pendingReminders} tone="yellow" to="/app/my-bikes" />
+        <MetricCard icon={Route} label="Mis rutas" value={stats.routes} tone="sky" to="/app/map" />
+        <MetricCard icon={MessageCircle} label="Comunidad" value={stats.communityPosts} tone="green" to="/app/messages" />
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -379,7 +422,7 @@ export function Home() {
           <Card className="border-white/5 bg-moto-gray py-0">
             <CardContent className="p-5">
               <div className="mb-4 flex items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold">Notificaciones de rutas</h2>
+                <h2 className="text-lg font-semibold">Notificaciones</h2>
                 <Bell className="h-5 w-5 text-moto-orange" />
               </div>
 
@@ -403,9 +446,22 @@ export function Home() {
                             )
                           })()}
                         </div>
-                        <Button size="sm" variant="outline" className="border-white/10" onClick={() => void markNotificationAsRead(notification)}>
-                          Leida
-                        </Button>
+                        {notification.type === 'club_invite' ? (
+                          <div className="flex shrink-0 flex-col gap-2">
+                            <Button size="sm" className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => void respondToClubInvite(notification, true)}>
+                              <UserPlus className="mr-2 h-4 w-4" />
+                              Aprobar
+                            </Button>
+                            <Button size="sm" variant="outline" className="border-white/10" onClick={() => void respondToClubInvite(notification, false)}>
+                              <X className="mr-2 h-4 w-4" />
+                              Rechazar
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button size="sm" variant="outline" className="border-white/10" onClick={() => void markNotificationAsRead(notification)}>
+                            Leida
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -413,7 +469,7 @@ export function Home() {
               ) : (
                 <div className="rounded-xl bg-moto-darker p-5 text-center text-gray-400">
                   <Bell className="mx-auto mb-2 h-10 w-10 text-gray-600" />
-                  No hay notificaciones de rutas pendientes.
+                  No hay notificaciones pendientes.
                 </div>
               )}
             </CardContent>
@@ -421,26 +477,28 @@ export function Home() {
         </div>
 
         <div className="space-y-5">
-          <Card className="border-white/5 bg-moto-gray py-0">
-            <CardContent className="p-5">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="font-semibold">Perfil</h2>
-                <Badge className={profileCompletion >= 80 ? 'bg-green-500/15 text-green-300' : 'bg-yellow-500/15 text-yellow-300'}>
-                  {profileCompletion}%
-                </Badge>
-              </div>
-              <div className="mb-4 h-2 overflow-hidden rounded-full bg-moto-darker">
-                <div className="h-full bg-moto-orange" style={{ width: `${profileCompletion}%` }} />
-              </div>
-              <p className="mb-4 text-sm text-gray-400">Completa tu perfil para que otros moteros identifiquen mejor tus rutas y publicaciones.</p>
-              <Button asChild variant="outline" className="w-full border-white/10">
-                <Link to="/app/profile">
-                  <Settings className="mr-2 h-4 w-4" />
-                  Completar perfil
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+          {profileCompletion < 100 && (
+            <Card className="border-white/5 bg-moto-gray py-0">
+              <CardContent className="p-5">
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="font-semibold">Perfil</h2>
+                  <Badge className={profileCompletion >= 80 ? 'bg-green-500/15 text-green-300' : 'bg-yellow-500/15 text-yellow-300'}>
+                    {profileCompletion}%
+                  </Badge>
+                </div>
+                <div className="mb-4 h-2 overflow-hidden rounded-full bg-moto-darker">
+                  <div className="h-full bg-moto-orange" style={{ width: `${profileCompletion}%` }} />
+                </div>
+                <p className="mb-4 text-sm text-gray-400">Completa tu perfil para que otros moteros identifiquen mejor tus rutas y publicaciones.</p>
+                <Button asChild variant="outline" className="w-full border-white/10">
+                  <Link to="/app/profile">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Completar perfil
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="border-white/5 bg-moto-gray py-0">
             <CardContent className="p-5">
@@ -482,7 +540,19 @@ export function Home() {
   )
 }
 
-function MetricCard({ icon: Icon, label, value, tone }: { icon: typeof Bike; label: string; value: number; tone: 'orange' | 'yellow' | 'sky' | 'green' }) {
+function MetricCard({
+  icon: Icon,
+  label,
+  value,
+  tone,
+  to,
+}: {
+  icon: typeof Bike
+  label: string
+  value: number
+  tone: 'orange' | 'yellow' | 'sky' | 'green'
+  to: string
+}) {
   const tones = {
     orange: 'bg-moto-orange/20 text-moto-orange',
     yellow: 'bg-yellow-500/20 text-yellow-300',
@@ -491,17 +561,19 @@ function MetricCard({ icon: Icon, label, value, tone }: { icon: typeof Bike; lab
   }
 
   return (
-    <Card className="border-white/5 bg-moto-gray py-0">
-      <CardContent className="flex items-center gap-4 p-4">
-        <div className={`grid h-12 w-12 place-items-center rounded-xl ${tones[tone]}`}>
-          <Icon className="h-6 w-6" />
-        </div>
-        <div>
-          <p className="text-sm text-gray-400">{label}</p>
-          <p className="text-xl font-bold">{value}</p>
-        </div>
-      </CardContent>
-    </Card>
+    <Link to={to} className="block rounded-xl focus:outline-none focus:ring-2 focus:ring-moto-orange focus:ring-offset-2 focus:ring-offset-moto-dark">
+      <Card className="border-white/5 bg-moto-gray py-0 transition-colors hover:border-moto-orange/40 hover:bg-white/5">
+        <CardContent className="flex items-center gap-4 p-4">
+          <div className={`grid h-12 w-12 place-items-center rounded-xl ${tones[tone]}`}>
+            <Icon className="h-6 w-6" />
+          </div>
+          <div>
+            <p className="text-sm text-gray-400">{label}</p>
+            <p className="text-xl font-bold">{value}</p>
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
   )
 }
 

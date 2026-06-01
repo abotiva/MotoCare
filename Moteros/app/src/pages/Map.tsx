@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { Calendar, CheckCircle2, Clock, Edit3, Eye, EyeOff, Flag, Loader2, MapPin, Navigation, PlayCircle, Plus, Route, Save, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
-import type { RoutePlan, RouteWithOwner } from '@/types/database'
+import type { RoutePlan } from '@/types/database'
 
 type RouteForm = {
   title: string
@@ -172,16 +172,14 @@ function routeOverdueNotificationRow(route: RoutePlan) {
 function RouteCard({
   route,
   isOwner,
-  showOwner = false,
   onOpen,
   onEdit,
   onDelete,
   onToggleVisibility,
   onUpdateStatus,
 }: {
-  route: RoutePlan | RouteWithOwner
+  route: RoutePlan
   isOwner: boolean
-  showOwner?: boolean
   onOpen: (route: RoutePlan) => void
   onEdit?: (route: RoutePlan) => void
   onDelete?: (route: RoutePlan) => void
@@ -190,7 +188,6 @@ function RouteCard({
 }) {
   const status = getRouteStatus(route)
   const StatusIcon = status.icon
-  const owner = 'profiles' in route ? route.profiles : null
 
   return (
     <div className="rounded-xl border border-white/5 bg-moto-darker p-4">
@@ -200,11 +197,6 @@ function RouteCard({
           <p className="mt-1 text-sm text-gray-400">
             {route.origin || 'Origen sin definir'} → {route.destination || 'Destino sin definir'}
           </p>
-          {showOwner && (
-            <p className="mt-1 text-xs text-gray-500">
-              Por {owner?.full_name || owner?.username || 'Motero MotoCare'}{owner?.city ? ` · ${owner.city}` : ''}
-            </p>
-          )}
         </div>
         <div className="flex flex-wrap justify-end gap-2">
           <Badge className={status.className}>
@@ -273,7 +265,6 @@ function RouteCard({
 export function Map() {
   const { user } = useAuth()
   const [myRoutes, setMyRoutes] = useState<RoutePlan[]>([])
-  const [communityRoutes, setCommunityRoutes] = useState<RouteWithOwner[]>([])
   const [routeForm, setRouteForm] = useState<RouteForm>(emptyRouteForm)
   const [editingRoute, setEditingRoute] = useState<RoutePlan | null>(null)
   const [selectedRoute, setSelectedRoute] = useState<RoutePlan | null>(null)
@@ -297,22 +288,11 @@ export function Map() {
     [myRoutes]
   )
 
-  const otherSharedCount = communityRoutes.length
-
   const loadRoutes = async () => {
     if (!supabase || !user) return
     setIsLoading(true)
 
-    const [myRoutesResult, communityRoutesResult] = await Promise.all([
-      supabase.from('routes').select('*').eq('owner_id', user.id).order('created_at', { ascending: false }),
-      supabase
-        .from('routes')
-        .select('*, profiles:owner_id(full_name, username, city, avatar_url)')
-        .eq('visibility', 'community')
-        .neq('owner_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(30),
-    ])
+    const myRoutesResult = await supabase.from('routes').select('*').eq('owner_id', user.id).order('created_at', { ascending: false })
 
     if (myRoutesResult.error) {
       toast.error('No pudimos cargar tus rutas', { description: myRoutesResult.error.message })
@@ -320,12 +300,6 @@ export function Map() {
       const nextRoutes = (myRoutesResult.data ?? []) as RoutePlan[]
       setMyRoutes(nextRoutes)
       void Promise.all(nextRoutes.map((route) => syncRouteNotifications(route)))
-    }
-
-    if (communityRoutesResult.error) {
-      toast.error('No pudimos cargar rutas de comunidad', { description: communityRoutesResult.error.message })
-    } else {
-      setCommunityRoutes((communityRoutesResult.data ?? []) as RouteWithOwner[])
     }
 
     setIsLoading(false)
@@ -618,17 +592,6 @@ export function Map() {
         </Card>
         <Card className="border-white/5 bg-moto-gray py-0">
           <CardContent className="flex items-center gap-4 p-4">
-            <div className="grid h-12 w-12 place-items-center rounded-xl bg-sky-500/20">
-              <Navigation className="h-6 w-6 text-sky-300" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">De otros moteros</p>
-              <p className="text-xl font-bold">{otherSharedCount}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex items-center gap-4 p-4">
             <div className="grid h-12 w-12 place-items-center rounded-xl bg-green-500/20">
               <CheckCircle2 className="h-6 w-6 text-green-400" />
             </div>
@@ -640,17 +603,8 @@ export function Map() {
         </Card>
       </div>
 
-      <Tabs defaultValue="mine" className="w-full">
-        <TabsList className="mb-4 w-full border-white/5 bg-moto-darker">
-          <TabsTrigger value="mine" className="flex-1 data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker">
-            Mis rutas
-          </TabsTrigger>
-          <TabsTrigger value="community" className="flex-1 data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker">
-            Rutas de otros
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="mine" className="space-y-3">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="space-y-3">
           {myRoutes.length > 0 ? (
             myRoutes.map((route) => (
               <RouteCard
@@ -672,29 +626,20 @@ export function Map() {
               </CardContent>
             </Card>
           )}
-        </TabsContent>
+        </div>
 
-        <TabsContent value="community" className="space-y-3">
-          {communityRoutes.length > 0 ? (
-            communityRoutes.map((route) => (
-              <RouteCard
-                key={route.id}
-                route={route}
-                isOwner={false}
-                showOwner
-                onOpen={openRouteDetail}
-              />
-            ))
-          ) : (
-            <Card className="border-white/5 bg-moto-gray py-0">
-              <CardContent className="p-8 text-center text-gray-400">
-                <MapPin className="mx-auto mb-3 h-12 w-12 text-gray-600" />
-                Todavia no hay rutas compartidas por otros moteros.
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-      </Tabs>
+        <Card className="h-fit border-white/5 bg-moto-gray py-0">
+          <CardContent className="p-5">
+            <h2 className="mb-2 font-semibold">Descubrir rutas</h2>
+            <p className="mb-4 text-sm leading-6 text-gray-400">
+              Las rutas de otros moteros viven en Explorar. Asi este modulo queda dedicado a planear y administrar tus propias rutas.
+            </p>
+            <Button asChild variant="outline" className="w-full border-white/10">
+              <Link to="/app/explore">Ir a Explorar</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
 
       <Dialog open={showCreateRoute} onOpenChange={(open) => {
         setShowCreateRoute(open)

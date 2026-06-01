@@ -12,6 +12,8 @@ create table if not exists public.profiles (
   bio text,
   social_url text,
   avatar_url text,
+  is_public boolean not null default true,
+  last_seen_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -144,10 +146,11 @@ create table if not exists public.saved_routes (
 create table if not exists public.notifications (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(id) on delete cascade,
-  type text not null check (type in ('route_planned', 'route_overdue')),
+  type text not null check (type in ('route_planned', 'route_overdue', 'club_invite')),
   title text not null,
   message text not null,
   route_id uuid references public.routes(id) on delete cascade,
+  club_invitation_id uuid,
   scheduled_for timestamptz not null,
   read_at timestamptz,
   created_at timestamptz not null default now()
@@ -172,6 +175,38 @@ create table if not exists public.club_members (
   created_at timestamptz not null default now(),
   unique (club_id, user_id)
 );
+
+create table if not exists public.club_invitations (
+  id uuid primary key default gen_random_uuid(),
+  club_id uuid not null references public.clubs(id) on delete cascade,
+  invited_user_id uuid not null references public.profiles(id) on delete cascade,
+  invited_by uuid not null references public.profiles(id) on delete cascade,
+  status text not null default 'pending' check (status in ('pending', 'accepted', 'declined', 'cancelled')),
+  created_at timestamptz not null default now(),
+  responded_at timestamptz,
+  unique (club_id, invited_user_id, status)
+);
+
+create table if not exists public.app_admins (
+  user_id uuid primary key references public.profiles(id) on delete cascade,
+  role text not null default 'admin' check (role in ('admin', 'owner')),
+  created_at timestamptz not null default now()
+);
+
+do $$
+begin
+  if not exists (
+    select 1 from information_schema.table_constraints
+    where constraint_schema = 'public'
+      and table_name = 'notifications'
+      and constraint_name = 'notifications_club_invitation_id_fkey'
+  ) then
+    alter table public.notifications
+    add constraint notifications_club_invitation_id_fkey
+    foreign key (club_invitation_id) references public.club_invitations(id) on delete cascade;
+  end if;
+end;
+$$;
 
 create table if not exists public.club_posts (
   id uuid primary key default gen_random_uuid(),
@@ -234,6 +269,19 @@ create trigger on_auth_user_created
 after insert on auth.users
 for each row execute function public.handle_new_user();
 
+create or replace function public.is_current_user_admin()
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.app_admins a
+    where a.user_id = auth.uid()
+  );
+$$;
+
 alter table public.profiles enable row level security;
 alter table public.motorcycles enable row level security;
 alter table public.maintenance_records enable row level security;
@@ -249,10 +297,24 @@ alter table public.saved_routes enable row level security;
 alter table public.notifications enable row level security;
 alter table public.clubs enable row level security;
 alter table public.club_members enable row level security;
+alter table public.club_invitations enable row level security;
 alter table public.club_posts enable row level security;
+alter table public.app_admins enable row level security;
 
 create policy "profiles_select_public" on public.profiles
-for select using (true);
+for select using (
+  is_public = true
+  or auth.uid() = id
+  or exists (
+    select 1 from public.club_members cm
+    where cm.user_id = profiles.id
+      and exists (
+        select 1 from public.club_members my_cm
+        where my_cm.club_id = cm.club_id
+          and my_cm.user_id = auth.uid()
+      )
+  )
+);
 
 create policy "profiles_update_own" on public.profiles
 for update using (auth.uid() = id) with check (auth.uid() = id);
@@ -308,6 +370,18 @@ for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "notifications_own_all" on public.notifications
 for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+create policy "notifications_club_invite_insert" on public.notifications
+for insert with check (
+  type = 'club_invite'
+  and exists (
+    select 1 from public.club_invitations ci
+    where ci.id = notifications.club_invitation_id
+      and ci.invited_user_id = notifications.user_id
+      and ci.invited_by = auth.uid()
+      and ci.status = 'pending'
+  )
+);
+
 create policy "clubs_read_all" on public.clubs
 for select using (true);
 
@@ -342,10 +416,64 @@ for select using (true);
 create policy "club_members_admin_insert" on public.club_members
 for insert with check (
   exists (
+    select 1 from public.club_members cm
+    where cm.club_id = club_members.club_id
+      and cm.user_id = auth.uid()
+      and cm.role in ('owner', 'admin')
+  )
+);
+
+create policy "club_members_club_owner_insert" on public.club_members
+for insert with check (
+  exists (
     select 1 from public.clubs c
     where c.id = club_members.club_id
       and c.owner_id = auth.uid()
   )
+);
+
+create policy "club_members_invitee_accept_insert" on public.club_members
+for insert with check (
+  auth.uid() = user_id
+  and exists (
+    select 1 from public.club_invitations ci
+    where ci.club_id = club_members.club_id
+      and ci.invited_user_id = auth.uid()
+      and ci.status = 'accepted'
+  )
+);
+
+create policy "club_invitations_read_related" on public.club_invitations
+for select using (
+  auth.uid() = invited_user_id
+  or auth.uid() = invited_by
+  or exists (
+    select 1 from public.club_members cm
+    where cm.club_id = club_invitations.club_id
+      and cm.user_id = auth.uid()
+      and cm.role in ('owner', 'admin')
+  )
+);
+
+create policy "club_invitations_admin_insert" on public.club_invitations
+for insert with check (
+  auth.uid() = invited_by
+  and exists (
+    select 1 from public.club_members cm
+    where cm.club_id = club_invitations.club_id
+      and cm.user_id = auth.uid()
+      and cm.role in ('owner', 'admin')
+  )
+);
+
+create policy "club_invitations_invitee_update" on public.club_invitations
+for update using (auth.uid() = invited_user_id)
+with check (auth.uid() = invited_user_id);
+
+create policy "app_admins_read_own_or_admin" on public.app_admins
+for select using (
+  user_id = auth.uid()
+  or public.is_current_user_admin()
 );
 
 create policy "club_members_admin_delete" on public.club_members
@@ -404,6 +532,246 @@ create index if not exists clubs_owner_id_idx on public.clubs(owner_id);
 create index if not exists club_members_user_id_idx on public.club_members(user_id);
 create index if not exists club_members_club_id_idx on public.club_members(club_id);
 create index if not exists club_posts_club_created_idx on public.club_posts(club_id, created_at desc);
+create index if not exists club_invitations_invited_user_status_idx on public.club_invitations(invited_user_id, status);
+create index if not exists club_invitations_club_id_idx on public.club_invitations(club_id);
+create index if not exists notifications_club_invitation_id_idx on public.notifications(club_invitation_id);
+create index if not exists profiles_public_last_seen_idx on public.profiles(is_public, last_seen_at desc);
+
+create or replace function public.community_public_profiles()
+returns table (
+  id uuid,
+  full_name text,
+  username text,
+  city text,
+  rider_type text,
+  avatar_url text,
+  last_seen_at timestamptz
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select
+    p.id,
+    p.full_name,
+    p.username,
+    p.city,
+    p.rider_type,
+    p.avatar_url,
+    p.last_seen_at
+  from public.profiles p
+  where p.is_public = true
+  order by p.last_seen_at desc nulls last, p.created_at desc
+  limit 80;
+$$;
+
+create or replace function public.admin_overview()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not public.is_current_user_admin() then
+    raise exception 'Admin access required';
+  end if;
+
+  return jsonb_build_object(
+    'users', (select count(*) from public.profiles),
+    'public_users', (select count(*) from public.profiles where is_public = true),
+    'private_users', (select count(*) from public.profiles where is_public = false),
+    'motorcycles', (select count(*) from public.motorcycles),
+    'routes', (select count(*) from public.routes),
+    'community_routes', (select count(*) from public.routes where visibility = 'community'),
+    'posts', (select count(*) from public.posts),
+    'clubs', (select count(*) from public.clubs),
+    'club_memberships', (select count(*) from public.club_members),
+    'pending_club_invitations', (select count(*) from public.club_invitations where status = 'pending'),
+    'maintenance_suggestions', (select count(*) from public.maintenance_suggestions),
+    'active_maintenance_suggestions', (select count(*) from public.maintenance_suggestions where is_active = true)
+  );
+end;
+$$;
+
+create or replace function public.admin_users()
+returns table (
+  id uuid,
+  display_name text,
+  username text,
+  city text,
+  rider_type text,
+  is_public boolean,
+  created_at timestamptz,
+  motorcycles_count bigint,
+  routes_count bigint,
+  posts_count bigint,
+  clubs_count bigint
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not public.is_current_user_admin() then
+    raise exception 'Admin access required';
+  end if;
+
+  return query
+  select
+    p.id,
+    case when p.is_public then p.full_name else 'Perfil privado' end as display_name,
+    case when p.is_public then p.username else concat('privado-', left(p.id::text, 8)) end as username,
+    case when p.is_public then p.city else null end as city,
+    case when p.is_public then p.rider_type else null end as rider_type,
+    p.is_public,
+    p.created_at,
+    (select count(*) from public.motorcycles m where m.owner_id = p.id) as motorcycles_count,
+    (select count(*) from public.routes r where r.owner_id = p.id) as routes_count,
+    (select count(*) from public.posts po where po.author_id = p.id) as posts_count,
+    (select count(*) from public.club_members cm where cm.user_id = p.id) as clubs_count
+  from public.profiles p
+  order by p.created_at desc;
+end;
+$$;
+
+create or replace function public.admin_clubs()
+returns table (
+  id uuid,
+  name text,
+  city text,
+  owner_display_name text,
+  owner_is_public boolean,
+  members_count bigint,
+  posts_count bigint,
+  pending_invitations_count bigint,
+  created_at timestamptz
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not public.is_current_user_admin() then
+    raise exception 'Admin access required';
+  end if;
+
+  return query
+  select
+    c.id,
+    c.name,
+    c.city,
+    case when p.is_public then coalesce(p.full_name, p.username) else 'Fundador privado' end as owner_display_name,
+    p.is_public as owner_is_public,
+    (select count(*) from public.club_members cm where cm.club_id = c.id) as members_count,
+    (select count(*) from public.club_posts cp where cp.club_id = c.id) as posts_count,
+    (select count(*) from public.club_invitations ci where ci.club_id = c.id and ci.status = 'pending') as pending_invitations_count,
+    c.created_at
+  from public.clubs c
+  left join public.profiles p on p.id = c.owner_id
+  order by c.created_at desc;
+end;
+$$;
+
+create or replace function public.admin_maintenance_suggestions()
+returns table (
+  id uuid,
+  code text,
+  name text,
+  category text,
+  recommended_interval_km int,
+  recommended_interval_days int,
+  applies_to text,
+  sort_order int,
+  is_active boolean,
+  updated_at timestamptz
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not public.is_current_user_admin() then
+    raise exception 'Admin access required';
+  end if;
+
+  return query
+  select
+    ms.id,
+    ms.code,
+    ms.name,
+    ms.category,
+    ms.recommended_interval_km,
+    ms.recommended_interval_days,
+    ms.applies_to,
+    ms.sort_order,
+    ms.is_active,
+    ms.updated_at
+  from public.maintenance_suggestions ms
+  order by ms.sort_order asc, ms.name asc;
+end;
+$$;
+
+create or replace function public.find_profile_for_club_invite(target_club_id uuid, target_username text)
+returns table (
+  id uuid,
+  full_name text,
+  username text,
+  city text,
+  avatar_url text,
+  is_public boolean
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select p.id, p.full_name, p.username, p.city, p.avatar_url, p.is_public
+  from public.profiles p
+  where lower(p.username) = lower(regexp_replace(target_username, '^@', ''))
+    and exists (
+      select 1 from public.club_members cm
+      where cm.club_id = target_club_id
+        and cm.user_id = auth.uid()
+        and cm.role in ('owner', 'admin')
+    )
+  limit 1;
+$$;
+
+create or replace function public.search_public_profiles_for_club_invite(target_club_id uuid, search_term text)
+returns table (
+  id uuid,
+  full_name text,
+  username text,
+  city text,
+  avatar_url text
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select p.id, p.full_name, p.username, p.city, p.avatar_url
+  from public.profiles p
+  where p.is_public = true
+    and p.id <> auth.uid()
+    and length(trim(search_term)) >= 2
+    and (
+      lower(coalesce(p.username, '')) like '%' || lower(trim(regexp_replace(search_term, '^@', ''))) || '%'
+      or lower(coalesce(p.full_name, '')) like '%' || lower(trim(search_term)) || '%'
+      or lower(coalesce(p.city, '')) like '%' || lower(trim(search_term)) || '%'
+    )
+    and exists (
+      select 1 from public.club_members cm
+      where cm.club_id = target_club_id
+        and cm.user_id = auth.uid()
+        and cm.role in ('owner', 'admin')
+    )
+    and not exists (
+      select 1 from public.club_members existing
+      where existing.club_id = target_club_id
+        and existing.user_id = p.id
+    )
+  order by p.full_name nulls last, p.username nulls last
+  limit 8;
+$$;
 
 insert into public.maintenance_suggestions (
   code,

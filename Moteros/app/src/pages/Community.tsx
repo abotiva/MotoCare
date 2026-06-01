@@ -12,6 +12,16 @@ import { supabase } from '@/lib/supabase'
 import type { Club, ClubPostWithAuthor, PostCommentWithAuthor, PostWithAuthor, RoutePlan } from '@/types/database'
 
 type LikeState = Record<string, { count: number; likedByMe: boolean }>
+type PublicProfileSummary = {
+  id: string
+  full_name: string | null
+  username: string | null
+  city: string | null
+  rider_type: string | null
+  avatar_url: string | null
+  last_seen_at: string | null
+}
+type PeopleFilter = 'all' | 'online'
 
 type ClubMembershipRow = {
   clubs: Club | null
@@ -46,6 +56,11 @@ const routeStatusLabels: Record<RoutePlan['status'], string> = {
   completed: 'Realizada',
 }
 
+function isOnline(lastSeenAt: string | null | undefined) {
+  if (!lastSeenAt) return false
+  return Date.now() - new Date(lastSeenAt).getTime() <= 5 * 60_000
+}
+
 function formatDuration(minutes: number | null) {
   if (!minutes) return 'Sin duracion'
   if (minutes < 60) return `${minutes} min`
@@ -67,6 +82,8 @@ export function Community() {
   const [posts, setPosts] = useState<PostWithAuthor[]>([])
   const [myRoutes, setMyRoutes] = useState<RoutePlan[]>([])
   const [myClubs, setMyClubs] = useState<Club[]>([])
+  const [publicProfiles, setPublicProfiles] = useState<PublicProfileSummary[]>([])
+  const [peopleFilter, setPeopleFilter] = useState<PeopleFilter>('all')
   const [selectedClubId, setSelectedClubId] = useState('')
   const [clubPosts, setClubPosts] = useState<ClubPostWithAuthor[]>([])
   const [clubPostContent, setClubPostContent] = useState('')
@@ -91,6 +108,11 @@ export function Community() {
   const myPostsCount = useMemo(() => posts.filter((post) => post.author_id === user?.id).length, [posts, user?.id])
   const routePostsCount = useMemo(() => posts.filter((post) => post.route_id).length, [posts])
   const selectedClub = useMemo(() => myClubs.find((club) => club.id === selectedClubId) ?? myClubs[0] ?? null, [myClubs, selectedClubId])
+  const onlineProfilesCount = useMemo(() => publicProfiles.filter((item) => isOnline(item.last_seen_at)).length, [publicProfiles])
+  const visibleProfiles = useMemo(
+    () => publicProfiles.filter((item) => peopleFilter === 'all' || isOnline(item.last_seen_at)),
+    [peopleFilter, publicProfiles]
+  )
 
   const loadFeed = async () => {
     if (!supabase) return
@@ -197,6 +219,18 @@ export function Community() {
     if (nextSelected) void loadClubPosts(nextSelected)
   }
 
+  const loadPublicProfiles = async () => {
+    if (!supabase) return
+
+    const { data, error } = await supabase.rpc('community_public_profiles')
+
+    if (error) {
+      toast.error('No pudimos cargar usuarios publicos', { description: error.message })
+    } else {
+      setPublicProfiles((data ?? []) as PublicProfileSummary[])
+    }
+  }
+
   const loadClubPosts = async (clubId: string) => {
     if (!supabase) return
 
@@ -216,6 +250,7 @@ export function Community() {
 
   useEffect(() => {
     void loadFeed()
+    void loadPublicProfiles()
   }, [user?.id])
 
   useEffect(() => {
@@ -875,6 +910,63 @@ export function Community() {
         </div>
 
         <div className="space-y-4">
+          <Card className="border-white/5 bg-moto-gray py-0">
+            <CardContent className="p-5">
+              <div className="mb-4 flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="font-semibold">Moteros publicos</h2>
+                  <p className="text-sm text-gray-400">{onlineProfilesCount} conectados</p>
+                </div>
+                <Badge className="bg-white/10 text-gray-300">{publicProfiles.length}</Badge>
+              </div>
+              <div className="mb-4 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${peopleFilter === 'all' ? 'bg-moto-orange text-moto-darker' : 'bg-moto-darker text-gray-300 hover:bg-white/5'}`}
+                  onClick={() => setPeopleFilter('all')}
+                >
+                  Todos
+                </button>
+                <button
+                  type="button"
+                  className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${peopleFilter === 'online' ? 'bg-moto-orange text-moto-darker' : 'bg-moto-darker text-gray-300 hover:bg-white/5'}`}
+                  onClick={() => setPeopleFilter('online')}
+                >
+                  Conectados
+                </button>
+              </div>
+              <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
+                {visibleProfiles.length > 0 ? (
+                  visibleProfiles.map((publicProfile) => {
+                    const online = isOnline(publicProfile.last_seen_at)
+                    const name = publicProfile.full_name || publicProfile.username || 'Motero MotoCare'
+                    return (
+                      <div key={publicProfile.id} className="flex items-center gap-3 rounded-xl bg-moto-darker p-3">
+                        <div className="relative">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={publicProfile.avatar_url ?? undefined} />
+                            <AvatarFallback>{initials(publicProfile.full_name, publicProfile.username)}</AvatarFallback>
+                          </Avatar>
+                          <span className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-moto-darker ${online ? 'bg-green-400' : 'bg-gray-600'}`} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">{name}</p>
+                          <p className="truncate text-xs text-gray-500">
+                            @{publicProfile.username || 'motocare'}{publicProfile.city ? ` · ${publicProfile.city}` : ''}
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  })
+                ) : (
+                  <div className="rounded-xl bg-moto-darker p-4 text-sm text-gray-500">
+                    No hay usuarios para este filtro.
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
           <Card className="border-white/5 bg-moto-gray py-0">
             <CardContent className="p-5">
               <h2 className="mb-3 font-semibold">Ideas para publicar</h2>

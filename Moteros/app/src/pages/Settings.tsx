@@ -93,7 +93,7 @@ function loadPreferences() {
 }
 
 export function Settings() {
-  const { user, profile, signOut } = useAuth()
+  const { user, profile, refreshProfile, signOut } = useAuth()
   const [preferences, setPreferences] = useState<Record<PreferenceKey, boolean>>(defaultPreferences)
   const [isSendingReset, setIsSendingReset] = useState(false)
 
@@ -109,11 +109,36 @@ export function Settings() {
   }, [])
 
   const togglePreference = (id: PreferenceKey) => {
+    if (id === 'public_profile') {
+      void togglePublicProfile()
+      return
+    }
+
     setPreferences((current) => {
       const next = { ...current, [id]: !current[id] }
       window.localStorage.setItem('motocare_settings', JSON.stringify(next))
       toast.success('Ajuste guardado', { description: 'Esta preferencia queda guardada en este navegador.' })
       return next
+    })
+  }
+
+  const togglePublicProfile = async () => {
+    if (!supabase || !user) return
+
+    const nextValue = !(profile?.is_public ?? true)
+    const { error } = await supabase
+      .from('profiles')
+      .update({ is_public: nextValue })
+      .eq('id', user.id)
+
+    if (error) {
+      toast.error('No pudimos guardar privacidad', { description: error.message })
+      return
+    }
+
+    await refreshProfile()
+    toast.success('Privacidad actualizada', {
+      description: nextValue ? 'Su perfil puede aparecer en busquedas.' : 'Su perfil queda privado para busquedas.',
     })
   }
 
@@ -182,7 +207,12 @@ export function Settings() {
 
           <SettingsGroup icon={Shield} title="Privacidad">
             {privacyPreferences.map((item) => (
-              <ToggleRow key={item.id} item={item} checked={preferences[item.id]} onToggle={() => togglePreference(item.id)} />
+              <ToggleRow
+                key={item.id}
+                item={item}
+                checked={item.id === 'public_profile' ? (profile?.is_public ?? true) : preferences[item.id]}
+                onToggle={() => togglePreference(item.id)}
+              />
             ))}
             <InfoRow label="Rutas privadas" description="Las rutas privadas solo las ve usted. Las rutas comunidad aparecen en Explorar." />
           </SettingsGroup>

@@ -128,6 +128,7 @@ Campos editables desde la app:
 - `social_url`
 - `avatar_url`
 - `primary_motorcycle_id`
+- `is_public`
 
 La foto de perfil se sube al bucket publico `motocare-public` y luego se guarda la URL publica en `profiles.avatar_url`.
 La moto principal se guarda en `profiles.primary_motorcycle_id`.
@@ -139,6 +140,16 @@ Si la base de datos ya estaba creada antes de esta mejora, ejecutar:
 Para habilitar bio y enlace social en bases existentes, ejecutar:
 
 `supabase/profile_bio_social_migration.sql`
+
+Para habilitar privacidad de perfil e invitaciones aprobadas a clubes en bases existentes, ejecutar:
+
+`supabase/profile_privacy_club_invites_migration.sql`
+
+Para habilitar presencia publica en Comunidad, ejecutar:
+
+`supabase/profile_presence_migration.sql`
+
+Esta migracion agrega `profiles.last_seen_at`. La app actualiza ese campo periodicamente mientras el usuario autenticado navega. Comunidad considera conectado a un perfil publico si `last_seen_at` esta dentro de los ultimos 5 minutos.
 
 ## Rutas
 
@@ -269,6 +280,16 @@ Campos principales de `club_posts`:
 
 La primera version permite al fundador crear el club, editar informacion, subir imagen, invitar miembros por `profiles.username` y retirar miembros no fundadores.
 
+Con privacidad de perfil habilitada:
+
+- si el perfil invitado es publico, aparece en el buscador de invitaciones mientras se escribe;
+- si el perfil invitado es privado, debe buscarse por usuario exacto;
+- toda invitacion crea un registro en `club_invitations` y una notificacion `club_invite`;
+- las invitaciones pendientes se muestran en Clubes, debajo de la lista de miembros;
+- el usuario invitado debe aprobar o rechazar la invitacion desde **Inicio**;
+- al aprobar, la app inserta el registro en `club_members`;
+- al rechazar, solo se marca la invitacion como `declined` y la notificacion como leida.
+
 Los mensajes privados del club se muestran en la pestana **Club privado** de Comunidad. La politica RLS de `club_posts` permite leer y publicar solo a miembros del club.
 
 Para habilitar clubes en bases existentes, ejecutar:
@@ -303,13 +324,63 @@ Nota para publicacion: esta clave debe quedar restringida en Google Cloud a la A
 
 El modulo **Ajustes** muestra datos reales del usuario autenticado desde `profiles` y `auth.users`.
 
-Las preferencias de notificaciones y privacidad se guardan temporalmente en `localStorage` bajo la llave `motocare_settings`.
+Las preferencias de notificaciones se guardan temporalmente en `localStorage` bajo la llave `motocare_settings`.
+
+La visibilidad publica/privada del perfil ya no es solo una preferencia local: se guarda en `profiles.is_public`.
 
 Esto evita crear tablas prematuramente mientras se valida que ajustes necesita realmente el usuario. Si se requiere sincronizacion entre dispositivos, crear una tabla `user_settings` con `user_id`, claves booleanas y fecha de actualizacion.
 
+## Modulo de administracion
+
+El modulo interno **Administracion** vive en:
+
+`/app/admin`
+
+Solo aparece en el menu cuando el usuario autenticado existe en la tabla:
+
+`app_admins`
+
+Para habilitar el modulo en bases existentes, ejecutar:
+
+`supabase/admin_module_migration.sql`
+
+Luego agregar manualmente el primer administrador desde Supabase SQL Editor:
+
+```sql
+insert into public.app_admins (user_id, role)
+values ('ID_DEL_USUARIO', 'owner')
+on conflict (user_id) do update set role = excluded.role;
+```
+
+El `ID_DEL_USUARIO` corresponde a `profiles.id` del usuario que tendra acceso administrativo.
+
+### Privacidad en administracion
+
+El panel admin no muestra correos ni datos privados de autenticacion.
+
+Para usuarios con `profiles.is_public = false`, el panel muestra:
+
+- nombre enmascarado como `Perfil privado`
+- usuario operativo tipo `privado-xxxxxxxx`
+- ciudad y tipo de motero ocultos
+- metricas agregadas como motos, rutas, publicaciones y clubes
+
+Para clubes, si el fundador tiene perfil privado, el panel muestra `Fundador privado`.
+
+### Vistas iniciales
+
+El panel incluye:
+
+- resumen general de usuarios, motos, rutas, publicaciones, clubes e invitaciones
+- listado de usuarios con datos enmascarados cuando aplica
+- listado de clubes con metricas
+- catalogo de mantenimientos sugeridos
+
+Las consultas se sirven por funciones RPC `security definer` que validan `public.is_current_user_admin()` antes de devolver datos.
+
 ## Pendiente futuro: modulo admin
 
-Por ahora los catalogos se editan desde Supabase. Mas adelante se puede crear una ruta interna `/admin` para administrar:
+La primera version del modulo admin es de lectura operativa. Mas adelante se puede ampliar para administrar:
 
 - mantenimientos sugeridos
 - categorias

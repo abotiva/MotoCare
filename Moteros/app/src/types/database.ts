@@ -8,6 +8,8 @@ export type Profile = {
   social_url: string | null
   avatar_url: string | null
   primary_motorcycle_id: string | null
+  is_public: boolean
+  last_seen_at: string | null
   created_at: string
   updated_at: string
 }
@@ -100,10 +102,11 @@ export type SavedRoute = {
 export type Notification = {
   id: string
   user_id: string
-  type: 'route_planned' | 'route_overdue'
+  type: 'route_planned' | 'route_overdue' | 'club_invite'
   title: string
   message: string
   route_id: string | null
+  club_invitation_id: string | null
   scheduled_for: string
   read_at: string | null
   created_at: string
@@ -113,6 +116,7 @@ export type Notification = {
     end_date: string | null
     status: RoutePlan['status']
   } | null
+  club_invitations?: ClubInvitationWithClub | null
 }
 
 export type Club = {
@@ -140,6 +144,26 @@ export type ClubMemberWithProfile = ClubMember & {
     username: string | null
     city: string | null
     avatar_url: string | null
+    is_public?: boolean
+  } | null
+}
+
+export type ClubInvitation = {
+  id: string
+  club_id: string
+  invited_user_id: string
+  invited_by: string
+  status: 'pending' | 'accepted' | 'declined' | 'cancelled'
+  created_at: string
+  responded_at: string | null
+}
+
+export type ClubInvitationWithClub = ClubInvitation & {
+  clubs: {
+    id: string
+    name: string
+    image_url: string | null
+    city: string | null
   } | null
 }
 
@@ -224,4 +248,58 @@ export type MotorcycleDocument = {
   file_path: string
   mime_type: string | null
   created_at: string
+}
+
+export type AdminOverview = {
+  users: number
+  public_users: number
+  private_users: number
+  motorcycles: number
+  routes: number
+  community_routes: number
+  posts: number
+  clubs: number
+  club_memberships: number
+  pending_club_invitations: number
+  maintenance_suggestions: number
+  active_maintenance_suggestions: number
+}
+
+export type AdminUserRow = {
+  id: string
+  display_name: string | null
+  username: string | null
+  city: string | null
+  rider_type: string | null
+  is_public: boolean
+  created_at: string
+  motorcycles_count: number
+  routes_count: number
+  posts_count: number
+  clubs_count: number
+}
+
+export type AdminClubRow = {
+  id: string
+  name: string
+  city: string | null
+  owner_display_name: string | null
+  owner_is_public: boolean
+  members_count: number
+  posts_count: number
+  pending_invitations_count: number
+  created_at: string
+}
+
+export type AdminMaintenanceSuggestionRow = {
+  id: string
+  code: string
+  name: string
+  category: string
+  recommended_interval_km: number | null
+  recommended_interval_days: number | null
+  applies_to: string
+  sort_order: number
+  is_active: boolean
+  updated_at: string
 }

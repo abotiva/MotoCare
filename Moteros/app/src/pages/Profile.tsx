@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { Calendar, Camera, Edit3, ExternalLink, Loader2, Mail, MapPin, Route, Save, UserRound, Users } from 'lucide-react'
+import { Calendar, Camera, Edit3, ExternalLink, Loader2, Mail, MapPin, Route, Save, Shield, UserRound, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -20,6 +20,7 @@ type ProfileForm = {
   bio: string
   social_url: string
   primary_motorcycle_id: string
+  is_public: boolean
 }
 
 type ProfileStats = {
@@ -97,6 +98,7 @@ export function Profile() {
     bio: '',
     social_url: '',
     primary_motorcycle_id: '',
+    is_public: true,
   })
   const [motorcycles, setMotorcycles] = useState<Motorcycle[]>([])
   const [routes, setRoutes] = useState<RoutePlan[]>([])
@@ -128,6 +130,7 @@ export function Profile() {
       bio: profile?.bio ?? '',
       social_url: profile?.social_url ?? '',
       primary_motorcycle_id: profile?.primary_motorcycle_id ?? '',
+      is_public: profile?.is_public ?? true,
     })
   }, [profile])
 
@@ -194,6 +197,7 @@ export function Profile() {
       bio: form.bio.trim() || null,
       social_url: form.social_url.trim() || null,
       primary_motorcycle_id: form.primary_motorcycle_id || null,
+      is_public: form.is_public,
     }
 
     const { error } = await supabase.from('profiles').update(payload).eq('id', user.id)
@@ -296,6 +300,9 @@ export function Profile() {
               <div className="mb-2 flex flex-wrap items-center gap-3">
                 <h1 className="text-3xl font-bold leading-tight">{visibleName}</h1>
                 <Badge className="bg-moto-orange text-moto-darker">{profile?.rider_type || 'Motero'}</Badge>
+                <Badge className={profile?.is_public === false ? 'bg-white/10 text-gray-300' : 'bg-green-500/15 text-green-300'}>
+                  {profile?.is_public === false ? 'Privado' : 'Publico'}
+                </Badge>
               </div>
               <p className="mb-3 text-gray-400">@{username}</p>
               {profile?.bio && <p className="mb-3 max-w-2xl text-sm text-gray-300">{profile.bio}</p>}
@@ -473,6 +480,10 @@ export function Profile() {
                 <span className="text-gray-400">Motos registradas</span>
                 <span className="text-right">{stats.motorcycles}</span>
               </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-gray-400">Privacidad</span>
+                <span className="text-right">{profile?.is_public === false ? 'Perfil privado' : 'Perfil publico'}</span>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -626,6 +637,23 @@ export function Profile() {
                   </option>
                 ))}
               </select>
+            </label>
+            <label className="flex items-start justify-between gap-4 rounded-xl border border-white/10 bg-moto-darker p-3">
+              <span>
+                <span className="flex items-center gap-2 text-sm font-medium">
+                  <Shield className="h-4 w-4 text-moto-orange" />
+                  Perfil publico
+                </span>
+                <span className="mt-1 block text-xs text-gray-400">
+                  Si lo apaga, no aparece en busquedas y las invitaciones a clubes quedan pendientes de aprobacion.
+                </span>
+              </span>
+              <input
+                type="checkbox"
+                className="mt-1 h-5 w-5 accent-moto-orange"
+                checked={form.is_public}
+                onChange={(event) => setForm({ ...form, is_public: event.target.checked })}
+              />
             </label>
             <Button type="submit" disabled={isSaving} className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
               {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}

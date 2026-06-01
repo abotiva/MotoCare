@@ -163,8 +163,18 @@ Funciones disponibles:
 - ver moto principal
 - ver rutas recientes
 - abrir el modulo de rutas desde el perfil
+- definir si el perfil es publico o privado
 
 La foto de perfil se guarda en Supabase Storage y la informacion se actualiza en la tabla `profiles`.
+
+## Perfil publico o privado
+
+El usuario puede controlar la visibilidad de su perfil desde **Mi perfil** o **Ajustes**.
+
+- Perfil publico: puede aparecer en busquedas para que un club lo encuentre e invite.
+- Perfil privado: no aparece en busquedas normales; si un club lo quiere invitar, debe buscarlo por usuario exacto.
+
+Todas las invitaciones pendientes aparecen en **Inicio**, dentro de **Notificaciones**, con opciones **Aprobar** y **Rechazar**. El usuario solo queda como miembro del club cuando aprueba la invitacion.
 
 ## Rutas
 

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
-import type { Club, ClubMemberWithProfile, Profile } from '@/types/database'
+import type { Club, ClubInvitation, ClubMemberWithProfile, Profile } from '@/types/database'
 
 type ClubForm = {
   name: string
@@ -19,6 +19,17 @@ type ClubForm = {
 type MembershipRow = {
   role: 'owner' | 'admin' | 'member'
   clubs: Club | null
+}
+
+type InviteSearchProfile = Pick<Profile, 'id' | 'full_name' | 'username' | 'city' | 'avatar_url'>
+
+type ClubInvitationWithProfile = ClubInvitation & {
+  profiles: {
+    full_name: string | null
+    username: string | null
+    city: string | null
+    avatar_url: string | null
+  } | null
 }
 
 const emptyClubForm: ClubForm = {
@@ -49,10 +60,13 @@ export function Clubs() {
   const { user } = useAuth()
   const [clubs, setClubs] = useState<Club[]>([])
   const [members, setMembers] = useState<ClubMemberWithProfile[]>([])
+  const [pendingInvitations, setPendingInvitations] = useState<ClubInvitationWithProfile[]>([])
   const [selectedClubId, setSelectedClubId] = useState('')
   const [createForm, setCreateForm] = useState<ClubForm>(emptyClubForm)
   const [clubForm, setClubForm] = useState<ClubForm>(emptyClubForm)
   const [inviteUsername, setInviteUsername] = useState('')
+  const [inviteSuggestions, setInviteSuggestions] = useState<InviteSearchProfile[]>([])
+  const [isSearchingInvite, setIsSearchingInvite] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
@@ -92,8 +106,10 @@ export function Clubs() {
 
     if (nextSelected) {
       await loadMembers(nextSelected)
+      await loadPendingInvitations(nextSelected)
     } else {
       setMembers([])
+      setPendingInvitations([])
     }
 
     setIsLoading(false)
@@ -104,7 +120,7 @@ export function Clubs() {
 
     const { data, error } = await supabase
       .from('club_members')
-      .select('*, profiles:user_id(full_name, username, city, avatar_url)')
+      .select('*, profiles:user_id(full_name, username, city, avatar_url, is_public)')
       .eq('club_id', clubId)
       .order('created_at', { ascending: true })
 
@@ -115,6 +131,23 @@ export function Clubs() {
     }
   }
 
+  const loadPendingInvitations = async (clubId: string) => {
+    if (!supabase) return
+
+    const { data, error } = await supabase
+      .from('club_invitations')
+      .select('*, profiles:invited_user_id(full_name, username, city, avatar_url)')
+      .eq('club_id', clubId)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      toast.error('No pudimos cargar invitaciones pendientes', { description: error.message })
+    } else {
+      setPendingInvitations((data ?? []) as ClubInvitationWithProfile[])
+    }
+  }
+
   useEffect(() => {
     void loadClubs()
   }, [user?.id])
@@ -122,6 +155,8 @@ export function Clubs() {
   useEffect(() => {
     if (!selectedClub) {
       setClubForm(emptyClubForm)
+      setInviteSuggestions([])
+      setPendingInvitations([])
       return
     }
 
@@ -131,7 +166,45 @@ export function Clubs() {
       description: selectedClub.description ?? '',
     })
     void loadMembers(selectedClub.id)
+    void loadPendingInvitations(selectedClub.id)
   }, [selectedClub?.id])
+
+  useEffect(() => {
+    if (!supabase || !selectedClub || !canManageSelectedClub) {
+      setInviteSuggestions([])
+      return
+    }
+    const client = supabase
+
+    const term = inviteUsername.trim()
+    if (term.replace(/^@/, '').length < 2) {
+      setInviteSuggestions([])
+      return
+    }
+
+    let cancelled = false
+    const timeout = window.setTimeout(async () => {
+      setIsSearchingInvite(true)
+      const { data, error } = await client.rpc('search_public_profiles_for_club_invite', {
+        target_club_id: selectedClub.id,
+        search_term: term,
+      })
+
+      if (!cancelled) {
+        if (error) {
+          setInviteSuggestions([])
+        } else {
+          setInviteSuggestions((data ?? []) as InviteSearchProfile[])
+        }
+        setIsSearchingInvite(false)
+      }
+    }, 250)
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(timeout)
+    }
+  }, [canManageSelectedClub, inviteUsername, selectedClub?.id])
 
   const createClub = async (event: FormEvent) => {
     event.preventDefault()
@@ -182,7 +255,7 @@ export function Clubs() {
 
   const updateClub = async (event: FormEvent) => {
     event.preventDefault()
-    if (!supabase || !selectedClub || !canManageSelectedClub) return
+    if (!supabase || !user || !selectedClub || !canManageSelectedClub) return
 
     if (!clubForm.name.trim()) {
       toast.error('Nombre requerido', { description: 'El club necesita un nombre.' })
@@ -257,18 +330,20 @@ export function Clubs() {
 
   const inviteMember = async (event: FormEvent) => {
     event.preventDefault()
-    if (!supabase || !selectedClub || !canManageSelectedClub) return
+    if (!supabase || !user || !selectedClub || !canManageSelectedClub) return
 
     const username = inviteUsername.trim().replace(/^@/, '').toLowerCase()
     if (!username) return
 
     setIsSaving(true)
 
-    const { data: foundProfile, error: profileError } = await supabase
-      .from('profiles')
-      .select('id, full_name, username, city, avatar_url')
-      .eq('username', username)
-      .single()
+    const { data: foundProfiles, error: profileError } = await supabase
+      .rpc('find_profile_for_club_invite', {
+        target_club_id: selectedClub.id,
+        target_username: username,
+      })
+
+    const foundProfile = Array.isArray(foundProfiles) ? foundProfiles[0] : foundProfiles
 
     if (profileError || !foundProfile) {
       toast.error('Usuario no encontrado', { description: 'Revise el nombre de usuario e intente de nuevo.' })
@@ -276,19 +351,72 @@ export function Clubs() {
       return
     }
 
-    const profile = foundProfile as Pick<Profile, 'id' | 'full_name' | 'username' | 'city' | 'avatar_url'>
-    const { error } = await supabase.from('club_members').insert({
-      club_id: selectedClub.id,
+    const profile = foundProfile as Pick<Profile, 'id' | 'full_name' | 'username' | 'city' | 'avatar_url' | 'is_public'>
+
+    const { data: existingMember } = await supabase
+      .from('club_members')
+      .select('id')
+      .eq('club_id', selectedClub.id)
+      .eq('user_id', profile.id)
+      .maybeSingle()
+
+    if (existingMember) {
+      toast.info('Ya es miembro', { description: profile.full_name || `@${profile.username}` || 'Este usuario ya pertenece al club.' })
+      setInviteUsername('')
+      setInviteSuggestions([])
+      setIsSaving(false)
+      return
+    }
+
+    const { data: pendingInvitation } = await supabase
+      .from('club_invitations')
+      .select('id')
+      .eq('club_id', selectedClub.id)
+      .eq('invited_user_id', profile.id)
+      .eq('status', 'pending')
+      .maybeSingle()
+
+    if (pendingInvitation) {
+      toast.info('Invitacion pendiente', { description: `${profile.full_name || `@${profile.username}` || 'Este usuario'} ya debe aprobar esta invitacion.` })
+      setInviteUsername('')
+      setInviteSuggestions([])
+      setIsSaving(false)
+      return
+    }
+
+    const { data: invitation, error: invitationError } = await supabase
+      .from('club_invitations')
+      .insert({
+        club_id: selectedClub.id,
+        invited_user_id: profile.id,
+        invited_by: user.id,
+        status: 'pending',
+      })
+      .select('id')
+      .single()
+
+    if (invitationError || !invitation) {
+      toast.error('No pudimos enviar la invitacion', { description: invitationError?.message })
+      setIsSaving(false)
+      return
+    }
+
+    const { error: notificationError } = await supabase.from('notifications').insert({
       user_id: profile.id,
-      role: 'member',
+      type: 'club_invite',
+      title: 'Invitacion a club',
+      message: `El club "${selectedClub.name}" quiere agregarte como miembro.`,
+      club_invitation_id: invitation.id,
+      scheduled_for: new Date().toISOString(),
     })
 
-    if (error) {
-      toast.error('No pudimos agregar el miembro', { description: error.message })
+    if (notificationError) {
+      toast.error('La invitacion se creo, pero no pudimos notificar', { description: notificationError.message })
     } else {
       setInviteUsername('')
-      await loadMembers(selectedClub.id)
-      toast.success('Miembro agregado', { description: profile.full_name || `@${profile.username}` || 'Nuevo miembro' })
+      setInviteSuggestions([])
+      await loadPendingInvitations(selectedClub.id)
+      toast.success('Invitacion enviada', { description: `${profile.full_name || `@${profile.username}` || 'El usuario'} debe aprobarla.` })
     }
 
     setIsSaving(false)
@@ -446,8 +574,51 @@ export function Clubs() {
                     Miembros
                   </h2>
                   {canManageSelectedClub && (
-                    <form className="flex gap-2" onSubmit={inviteMember}>
-                      <input className="min-w-0 rounded-lg border border-white/10 bg-moto-darker px-3 py-2 text-sm text-white" value={inviteUsername} onChange={(event) => setInviteUsername(event.target.value)} placeholder="@usuario" />
+                    <form className="relative flex gap-2" onSubmit={inviteMember}>
+                      <div className="relative min-w-0 flex-1">
+                        <input
+                          className="w-full rounded-lg border border-white/10 bg-moto-darker px-3 py-2 text-sm text-white"
+                          value={inviteUsername}
+                          onChange={(event) => setInviteUsername(event.target.value)}
+                          placeholder="@usuario"
+                        />
+                        {(inviteSuggestions.length > 0 || isSearchingInvite) && (
+                          <div className="absolute right-0 top-11 z-30 w-full overflow-hidden rounded-xl border border-white/10 bg-moto-darker shadow-xl md:w-80">
+                            {isSearchingInvite ? (
+                              <div className="flex items-center gap-2 p-3 text-sm text-gray-400">
+                                <Loader2 className="h-4 w-4 animate-spin text-moto-orange" />
+                                Buscando...
+                              </div>
+                            ) : (
+                              inviteSuggestions.map((suggestion) => {
+                                const suggestionName = suggestion.full_name || suggestion.username || 'Motero MotoCare'
+                                return (
+                                  <button
+                                    key={suggestion.id}
+                                    type="button"
+                                    className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-white/5"
+                                    onClick={() => {
+                                      setInviteUsername(suggestion.username ? `@${suggestion.username}` : suggestionName)
+                                      setInviteSuggestions([])
+                                    }}
+                                  >
+                                    <Avatar className="h-9 w-9 bg-moto-gray">
+                                      <AvatarImage src={suggestion.avatar_url ?? undefined} />
+                                      <AvatarFallback>{initials(suggestionName)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="min-w-0">
+                                      <p className="truncate text-sm font-medium">{suggestionName}</p>
+                                      <p className="truncate text-xs text-gray-500">
+                                        @{suggestion.username || 'motocare'}{suggestion.city ? ` · ${suggestion.city}` : ''}
+                                      </p>
+                                    </div>
+                                  </button>
+                                )
+                              })
+                            )}
+                          </div>
+                        )}
+                      </div>
                       <Button type="submit" disabled={isSaving} className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
                         <UserPlus className="mr-2 h-4 w-4" />
                         Invitar
@@ -482,6 +653,35 @@ export function Clubs() {
                     )
                   })}
                 </div>
+
+                {canManageSelectedClub && pendingInvitations.length > 0 && (
+                  <div className="mt-6 border-t border-white/10 pt-5">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <h3 className="font-semibold">Invitaciones pendientes</h3>
+                      <Badge className="bg-yellow-500/15 text-yellow-300">{pendingInvitations.length}</Badge>
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      {pendingInvitations.map((invitation) => {
+                        const invitedName = invitation.profiles?.full_name || invitation.profiles?.username || 'Motero MotoCare'
+                        return (
+                          <div key={invitation.id} className="flex items-center justify-between gap-3 rounded-xl bg-moto-darker p-3">
+                            <div className="flex min-w-0 items-center gap-3">
+                              <Avatar className="h-10 w-10 bg-moto-gray">
+                                <AvatarImage src={invitation.profiles?.avatar_url ?? undefined} />
+                                <AvatarFallback>{initials(invitedName)}</AvatarFallback>
+                              </Avatar>
+                              <div className="min-w-0">
+                                <p className="truncate font-medium">{invitedName}</p>
+                                <p className="truncate text-xs text-gray-500">@{invitation.profiles?.username || 'motocare'} · pendiente de aprobacion</p>
+                              </div>
+                            </div>
+                            <Badge className="shrink-0 bg-yellow-500/15 text-yellow-300">Pendiente</Badge>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

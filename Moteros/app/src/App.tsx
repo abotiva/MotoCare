@@ -12,6 +12,7 @@ import { Clubs } from './pages/Clubs'
 import { Profile } from './pages/Profile'
 import { MyBikes } from './pages/MyBikes'
 import { Settings } from './pages/Settings'
+import { Admin } from './pages/Admin'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { Toaster } from './components/ui/sonner'
 
@@ -35,6 +36,7 @@ function App() {
           <Route path="profile" element={<Profile />} />
           <Route path="my-bikes" element={<MyBikes />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="admin" element={<Admin />} />
         </Route>
       </Routes>
       <Toaster richColors position="top-right" />
