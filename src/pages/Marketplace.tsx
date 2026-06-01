@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { 
   Search, Filter, Grid3X3, List, MapPin, Heart, MessageCircle, 
-  Share2, Star, TrendingUp, Bike, Wrench, Shirt
+  Share2, Star, TrendingUp, Bike, Wrench, Shirt, Clock3, Lock
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -116,10 +116,40 @@ export function Marketplace() {
   return (
     <div className="max-w-7xl mx-auto p-4 lg:p-6">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">Marketplace</h1>
-        <p className="text-gray-400">Compra y vende motos, repuestos y equipamiento</p>
+      <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
+        <div>
+          <h1 className="text-2xl font-bold mb-2">Marketplace</h1>
+          <p className="text-gray-400">Compra y vende motos, repuestos y equipamiento</p>
+        </div>
+        <Badge className="w-fit bg-moto-orange text-moto-darker">
+          <Clock3 className="mr-2 h-4 w-4" />
+          Proximamente
+        </Badge>
       </div>
+
+      <Card className="mb-6 overflow-hidden border-white/5 bg-moto-gray py-0">
+        <CardContent className="relative p-5">
+          <div className="absolute inset-0 bg-[url('/feature-marketplace.jpg')] bg-cover bg-center opacity-20" />
+          <div className="relative grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center">
+            <div>
+              <Badge className="mb-3 bg-white/10 text-gray-200">Modulo en preparacion</Badge>
+              <h2 className="text-2xl font-bold">Tienda MotoCare llegara pronto</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-300">
+                Estamos dejando listo el espacio para aliados, repuestos, equipamiento y motos usadas. Por ahora conservamos el diseno para validar la experiencia sin habilitar compras ni publicaciones reales.
+              </p>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-moto-darker/90 p-4">
+              <div className="mb-3 flex items-center gap-2 text-moto-orange">
+                <Lock className="h-5 w-5" />
+                <span className="font-semibold">Acciones desactivadas</span>
+              </div>
+              <p className="text-sm leading-6 text-gray-400">
+                Buscar, vender, contactar y filtros quedan visibles como maqueta funcional, pero no guardan informacion ni inician transacciones.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Search & Filters */}
       <div className="flex flex-col lg:flex-row gap-4 mb-6">
@@ -129,15 +159,16 @@ export function Marketplace() {
             placeholder="Buscar motos, repuestos, equipamiento..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-moto-gray border-white/5"
+            disabled
+            className="pl-10 bg-moto-gray border-white/5 opacity-70"
           />
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="border-white/10">
+          <Button variant="outline" className="border-white/10" disabled>
             <MapPin className="w-4 h-4 mr-2" />
             Ubicación
           </Button>
-          <Button variant="outline" className="border-white/10">
+          <Button variant="outline" className="border-white/10" disabled>
             <Filter className="w-4 h-4 mr-2" />
             Filtros
           </Button>
@@ -164,6 +195,7 @@ export function Marketplace() {
           <button
             key={cat.id}
             onClick={() => setSelectedCategory(cat.id)}
+            disabled
             className={`flex items-center gap-2 px-5 py-3 rounded-xl whitespace-nowrap transition-colors ${
               selectedCategory === cat.id
                 ? 'bg-moto-orange text-white'
@@ -183,19 +215,19 @@ export function Marketplace() {
             <TrendingUp className="w-5 h-5 text-moto-orange" />
             Destacados
           </h2>
-          <Button variant="ghost" size="sm">Ver todos</Button>
+          <Button variant="ghost" size="sm" disabled>Ver todos</Button>
         </div>
         <div className="grid md:grid-cols-2 gap-4">
           {listings.filter(l => l.featured).map((listing) => (
-            <Card key={listing.id} className="bg-moto-gray border-white/5 overflow-hidden group cursor-pointer">
+            <Card key={listing.id} className="bg-moto-gray border-white/5 overflow-hidden opacity-75">
               <div className="relative h-48 overflow-hidden">
                 <img 
                   src={listing.image} 
                   alt={listing.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-cover"
                 />
                 <Badge className="absolute top-3 left-3 bg-moto-orange">Destacado</Badge>
-                <button className="absolute top-3 right-3 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center hover:bg-moto-orange transition-colors">
+                <button className="absolute top-3 right-3 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center" disabled>
                   <Heart className="w-4 h-4" />
                 </button>
               </div>
@@ -234,10 +266,10 @@ export function Marketplace() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline" className="border-white/10">
+                    <Button size="sm" variant="outline" className="border-white/10" disabled>
                       <MessageCircle className="w-4 h-4" />
                     </Button>
-                    <Button size="sm" className="bg-moto-orange hover:bg-moto-orange-dark">
+                    <Button size="sm" className="bg-moto-orange hover:bg-moto-orange-dark" disabled>
                       Ver más
                     </Button>
                   </div>
@@ -255,7 +287,7 @@ export function Marketplace() {
           {filteredListings.filter(l => !l.featured).map((listing) => (
             <Card 
               key={listing.id} 
-              className={`bg-moto-gray border-white/5 overflow-hidden group cursor-pointer ${
+              className={`bg-moto-gray border-white/5 overflow-hidden opacity-75 ${
                 viewMode === 'list' ? 'flex' : ''
               }`}
             >
@@ -263,9 +295,9 @@ export function Marketplace() {
                 <img 
                   src={listing.image} 
                   alt={listing.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-cover"
                 />
-                <button className="absolute top-3 right-3 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center hover:bg-moto-orange transition-colors">
+                <button className="absolute top-3 right-3 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center" disabled>
                   <Heart className="w-4 h-4" />
                 </button>
               </div>
@@ -291,7 +323,7 @@ export function Marketplace() {
                       <Badge variant="secondary" className="text-[10px]">Verificado</Badge>
                     )}
                   </div>
-                  <Button size="sm" variant="ghost" className="text-moto-orange">
+                  <Button size="sm" variant="ghost" className="text-moto-orange" disabled>
                     Contactar
                   </Button>
                 </div>
@@ -305,6 +337,7 @@ export function Marketplace() {
       <div className="fixed bottom-20 lg:bottom-8 right-4 lg:right-8 z-40">
         <Button 
           size="lg" 
+          disabled
           className="bg-moto-orange hover:bg-moto-orange-dark shadow-lg shadow-moto-orange/30 rounded-full px-6"
         >
           <Share2 className="w-5 h-5 mr-2" />

@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
   Bell,
   Bike,
@@ -12,13 +12,18 @@ import {
   Settings,
   ShoppingBag,
   LogOut,
+  ShieldCheck,
   User,
+  Users,
   X,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { InstallPrompt } from '@/components/InstallPrompt'
 import { MotoCareLogo } from '@/components/MotoCareLogo'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuth } from '@/contexts/AuthContext'
+import { supabase } from '@/lib/supabase'
+import type { Notification } from '@/types/database'
 
 const navItems = [
   { path: '/app/home', icon: Home, label: 'Inicio' },
@@ -26,6 +31,7 @@ const navItems = [
   { path: '/app/map', icon: MapIcon, label: 'Rutas' },
   { path: '/app/marketplace', icon: ShoppingBag, label: 'Tienda' },
   { path: '/app/messages', icon: MessageCircle, label: 'Comunidad' },
+  { path: '/app/clubs', icon: Users, label: 'Clubes' },
 ]
 
 const sidebarItems = [
@@ -34,16 +40,123 @@ const sidebarItems = [
   { path: '/app/settings', icon: Settings, label: 'Ajustes' },
 ]
 
+function initials(name: string | null | undefined, email: string | undefined) {
+  const source = name || email || 'MC'
+  return source
+    .split(/[\s@._-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('')
+}
+
+function notificationPreview(notification: Notification) {
+  if (notification.type === 'club_invite' && notification.club_invitations?.clubs) {
+    return {
+      title: 'Invitacion a club',
+      message: `El club "${notification.club_invitations.clubs.name}" quiere agregarte como miembro.`,
+    }
+  }
+
+  if (notification.type === 'route_planned' && notification.routes?.title) {
+    return {
+      title: 'Ruta planeada cercana',
+      message: `Tienes cerca la ruta "${notification.routes.title}".`,
+    }
+  }
+
+  return {
+    title: notification.title,
+    message: notification.message,
+  }
+}
+
 export function MainLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
-  const { profile, signOut } = useAuth()
+  const [unreadNotifications, setUnreadNotifications] = useState(0)
+  const [notificationItems, setNotificationItems] = useState<Notification[]>([])
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const { user, profile, signOut } = useAuth()
   const location = useLocation()
+
+  const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Motero MotoCare'
+  const username = profile?.username || user?.email?.split('@')[0] || 'motocare'
+  const avatarFallback = initials(profile?.full_name, user?.email)
 
   const pageTitle =
     navItems.find((item) => item.path === location.pathname)?.label ||
     sidebarItems.find((item) => item.path === location.pathname)?.label ||
+    (location.pathname === '/app/admin' ? 'Administracion' : null) ||
     'Inicio'
+
+  useEffect(() => {
+    if (!supabase || !user) return
+    const client = supabase
+
+    const loadUnreadNotifications = async () => {
+      const { count } = await client
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .is('read_at', null)
+        .lte('scheduled_for', new Date().toISOString())
+
+      setUnreadNotifications(count ?? 0)
+
+      const { data } = await client
+        .from('notifications')
+        .select('*, routes:route_id(title, start_date, end_date, status), club_invitations:club_invitation_id(*, clubs:club_id(id, name, image_url, city))')
+        .eq('user_id', user.id)
+        .is('read_at', null)
+        .lte('scheduled_for', new Date().toISOString())
+        .order('scheduled_for', { ascending: true })
+        .limit(5)
+
+      setNotificationItems((data ?? []) as Notification[])
+    }
+
+    void loadUnreadNotifications()
+  }, [user?.id, location.pathname])
+
+  useEffect(() => {
+    setIsNotificationsOpen(false)
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (!supabase || !user) {
+      setIsAdmin(false)
+      return
+    }
+    const client = supabase
+
+    const loadAdminAccess = async () => {
+      const { data } = await client.rpc('is_current_user_admin')
+      setIsAdmin(Boolean(data))
+    }
+
+    void loadAdminAccess()
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!supabase || !user) return
+    const client = supabase
+
+    const touchPresence = async () => {
+      await client
+        .from('profiles')
+        .update({ last_seen_at: new Date().toISOString() })
+        .eq('id', user.id)
+    }
+
+    void touchPresence()
+    const interval = window.setInterval(() => {
+      void touchPresence()
+    }, 60_000)
+
+    return () => window.clearInterval(interval)
+  }, [user?.id])
 
   return (
     <div className="flex min-h-screen bg-moto-dark text-white">
@@ -68,9 +181,6 @@ export function MainLayout() {
             >
               <item.icon className="h-5 w-5" />
               <span className="flex-1">{item.label}</span>
-              {item.path === '/app/messages' && (
-                <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">3</span>
-              )}
             </NavLink>
           ))}
 
@@ -89,18 +199,30 @@ export function MainLayout() {
               <span>{item.label}</span>
             </NavLink>
           ))}
+          {isAdmin && (
+            <NavLink
+              to="/app/admin"
+              className={({ isActive }) =>
+                `flex items-center gap-3 rounded-xl px-3 py-3 transition-all duration-200 ${
+                  isActive ? 'bg-moto-orange text-moto-darker' : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                }`
+              }
+            >
+              <ShieldCheck className="h-5 w-5" />
+              <span>Administracion</span>
+            </NavLink>
+          )}
         </nav>
 
         <div className="border-t border-white/5 p-4">
           <NavLink to="/app/profile" className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-white/5">
-            <img
-              src="https://api.dicebear.com/7.x/avataaars/svg?seed=motero1"
-              alt="Perfil"
-              className="h-10 w-10 rounded-full bg-moto-gray"
-            />
+            <Avatar className="h-10 w-10 bg-moto-gray">
+              <AvatarImage src={profile?.avatar_url ?? undefined} />
+              <AvatarFallback>{avatarFallback}</AvatarFallback>
+            </Avatar>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">{profile?.full_name ?? 'Motero MotoCare'}</p>
-              <p className="text-xs text-gray-500">@{profile?.username ?? 'motocare'}</p>
+              <p className="truncate text-sm font-semibold">{displayName}</p>
+              <p className="truncate text-xs text-gray-500">@{username}</p>
             </div>
           </NavLink>
           <button
@@ -143,17 +265,73 @@ export function MainLayout() {
                 </button>
               )}
 
-              <button className="relative rounded-lg p-2 hover:bg-white/5">
-                <Bell className="h-5 w-5 text-gray-400" />
-                <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-moto-orange" />
-              </button>
+              <div className="relative">
+                <button
+                  type="button"
+                  className="relative rounded-lg p-2 hover:bg-white/5"
+                  aria-label="Abrir notificaciones"
+                  aria-expanded={isNotificationsOpen}
+                  onClick={() => setIsNotificationsOpen((current) => !current)}
+                >
+                  <Bell className={`h-5 w-5 ${unreadNotifications > 0 ? 'text-moto-orange' : 'text-gray-400'}`} />
+                  {unreadNotifications > 0 && (
+                    <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-moto-orange px-1 text-[10px] font-bold text-moto-darker">
+                      {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                    </span>
+                  )}
+                </button>
+
+                {isNotificationsOpen && (
+                  <div className="absolute right-0 top-12 z-50 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-white/10 bg-moto-darker shadow-2xl">
+                    <div className="flex items-center justify-between gap-3 border-b border-white/10 p-4">
+                      <div>
+                        <p className="font-semibold">Notificaciones</p>
+                        <p className="text-xs text-gray-500">{unreadNotifications} pendientes</p>
+                      </div>
+                      <Link to="/app/home" className="text-sm font-medium text-moto-orange hover:text-moto-orange-dark">
+                        Ver todas
+                      </Link>
+                    </div>
+
+                    {notificationItems.length > 0 ? (
+                      <div className="max-h-80 overflow-y-auto p-2">
+                        {notificationItems.map((notification) => {
+                          const preview = notificationPreview(notification)
+                          return (
+                            <Link
+                              key={notification.id}
+                              to="/app/home"
+                              className="block rounded-xl p-3 transition-colors hover:bg-white/5"
+                            >
+                              <p className="line-clamp-1 text-sm font-semibold">{preview.title}</p>
+                              <p className="mt-1 line-clamp-2 text-xs leading-5 text-gray-400">{preview.message}</p>
+                            </Link>
+                          )
+                        })}
+                      </div>
+                    ) : (
+                      <div className="p-5 text-center text-sm text-gray-400">
+                        No tienes notificaciones pendientes.
+                      </div>
+                    )}
+
+                    <div className="border-t border-white/10 p-3">
+                      <Link
+                        to="/app/home"
+                        className="block rounded-xl bg-moto-orange px-3 py-2 text-center text-sm font-semibold text-moto-darker transition-colors hover:bg-moto-orange-dark"
+                      >
+                        Gestionar notificaciones
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               <NavLink to="/app/profile" className="lg:hidden">
-                <img
-                  src="https://api.dicebear.com/7.x/avataaars/svg?seed=motero1"
-                  alt="Perfil"
-                  className="h-8 w-8 rounded-full bg-moto-gray"
-                />
+                <Avatar className="h-8 w-8 bg-moto-gray">
+                  <AvatarImage src={profile?.avatar_url ?? undefined} />
+                  <AvatarFallback className="text-xs">{avatarFallback}</AvatarFallback>
+                </Avatar>
               </NavLink>
             </div>
           </div>
@@ -175,11 +353,6 @@ export function MainLayout() {
               >
                 <div className="relative">
                   <item.icon className="h-6 w-6" />
-                  {item.path === '/app/messages' && (
-                    <span className="absolute -right-2 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                      3
-                    </span>
-                  )}
                 </div>
                 <span className="mt-1 text-[10px]">{item.label}</span>
               </NavLink>
@@ -196,7 +369,7 @@ export function MainLayout() {
               </button>
             </div>
             <nav className="space-y-1 p-4">
-              {[...navItems, ...sidebarItems].map((item) => (
+              {[...navItems, ...sidebarItems, ...(isAdmin ? [{ path: '/app/admin', icon: ShieldCheck, label: 'Administracion' }] : [])].map((item) => (
                 <NavLink
                   key={item.path}
                   to={item.path}
@@ -209,9 +382,6 @@ export function MainLayout() {
                 >
                   <item.icon className="h-6 w-6" />
                   <span className="text-lg">{item.label}</span>
-                  {item.path === '/app/messages' && (
-                    <span className="ml-auto rounded-full bg-red-500 px-3 py-1 text-sm font-bold text-white">3</span>
-                  )}
                 </NavLink>
               ))}
               <button

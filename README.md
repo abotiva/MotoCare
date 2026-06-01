@@ -1,73 +1,88 @@
-# React + TypeScript + Vite
+# MotoCare MVP Alpha
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+MotoCare es una app MVP para moteros enfocada en mantenimiento de la moto, rutas, comunidad, clubes y perfil del usuario.
 
-Currently, two official plugins are available:
+Estado actual: **MVP Alpha**. No es una version publica 1.0.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Funcionalidades
 
-## React Compiler
+- Login con Supabase Auth.
+- Perfil de usuario con avatar, bio, ciudad, moto principal y clubes.
+- Mi moto: motos, documentos, kilometraje, mantenimientos, recordatorios y pendientes.
+- Rutas: creacion manual, estado, fechas, notificaciones y mapas embebidos.
+- Comunidad: publicaciones, imagenes, likes, comentarios y rutas adjuntas.
+- Clubes: crear club, editar informacion, imagen, miembros y mensajes privados.
+- Explorar: rutas publicas, publicaciones y rutas guardadas.
+- Tienda/Marketplace: pantalla visual en estado proximamente.
+- Ajustes basicos de cuenta y preferencias locales.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Stack
 
-## Expanding the ESLint configuration
+- React + TypeScript + Vite.
+- Supabase para Auth, PostgreSQL, Storage y RLS.
+- Google Maps Embed para vista de mapas de rutas.
+- Tailwind CSS y componentes UI locales.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Variables de entorno
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Crear un archivo `.env` basado en `.env.example`:
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
+VITE_GOOGLE_MAPS_EMBED_KEY=your-google-maps-embed-api-key
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+El archivo `.env` no debe subirse a GitHub.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Supabase
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Para una base nueva, ejecutar:
+
+```txt
+supabase/schema.sql
 ```
+
+Para bases existentes, revisar y ejecutar las migraciones necesarias en `supabase/`:
+
+- `maintenance_suggestions_migration.sql`
+- `profile_primary_motorcycle_migration.sql`
+- `profile_bio_social_migration.sql`
+- `route_status_migration.sql`
+- `route_dates_migration.sql`
+- `notifications_migration.sql`
+- `saved_routes_migration.sql`
+- `post_images_migration.sql`
+- `storage_migration.sql`
+- `storage_delete_policy_migration.sql`
+- `clubs_migration.sql`
+
+## Google Maps
+
+La integracion actual usa Maps Embed API.
+
+Antes de publicar, restringir la API key en Google Cloud:
+
+- Permitir solo **Maps Embed API**.
+- Restringir al dominio real de MotoCare.
+- En desarrollo local puede permitirse `http://127.0.0.1:*` o `http://localhost:*`.
+
+## Desarrollo
+
+```bash
+npm install
+npm run dev
+```
+
+Si Vite bloquea `node_modules/.vite` en Windows, el proyecto usa `cacheDir: '.vite-cache'` en `vite.config.ts`.
+
+## Build
+
+```bash
+npm run build
+```
+
+## Documentacion
+
+- `docs/MANUAL_USUARIO.md`
+- `docs/MANUAL_ADMINISTRADOR.md`

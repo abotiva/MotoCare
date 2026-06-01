@@ -1,218 +1,372 @@
-import { useState } from 'react'
-import { 
-  User, Bell, Shield, CreditCard, Smartphone, LogOut, 
-  ChevronRight, Camera, Edit3
+import { useEffect, useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
+import {
+  Bell,
+  Bike,
+  Bookmark,
+  ChevronRight,
+  Database,
+  KeyRound,
+  LogOut,
+  Mail,
+  Route,
+  Shield,
+  User,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import { toast } from 'sonner'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Switch } from '@/components/ui/switch'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Switch } from '@/components/ui/switch'
+import { useAuth } from '@/contexts/AuthContext'
+import { supabase, supabaseUrl } from '@/lib/supabase'
 
-const settingsSections = [
+type PreferenceKey = 'maintenance_alerts' | 'community_alerts' | 'route_alerts' | 'email_summary' | 'public_profile'
+
+type Preference = {
+  id: PreferenceKey
+  label: string
+  description: string
+}
+
+const defaultPreferences: Record<PreferenceKey, boolean> = {
+  maintenance_alerts: true,
+  community_alerts: true,
+  route_alerts: true,
+  email_summary: false,
+  public_profile: true,
+}
+
+const notificationPreferences: Preference[] = [
   {
-    id: 'account',
-    title: 'Cuenta',
-    icon: User,
-    items: [
-      { id: 'profile', label: 'Información personal', description: 'Nombre, email, teléfono' },
-      { id: 'password', label: 'Contraseña', description: 'Cambiar contraseña' },
-      { id: 'privacy', label: 'Privacidad', description: 'Quién puede ver tu perfil' },
-    ]
+    id: 'maintenance_alerts',
+    label: 'Alertas de mantenimiento',
+    description: 'Recordatorios de pendientes, documentos y kilometraje.',
   },
   {
-    id: 'notifications',
-    title: 'Notificaciones',
-    icon: Bell,
-    items: [
-      { id: 'push', label: 'Notificaciones push', description: 'Alertas en tu teléfono', type: 'toggle', value: true },
-      { id: 'email', label: 'Notificaciones por email', description: 'Resumen semanal', type: 'toggle', value: true },
-      { id: 'messages', label: 'Mensajes', description: 'Cuando recibes un mensaje', type: 'toggle', value: true },
-      { id: 'routes', label: 'Rutas y eventos', description: 'Salidas grupales cercanas', type: 'toggle', value: false },
-    ]
+    id: 'community_alerts',
+    label: 'Actividad de comunidad',
+    description: 'Likes, comentarios y publicaciones relacionadas.',
   },
   {
-    id: 'preferences',
-    title: 'Preferencias',
-    icon: Smartphone,
-    items: [
-      { id: 'darkMode', label: 'Modo oscuro', description: 'Tema oscuro de la app', type: 'toggle', value: true },
-      { id: 'language', label: 'Idioma', description: 'Español (Colombia)' },
-      { id: 'units', label: 'Unidades', description: 'Kilómetros, Celsius' },
-    ]
+    id: 'route_alerts',
+    label: 'Rutas guardadas y compartidas',
+    description: 'Cambios relevantes en rutas de comunidad.',
   },
   {
-    id: 'security',
-    title: 'Seguridad',
-    icon: Shield,
-    items: [
-      { id: '2fa', label: 'Autenticación de dos factores', description: 'Añade una capa extra de seguridad', type: 'toggle', value: false },
-      { id: 'biometric', label: 'Desbloqueo biométrico', description: 'Huella o Face ID', type: 'toggle', value: true },
-      { id: 'sessions', label: 'Sesiones activas', description: 'Ver dónde has iniciado sesión' },
-    ]
-  },
-  {
-    id: 'billing',
-    title: 'Suscripción y Pagos',
-    icon: CreditCard,
-    items: [
-      { id: 'plan', label: 'Plan actual', description: 'MotoPro - $14.900/mes' },
-      { id: 'payment', label: 'Método de pago', description: '**** 4242' },
-      { id: 'history', label: 'Historial de pagos', description: 'Ver facturas anteriores' },
-    ]
+    id: 'email_summary',
+    label: 'Resumen por email',
+    description: 'Recibir un resumen periodico cuando se habilite esta funcion.',
   },
 ]
 
-export function Settings() {
-  const [activeSection, setActiveSection] = useState<string | null>(null)
-  const [toggles, setToggles] = useState<Record<string, boolean>>({
-    push: true,
-    email: true,
-    messages: true,
-    routes: false,
-    darkMode: true,
-    '2fa': false,
-    biometric: true,
-  })
+const privacyPreferences: Preference[] = [
+  {
+    id: 'public_profile',
+    label: 'Perfil visible',
+    description: 'Permitir que otros moteros vean nombre, usuario, ciudad y avatar.',
+  },
+]
 
-  const handleToggle = (id: string) => {
-    setToggles(prev => ({ ...prev, [id]: !prev[id] }))
+function initials(name: string | null | undefined, email: string | undefined) {
+  const source = name || email || 'MC'
+  return source
+    .split(/[\s@._-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('')
+}
+
+function loadPreferences() {
+  try {
+    const raw = window.localStorage.getItem('motocare_settings')
+    if (!raw) return defaultPreferences
+    return { ...defaultPreferences, ...JSON.parse(raw) } as Record<PreferenceKey, boolean>
+  } catch {
+    return defaultPreferences
+  }
+}
+
+export function Settings() {
+  const { user, profile, refreshProfile, signOut } = useAuth()
+  const [preferences, setPreferences] = useState<Record<PreferenceKey, boolean>>(defaultPreferences)
+  const [isSendingReset, setIsSendingReset] = useState(false)
+
+  const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Motero MotoCare'
+  const username = profile?.username || user?.email?.split('@')[0] || 'motocare'
+  const projectRef = useMemo(() => {
+    if (!supabaseUrl) return 'Sin configurar'
+    return supabaseUrl.replace('https://', '').split('.')[0]
+  }, [])
+
+  useEffect(() => {
+    setPreferences(loadPreferences())
+  }, [])
+
+  const togglePreference = (id: PreferenceKey) => {
+    if (id === 'public_profile') {
+      void togglePublicProfile()
+      return
+    }
+
+    setPreferences((current) => {
+      const next = { ...current, [id]: !current[id] }
+      window.localStorage.setItem('motocare_settings', JSON.stringify(next))
+      toast.success('Ajuste guardado', { description: 'Esta preferencia queda guardada en este navegador.' })
+      return next
+    })
+  }
+
+  const togglePublicProfile = async () => {
+    if (!supabase || !user) return
+
+    const nextValue = !(profile?.is_public ?? true)
+    const { error } = await supabase
+      .from('profiles')
+      .update({ is_public: nextValue })
+      .eq('id', user.id)
+
+    if (error) {
+      toast.error('No pudimos guardar privacidad', { description: error.message })
+      return
+    }
+
+    await refreshProfile()
+    toast.success('Privacidad actualizada', {
+      description: nextValue ? 'Su perfil puede aparecer en busquedas.' : 'Su perfil queda privado para busquedas.',
+    })
+  }
+
+  const sendPasswordReset = async () => {
+    if (!supabase || !user?.email) return
+    setIsSendingReset(true)
+
+    const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+      redirectTo: window.location.origin + '/login',
+    })
+
+    if (error) {
+      toast.error('No pudimos enviar el correo', { description: error.message })
+    } else {
+      toast.success('Correo enviado', { description: 'Revise su bandeja para continuar el cambio de clave.' })
+    }
+
+    setIsSendingReset(false)
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-4 lg:p-6">
-      {/* Header */}
+    <div className="mx-auto max-w-5xl p-4 pb-24 lg:p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-1">Configuración</h1>
-        <p className="text-gray-400">Personaliza tu experiencia en MotoCare</p>
+        <h1 className="mb-1 text-2xl font-bold">Ajustes</h1>
+        <p className="text-gray-400">Administra tu cuenta, privacidad y preferencias del MVP.</p>
       </div>
 
-      {/* Profile Summary */}
-      <Card className="bg-moto-gray border-white/5 mb-6">
-        <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row items-center gap-6">
-            <div className="relative">
-              <Avatar className="w-24 h-24">
-                <AvatarImage src="https://api.dicebear.com/7.x/avataaars/svg?seed=motero1" />
-                <AvatarFallback className="text-2xl">JP</AvatarFallback>
-              </Avatar>
-              <button className="absolute bottom-0 right-0 w-8 h-8 bg-moto-orange rounded-full flex items-center justify-center">
-                <Camera className="w-4 h-4" />
-              </button>
+      <Card className="mb-6 border-white/5 bg-moto-gray py-0">
+        <CardContent className="p-5">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+            <Avatar className="h-20 w-20">
+              <AvatarImage src={profile?.avatar_url ?? undefined} />
+              <AvatarFallback className="text-xl">{initials(profile?.full_name, user?.email)}</AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="truncate text-xl font-bold">{displayName}</h2>
+                <Badge className="bg-moto-orange text-moto-darker">{profile?.rider_type || 'Motero'}</Badge>
+              </div>
+              <p className="text-gray-400">@{username}</p>
+              <div className="mt-2 flex flex-wrap gap-3 text-sm text-gray-500">
+                <span className="flex items-center gap-1">
+                  <Mail className="h-4 w-4" />
+                  {user?.email || 'Email no disponible'}
+                </span>
+                <span>{profile?.city || 'Ciudad sin definir'}</span>
+              </div>
             </div>
-            <div className="text-center sm:text-left flex-1">
-              <h2 className="text-xl font-bold">Juan Pérez</h2>
-              <p className="text-gray-400">@juan_rider</p>
-              <p className="text-sm text-gray-500 mt-1">juan.perez@email.com</p>
-            </div>
-            <Button variant="outline" className="border-white/10">
-              <Edit3 className="w-4 h-4 mr-2" />
-              Editar Perfil
+            <Button asChild className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
+              <Link to="/app/profile">
+                <User className="mr-2 h-4 w-4" />
+                Editar perfil
+              </Link>
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Settings Sections */}
-      <div className="space-y-4">
-        {settingsSections.map((section) => (
-          <Card key={section.id} className="bg-moto-gray border-white/5 overflow-hidden">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="space-y-5">
+          <SettingsGroup icon={Bell} title="Notificaciones">
+            {notificationPreferences.map((item) => (
+              <ToggleRow key={item.id} item={item} checked={preferences[item.id]} onToggle={() => togglePreference(item.id)} />
+            ))}
+          </SettingsGroup>
+
+          <SettingsGroup icon={Shield} title="Privacidad">
+            {privacyPreferences.map((item) => (
+              <ToggleRow
+                key={item.id}
+                item={item}
+                checked={item.id === 'public_profile' ? (profile?.is_public ?? true) : preferences[item.id]}
+                onToggle={() => togglePreference(item.id)}
+              />
+            ))}
+            <InfoRow label="Rutas privadas" description="Las rutas privadas solo las ve usted. Las rutas comunidad aparecen en Explorar." />
+          </SettingsGroup>
+
+          <SettingsGroup icon={KeyRound} title="Seguridad">
+            <ActionRow
+              label="Cambiar contrasena"
+              description="Enviaremos un correo de recuperacion a su email registrado."
+              action={
+                <Button variant="outline" className="border-white/10" disabled={isSendingReset} onClick={() => void sendPasswordReset()}>
+                  Enviar correo
+                </Button>
+              }
+            />
+            <ActionRow
+              label="Cerrar sesion"
+              description="Salir de MotoCare en este navegador."
+              action={
+                <Button variant="outline" className="border-red-500/30 text-red-300 hover:text-red-200" onClick={() => void signOut()}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Salir
+                </Button>
+              }
+            />
+          </SettingsGroup>
+        </div>
+
+        <div className="space-y-5">
+          <Card className="border-white/5 bg-moto-gray py-0">
             <CardHeader className="p-4 pb-2">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-moto-orange/20 flex items-center justify-center">
-                  <section.icon className="w-5 h-5 text-moto-orange" />
-                </div>
-                <h3 className="font-semibold">{section.title}</h3>
-              </div>
+              <h3 className="font-semibold">Accesos rapidos</h3>
             </CardHeader>
             <CardContent className="p-0">
-              {section.items.map((item, index) => (
-                <div key={item.id}>
-                  {index > 0 && <Separator className="bg-white/5" />}
-                  <button 
-                    className="w-full p-4 flex items-center justify-between hover:bg-white/5 transition-colors"
-                    onClick={() => item.type !== 'toggle' && setActiveSection(item.id)}
-                  >
-                    <div className="text-left">
-                      <p className="font-medium">{item.label}</p>
-                      <p className="text-sm text-gray-400">{item.description}</p>
-                    </div>
-                    {item.type === 'toggle' ? (
-                      <Switch 
-                        checked={toggles[item.id]} 
-                        onCheckedChange={() => handleToggle(item.id)}
-                        className="data-[state=checked]:bg-moto-orange"
-                      />
-                    ) : (
-                      <ChevronRight className="w-5 h-5 text-gray-500" />
-                    )}
-                  </button>
-                </div>
-              ))}
+              <QuickLink icon={Bike} label="Mi moto" description="Motos, documentos y mantenimientos" to="/app/my-bikes" />
+              <QuickLink icon={Route} label="Rutas" description="Crear, editar y guardar rutas" to="/app/map" />
+              <QuickLink icon={Bookmark} label="Explorar" description="Rutas publicas y guardadas" to="/app/explore" />
             </CardContent>
           </Card>
-        ))}
 
-        {/* Danger Zone */}
-        <Card className="bg-red-500/5 border-red-500/20 overflow-hidden">
-          <CardContent className="p-4">
-            <h3 className="font-semibold text-red-500 mb-4">Zona de Peligro</h3>
-            <div className="space-y-2">
-              <Button variant="outline" className="w-full justify-start border-red-500/30 text-red-500 hover:bg-red-500/10">
-                <LogOut className="w-4 h-4 mr-2" />
-                Cerrar Sesión
-              </Button>
-              <Button variant="outline" className="w-full justify-start border-red-500/30 text-red-500 hover:bg-red-500/10">
-                Eliminar Cuenta
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+          <Card className="border-white/5 bg-moto-gray py-0">
+            <CardContent className="p-5">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-xl bg-moto-orange/20">
+                  <Database className="h-5 w-5 text-moto-orange" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Datos de la app</h3>
+                  <p className="text-sm text-gray-400">Estado tecnico del MVP</p>
+                </div>
+              </div>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between gap-3">
+                  <span className="text-gray-400">Proyecto Supabase</span>
+                  <span className="truncate text-right">{projectRef}</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-gray-400">Version</span>
+                  <span>MVP local</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-gray-400">Preferencias</span>
+                  <span>Este navegador</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-
-      {/* App Info */}
-      <div className="text-center mt-8 text-sm text-gray-500">
-        <p>MotoCare v1.0.0</p>
-        <p className="mt-1">© 2025 MotoCare. Todos los derechos reservados.</p>
-      </div>
-
-      {/* Edit Profile Dialog */}
-      <Dialog open={activeSection === 'profile'} onOpenChange={() => setActiveSection(null)}>
-        <DialogContent className="bg-moto-gray border-white/10 text-white max-w-md">
-          <DialogHeader>
-            <DialogTitle>Editar Información Personal</DialogTitle>
-            <DialogDescription className="text-gray-400">
-              Actualiza tus datos de perfil.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <div>
-              <label className="text-sm text-gray-400 mb-1 block">Nombre</label>
-              <input type="text" defaultValue="Juan Pérez" className="w-full bg-moto-darker border border-white/10 rounded-lg p-2 text-white" />
-            </div>
-            <div>
-              <label className="text-sm text-gray-400 mb-1 block">Nombre de usuario</label>
-              <input type="text" defaultValue="@juan_rider" className="w-full bg-moto-darker border border-white/10 rounded-lg p-2 text-white" />
-            </div>
-            <div>
-              <label className="text-sm text-gray-400 mb-1 block">Email</label>
-              <input type="email" defaultValue="juan.perez@email.com" className="w-full bg-moto-darker border border-white/10 rounded-lg p-2 text-white" />
-            </div>
-            <div>
-              <label className="text-sm text-gray-400 mb-1 block">Teléfono</label>
-              <input type="tel" defaultValue="+57 300 123 4567" className="w-full bg-moto-darker border border-white/10 rounded-lg p-2 text-white" />
-            </div>
-            <div>
-              <label className="text-sm text-gray-400 mb-1 block">Bio</label>
-              <textarea defaultValue="🏍️ Apasionado por las dos ruedas | 📍 Explorando Colombia" className="w-full bg-moto-darker border border-white/10 rounded-lg p-2 text-white h-20 resize-none" />
-            </div>
-            <Button className="w-full bg-moto-orange hover:bg-moto-orange-dark">
-              Guardar Cambios
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
+  )
+}
+
+function SettingsGroup({
+  icon: Icon,
+  title,
+  children,
+}: {
+  icon: LucideIcon
+  title: string
+  children: ReactNode
+}) {
+  return (
+    <Card className="overflow-hidden border-white/5 bg-moto-gray py-0">
+      <CardHeader className="p-4 pb-2">
+        <div className="flex items-center gap-3">
+          <div className="grid h-10 w-10 place-items-center rounded-xl bg-moto-orange/20">
+            <Icon className="h-5 w-5 text-moto-orange" />
+          </div>
+          <h3 className="font-semibold">{title}</h3>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">{children}</CardContent>
+    </Card>
+  )
+}
+
+function ToggleRow({ item, checked, onToggle }: { item: Preference; checked: boolean; onToggle: () => void }) {
+  return (
+    <div>
+      <Separator className="bg-white/5" />
+      <div className="flex items-center justify-between gap-4 p-4">
+        <div>
+          <p className="font-medium">{item.label}</p>
+          <p className="text-sm text-gray-400">{item.description}</p>
+        </div>
+        <Switch checked={checked} onCheckedChange={onToggle} className="data-[state=checked]:bg-moto-orange" />
+      </div>
+    </div>
+  )
+}
+
+function InfoRow({ label, description }: { label: string; description: string }) {
+  return (
+    <div>
+      <Separator className="bg-white/5" />
+      <div className="p-4">
+        <p className="font-medium">{label}</p>
+        <p className="text-sm text-gray-400">{description}</p>
+      </div>
+    </div>
+  )
+}
+
+function ActionRow({ label, description, action }: { label: string; description: string; action: ReactNode }) {
+  return (
+    <div>
+      <Separator className="bg-white/5" />
+      <div className="flex flex-col justify-between gap-3 p-4 sm:flex-row sm:items-center">
+        <div>
+          <p className="font-medium">{label}</p>
+          <p className="text-sm text-gray-400">{description}</p>
+        </div>
+        {action}
+      </div>
+    </div>
+  )
+}
+
+function QuickLink({ icon: Icon, label, description, to }: { icon: LucideIcon; label: string; description: string; to: string }) {
+  return (
+    <Link to={to} className="block">
+      <Separator className="bg-white/5" />
+      <div className="flex items-center justify-between gap-3 p-4 transition-colors hover:bg-white/5">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="grid h-10 w-10 place-items-center rounded-xl bg-moto-darker">
+            <Icon className="h-5 w-5 text-moto-orange" />
+          </div>
+          <div className="min-w-0">
+            <p className="font-medium">{label}</p>
+            <p className="truncate text-sm text-gray-400">{description}</p>
+          </div>
+        </div>
+        <ChevronRight className="h-5 w-5 text-gray-500" />
+      </div>
+    </Link>
   )
 }

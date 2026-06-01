@@ -9,15 +9,19 @@
 - Modulo `Mi moto` conectado a Supabase:
   - listar motos del usuario
   - crear moto
+  - editar moto
   - crear recordatorios iniciales de SOAT y tecnomecanica
   - registrar servicios de mantenimiento
   - actualizar kilometraje al registrar servicio
   - marcar recordatorios como completados
+  - subir foto de la moto a Supabase Storage
+  - subir documentos de SOAT, tecnomecanica y otros soportes
 
 ## Configuracion
 
 1. Crear un proyecto en Supabase.
 2. Abrir Supabase SQL Editor y ejecutar `supabase/schema.sql`.
+   - Si ya habias ejecutado el esquema antes de agregar Storage, ejecuta tambien `supabase/storage_migration.sql`.
 3. Copiar `.env.example` a `.env`.
 4. Completar:
 
