@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Calendar, Edit3, Heart, Image as ImageIcon, Loader2, MapPin, MessageCircle, Route as RouteIcon, Send, Trash2, Users, X } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Calendar, Edit3, Heart, Image as ImageIcon, Loader2, MapPin, MessageCircle, Plus, Route as RouteIcon, Send, Trash2, Users, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -87,6 +88,7 @@ export function Community() {
   const [selectedClubId, setSelectedClubId] = useState('')
   const [clubPosts, setClubPosts] = useState<ClubPostWithAuthor[]>([])
   const [clubPostContent, setClubPostContent] = useState('')
+  const [selectedClubRouteId, setSelectedClubRouteId] = useState('')
   const [likesByPost, setLikesByPost] = useState<LikeState>({})
   const [commentsByPost, setCommentsByPost] = useState<Record<string, PostCommentWithAuthor[]>>({})
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({})
@@ -236,7 +238,7 @@ export function Community() {
 
     const { data, error } = await supabase
       .from('club_posts')
-      .select('*, profiles:author_id(full_name, username, avatar_url), clubs:club_id(name, image_url)')
+      .select('*, profiles:author_id(full_name, username, avatar_url), clubs:club_id(name, image_url), routes:route_id(id, owner_id, title, origin, destination, distance_km, duration_minutes, start_date, end_date, visibility, status, created_at)')
       .eq('club_id', clubId)
       .order('created_at', { ascending: false })
       .limit(40)
@@ -263,6 +265,7 @@ export function Community() {
 
   useEffect(() => {
     if (selectedClubId) void loadClubPosts(selectedClubId)
+    setSelectedClubRouteId('')
   }, [selectedClubId])
 
   useEffect(() => {
@@ -545,9 +548,10 @@ export function Community() {
     event.preventDefault()
     if (!supabase || !user || !selectedClub) return
 
+    const selectedClubRoute = myRoutes.find((route) => route.id === selectedClubRouteId)
     const content = clubPostContent.trim()
-    if (!content) {
-      toast.error('Mensaje vacio', { description: 'Escriba un mensaje para el club.' })
+    if (!content && !selectedClubRoute) {
+      toast.error('Mensaje vacio', { description: 'Escriba un mensaje o adjunte una ruta para el club.' })
       return
     }
 
@@ -558,9 +562,10 @@ export function Community() {
       .insert({
         club_id: selectedClub.id,
         author_id: user.id,
-        content,
+        content: content || `Compartiendo ruta con el club: ${selectedClubRoute?.title}`,
+        route_id: selectedClubRoute?.id ?? null,
       })
-      .select('*, profiles:author_id(full_name, username, avatar_url), clubs:club_id(name, image_url)')
+      .select('*, profiles:author_id(full_name, username, avatar_url), clubs:club_id(name, image_url), routes:route_id(id, owner_id, title, origin, destination, distance_km, duration_minutes, start_date, end_date, visibility, status, created_at)')
       .single()
 
     if (error) {
@@ -568,6 +573,7 @@ export function Community() {
     } else if (data) {
       setClubPosts((current) => [data as ClubPostWithAuthor, ...current])
       setClubPostContent('')
+      setSelectedClubRouteId('')
       toast.success('Mensaje publicado en el club')
     }
 
@@ -1035,6 +1041,31 @@ export function Community() {
                           maxLength={500}
                           placeholder="Mensaje privado para los miembros del club..."
                         />
+                        <div className="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
+                          <select
+                            className="w-full rounded-xl border border-white/10 bg-moto-darker p-3 text-sm text-white"
+                            value={selectedClubRouteId}
+                            onChange={(event) => setSelectedClubRouteId(event.target.value)}
+                          >
+                            <option value="">Compartir sin adjuntar ruta</option>
+                            {myRoutes.map((route) => (
+                              <option key={route.id} value={route.id}>
+                                {route.title} · {route.origin || 'Origen'} - {route.destination || 'Destino'} · {routeStatusLabels[route.status ?? 'planned']}
+                              </option>
+                            ))}
+                          </select>
+                          <Button asChild variant="outline" className="border-white/10">
+                            <Link to="/app/map">
+                              <Plus className="mr-2 h-4 w-4" />
+                              Crear ruta
+                            </Link>
+                          </Button>
+                        </div>
+                        {selectedClubRouteId && (
+                          <div className="mt-3 rounded-xl border border-moto-orange/20 bg-moto-orange/10 p-3 text-xs text-moto-orange">
+                            Esta ruta se compartira solo en el club seleccionado.
+                          </div>
+                        )}
                         <div className="mt-3 flex items-center justify-between gap-3">
                           <span className="text-xs text-gray-500">{clubPostContent.length}/500</span>
                           <Button type="submit" disabled={isSavingClubPost} className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
@@ -1065,6 +1096,32 @@ export function Community() {
                             </div>
                           </div>
                           <p className="whitespace-pre-wrap text-sm leading-6 text-gray-100">{post.content}</p>
+                          {post.routes && (
+                            <div className="mt-4 rounded-xl border border-white/10 bg-moto-darker p-4">
+                              <div className="mb-3 flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <p className="flex items-center gap-2 truncate font-semibold">
+                                    <RouteIcon className="h-4 w-4 text-moto-orange" />
+                                    {post.routes.title}
+                                  </p>
+                                  <p className="mt-1 truncate text-sm text-gray-400">
+                                    {post.routes.origin || 'Origen sin definir'} - {post.routes.destination || 'Destino sin definir'}
+                                  </p>
+                                </div>
+                                <Badge className="shrink-0 bg-white/10 text-gray-300">
+                                  {routeStatusLabels[post.routes.status ?? 'planned']}
+                                </Badge>
+                              </div>
+                              <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+                                <span>{post.routes.distance_km ? `${post.routes.distance_km.toLocaleString()} km` : 'Sin distancia'}</span>
+                                <span>{formatDuration(post.routes.duration_minutes)}</span>
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="h-3.5 w-3.5" />
+                                  {formatRouteDates(post.routes)}
+                                </span>
+                              </div>
+                            </div>
+                          )}
                         </CardContent>
                       </Card>
                     )

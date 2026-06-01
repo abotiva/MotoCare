@@ -213,6 +213,7 @@ create table if not exists public.club_posts (
   club_id uuid not null references public.clubs(id) on delete cascade,
   author_id uuid not null references public.profiles(id) on delete cascade,
   content text not null,
+  route_id uuid references public.routes(id) on delete set null,
   created_at timestamptz not null default now()
 );
 
@@ -335,7 +336,17 @@ create policy "motorcycle_documents_own_all" on public.motorcycle_documents
 for all using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
 
 create policy "routes_read_visible" on public.routes
-for select using (visibility = 'community' or auth.uid() = owner_id);
+for select using (
+  visibility = 'community'
+  or auth.uid() = owner_id
+  or exists (
+    select 1
+    from public.club_posts cp
+    join public.club_members cm on cm.club_id = cp.club_id
+    where cp.route_id = routes.id
+      and cm.user_id = auth.uid()
+  )
+);
 
 create policy "routes_own_write" on public.routes
 for all using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
@@ -532,6 +543,7 @@ create index if not exists clubs_owner_id_idx on public.clubs(owner_id);
 create index if not exists club_members_user_id_idx on public.club_members(user_id);
 create index if not exists club_members_club_id_idx on public.club_members(club_id);
 create index if not exists club_posts_club_created_idx on public.club_posts(club_id, created_at desc);
+create index if not exists club_posts_route_id_idx on public.club_posts(route_id);
 create index if not exists club_invitations_invited_user_status_idx on public.club_invitations(invited_user_id, status);
 create index if not exists club_invitations_club_id_idx on public.club_invitations(club_id);
 create index if not exists notifications_club_invitation_id_idx on public.notifications(club_invitation_id);

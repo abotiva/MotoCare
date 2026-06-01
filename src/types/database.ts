@@ -179,6 +179,7 @@ export type ClubPost = {
   club_id: string
   author_id: string
   content: string
+  route_id: string | null
   created_at: string
 }
 
@@ -192,6 +193,7 @@ export type ClubPostWithAuthor = ClubPost & {
     name: string
     image_url: string | null
   } | null
+  routes: RoutePlan | null
 }
 
 export type Post = {

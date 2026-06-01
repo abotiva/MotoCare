@@ -277,6 +277,7 @@ Campos principales de `club_posts`:
 - `club_id`: club donde se publica.
 - `author_id`: usuario que escribe el mensaje.
 - `content`: texto privado del club.
+- `route_id`: ruta adjunta al mensaje privado, cuando aplica.
 
 La primera version permite al fundador crear el club, editar informacion, subir imagen, invitar miembros por `profiles.username` y retirar miembros no fundadores.
 
@@ -292,9 +293,15 @@ Con privacidad de perfil habilitada:
 
 Los mensajes privados del club se muestran en la pestana **Club privado** de Comunidad. La politica RLS de `club_posts` permite leer y publicar solo a miembros del club.
 
+La pestana **Club privado** tambien permite adjuntar una ruta propia al mensaje. Esa ruta queda visible para miembros del club mediante la politica `routes_read_visible`, sin tener que publicarla para toda la comunidad.
+
 Para habilitar clubes en bases existentes, ejecutar:
 
 `supabase/clubs_migration.sql`
+
+Para habilitar rutas adjuntas en mensajes privados de club, ejecutar:
+
+`supabase/club_private_routes_migration.sql`
 
 ## Explorar
 
