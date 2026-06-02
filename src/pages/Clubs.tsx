@@ -10,6 +10,8 @@ import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import type { Club, ClubInvitation, ClubMemberWithProfile, Profile } from '@/types/database'
 
+type UserPlan = 'free' | 'pro' | 'premium'
+
 type ClubForm = {
   name: string
   city: string
@@ -70,6 +72,8 @@ export function Clubs() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [userPlan, setUserPlan] = useState<UserPlan>('free')
+  const [isLoadingPlan, setIsLoadingPlan] = useState(true)
 
   const selectedClub = useMemo(
     () => clubs.find((club) => club.id === selectedClubId) ?? clubs[0] ?? null,
@@ -82,6 +86,30 @@ export function Clubs() {
   )
 
   const canManageSelectedClub = selectedClub?.owner_id === user?.id || selectedMembership?.role === 'owner' || selectedMembership?.role === 'admin'
+  const canCreateClub = userPlan !== 'free'
+
+  const showUpgradeForClubCreation = () => {
+    toast.info('Actualice su cuenta para poder crear un club', {
+      description: 'La creacion de clubes esta disponible para licencias Pro y Premium.',
+    })
+  }
+
+  const loadSubscription = async () => {
+    if (!supabase || !user) return
+
+    setIsLoadingPlan(true)
+    const { data, error } = await supabase.rpc('current_user_subscription')
+
+    if (error) {
+      toast.error('No pudimos cargar tu licencia', { description: error.message })
+      setUserPlan('free')
+    } else {
+      const subscription = Array.isArray(data) ? data[0] : null
+      setUserPlan((subscription?.plan as UserPlan | undefined) ?? 'free')
+    }
+
+    setIsLoadingPlan(false)
+  }
 
   const loadClubs = async () => {
     if (!supabase || !user) return
@@ -149,6 +177,7 @@ export function Clubs() {
   }
 
   useEffect(() => {
+    void loadSubscription()
     void loadClubs()
   }, [user?.id])
 
@@ -209,6 +238,11 @@ export function Clubs() {
   const createClub = async (event: FormEvent) => {
     event.preventDefault()
     if (!supabase || !user) return
+
+    if (!canCreateClub) {
+      showUpgradeForClubCreation()
+      return
+    }
 
     if (!createForm.name.trim()) {
       toast.error('Nombre requerido', { description: 'El club necesita un nombre.' })
@@ -492,14 +526,29 @@ export function Clubs() {
 
           <Card className="border-white/5 bg-moto-gray py-0">
             <CardContent className="p-4">
-              <h2 className="mb-3 font-semibold">Crear club</h2>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h2 className="font-semibold">Crear club</h2>
+                <Badge className={canCreateClub ? 'bg-moto-orange text-moto-darker' : 'bg-white/10 text-gray-300'}>
+                  {canCreateClub ? 'Pro/Premium' : 'Requiere Pro'}
+                </Badge>
+              </div>
+              {!canCreateClub && (
+                <div className="mb-3 rounded-xl border border-moto-orange/20 bg-moto-orange/10 p-3 text-sm text-gray-200">
+                  Actualice su cuenta para poder crear un club.
+                </div>
+              )}
               <form className="space-y-3" onSubmit={createClub}>
-                <input className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={createForm.name} onChange={(event) => setCreateForm({ ...createForm, name: event.target.value })} placeholder="Nombre del club" />
-                <input className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={createForm.city} onChange={(event) => setCreateForm({ ...createForm, city: event.target.value })} placeholder="Ciudad" />
-                <textarea className="h-20 w-full resize-none rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={createForm.description} onChange={(event) => setCreateForm({ ...createForm, description: event.target.value })} placeholder="Descripcion corta" />
-                <Button type="submit" disabled={isSaving} className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
-                  {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
-                  Crear club
+                <input disabled={!canCreateClub || isLoadingPlan} className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white disabled:opacity-60" value={createForm.name} onChange={(event) => setCreateForm({ ...createForm, name: event.target.value })} placeholder="Nombre del club" />
+                <input disabled={!canCreateClub || isLoadingPlan} className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white disabled:opacity-60" value={createForm.city} onChange={(event) => setCreateForm({ ...createForm, city: event.target.value })} placeholder="Ciudad" />
+                <textarea disabled={!canCreateClub || isLoadingPlan} className="h-20 w-full resize-none rounded-lg border border-white/10 bg-moto-darker p-2 text-white disabled:opacity-60" value={createForm.description} onChange={(event) => setCreateForm({ ...createForm, description: event.target.value })} placeholder="Descripcion corta" />
+                <Button type="submit" disabled={isSaving || isLoadingPlan} className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={(event) => {
+                  if (!canCreateClub) {
+                    event.preventDefault()
+                    showUpgradeForClubCreation()
+                  }
+                }}>
+                  {isSaving || isLoadingPlan ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+                  {canCreateClub ? 'Crear club' : 'Actualizar cuenta'}
                 </Button>
               </form>
             </CardContent>

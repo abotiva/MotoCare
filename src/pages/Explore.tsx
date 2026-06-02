@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Bookmark, BookmarkCheck, Calendar, Clock, Loader2, MapPin, MessageCircle, Route as RouteIcon, Search, Star, TrendingUp, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -247,16 +248,18 @@ export function Explore() {
                 return (
                   <Card key={route.id} className="overflow-hidden border-white/5 bg-moto-gray py-0">
                     <CardContent className="p-4">
-                      <div className="mb-4 flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <h3 className="truncate text-lg font-semibold">{route.title}</h3>
-                          <p className="mt-1 flex items-center gap-1 text-sm text-gray-400">
-                            <MapPin className="h-4 w-4" />
-                            {route.origin || 'Origen sin definir'} - {route.destination || 'Destino sin definir'}
-                          </p>
+                      <Link to={`/app/routes/${route.id}`} className="mb-4 block rounded-xl p-1 transition hover:bg-white/5">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <h3 className="truncate text-lg font-semibold">{route.title}</h3>
+                            <p className="mt-1 flex items-center gap-1 text-sm text-gray-400">
+                              <MapPin className="h-4 w-4" />
+                              {route.origin || 'Origen sin definir'} - {route.destination || 'Destino sin definir'}
+                            </p>
+                          </div>
+                          <Badge className="bg-sky-500/15 text-sky-300">{routeStatusLabels[route.status ?? 'planned']}</Badge>
                         </div>
-                        <Badge className="bg-sky-500/15 text-sky-300">{routeStatusLabels[route.status ?? 'planned']}</Badge>
-                      </div>
+                      </Link>
 
                       <div className="mb-4 flex items-center gap-3 rounded-xl bg-moto-darker p-3">
                         <Avatar className="h-10 w-10">
@@ -317,16 +320,18 @@ export function Explore() {
                 return (
                   <Card key={route.id} className="overflow-hidden border-white/5 bg-moto-gray py-0">
                     <CardContent className="p-4">
-                      <div className="mb-4 flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <h3 className="truncate text-lg font-semibold">{route.title}</h3>
-                          <p className="mt-1 flex items-center gap-1 text-sm text-gray-400">
-                            <MapPin className="h-4 w-4" />
-                            {route.origin || 'Origen sin definir'} - {route.destination || 'Destino sin definir'}
-                          </p>
+                      <Link to={`/app/routes/${route.id}`} className="mb-4 block rounded-xl p-1 transition hover:bg-white/5">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <h3 className="truncate text-lg font-semibold">{route.title}</h3>
+                            <p className="mt-1 flex items-center gap-1 text-sm text-gray-400">
+                              <MapPin className="h-4 w-4" />
+                              {route.origin || 'Origen sin definir'} - {route.destination || 'Destino sin definir'}
+                            </p>
+                          </div>
+                          <Badge className="bg-sky-500/15 text-sky-300">{routeStatusLabels[route.status ?? 'planned']}</Badge>
                         </div>
-                        <Badge className="bg-sky-500/15 text-sky-300">{routeStatusLabels[route.status ?? 'planned']}</Badge>
-                      </div>
+                      </Link>
 
                       <div className="mb-4 flex items-center gap-3 rounded-xl bg-moto-darker p-3">
                         <Avatar className="h-10 w-10">

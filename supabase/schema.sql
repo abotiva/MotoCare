@@ -193,6 +193,23 @@ create table if not exists public.app_admins (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.user_subscriptions (
+  user_id uuid primary key references public.profiles(id) on delete cascade,
+  plan text not null default 'free' check (plan in ('free', 'pro', 'premium')),
+  status text not null default 'active' check (status in ('active', 'trialing', 'past_due', 'canceled')),
+  started_at timestamptz not null default now(),
+  expires_at timestamptz,
+  payment_provider text,
+  payment_customer_id text,
+  notes text,
+  updated_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists user_subscriptions_plan_idx on public.user_subscriptions(plan);
+create index if not exists user_subscriptions_status_idx on public.user_subscriptions(status);
+
 do $$
 begin
   if not exists (
@@ -245,6 +262,11 @@ for each row execute function public.set_updated_at();
 drop trigger if exists clubs_set_updated_at on public.clubs;
 create trigger clubs_set_updated_at
 before update on public.clubs
+for each row execute function public.set_updated_at();
+
+drop trigger if exists user_subscriptions_set_updated_at on public.user_subscriptions;
+create trigger user_subscriptions_set_updated_at
+before update on public.user_subscriptions
 for each row execute function public.set_updated_at();
 
 create or replace function public.handle_new_user()
@@ -301,6 +323,7 @@ alter table public.club_members enable row level security;
 alter table public.club_invitations enable row level security;
 alter table public.club_posts enable row level security;
 alter table public.app_admins enable row level security;
+alter table public.user_subscriptions enable row level security;
 
 create policy "profiles_select_public" on public.profiles
 for select using (
@@ -487,6 +510,19 @@ for select using (
   or public.is_current_user_admin()
 );
 
+create policy "subscriptions_read_own_or_admin" on public.user_subscriptions
+for select using (
+  user_id = auth.uid()
+  or public.is_current_user_admin()
+);
+
+create policy "subscriptions_admin_write" on public.user_subscriptions
+for all using (
+  public.is_current_user_admin()
+) with check (
+  public.is_current_user_admin()
+);
+
 create policy "club_members_admin_delete" on public.club_members
 for delete using (
   user_id = auth.uid()
@@ -577,6 +613,105 @@ as $$
   limit 80;
 $$;
 
+create or replace function public.current_user_subscription()
+returns table (
+  user_id uuid,
+  plan text,
+  status text,
+  started_at timestamptz,
+  expires_at timestamptz
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'Authentication required';
+  end if;
+
+  insert into public.user_subscriptions (user_id, plan, status)
+  values (auth.uid(), 'free', 'active')
+  on conflict (user_id) do nothing;
+
+  return query
+  select
+    s.user_id,
+    s.plan,
+    s.status,
+    s.started_at,
+    s.expires_at
+  from public.user_subscriptions s
+  where s.user_id = auth.uid();
+end;
+$$;
+
+create or replace function public.admin_set_user_subscription(
+  target_user_id uuid,
+  target_plan text,
+  target_status text default 'active',
+  target_expires_at timestamptz default null,
+  target_notes text default null
+)
+returns table (
+  user_id uuid,
+  plan text,
+  status text,
+  expires_at timestamptz,
+  updated_at timestamptz
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not public.is_current_user_admin() then
+    raise exception 'Admin access required';
+  end if;
+
+  if target_plan not in ('free', 'pro', 'premium') then
+    raise exception 'Invalid plan';
+  end if;
+
+  if target_status not in ('active', 'trialing', 'past_due', 'canceled') then
+    raise exception 'Invalid status';
+  end if;
+
+  insert into public.user_subscriptions (
+    user_id,
+    plan,
+    status,
+    expires_at,
+    notes,
+    updated_by
+  )
+  values (
+    target_user_id,
+    target_plan,
+    target_status,
+    target_expires_at,
+    target_notes,
+    auth.uid()
+  )
+  on conflict (user_id) do update set
+    plan = excluded.plan,
+    status = excluded.status,
+    expires_at = excluded.expires_at,
+    notes = excluded.notes,
+    updated_by = excluded.updated_by;
+
+  return query
+  select
+    s.user_id,
+    s.plan,
+    s.status,
+    s.expires_at,
+    s.updated_at
+  from public.user_subscriptions s
+  where s.user_id = target_user_id;
+end;
+$$;
+
 create or replace function public.admin_overview()
 returns jsonb
 language plpgsql
@@ -592,6 +727,9 @@ begin
     'users', (select count(*) from public.profiles),
     'public_users', (select count(*) from public.profiles where is_public = true),
     'private_users', (select count(*) from public.profiles where is_public = false),
+    'free_users', (select count(*) from public.user_subscriptions where plan = 'free'),
+    'pro_users', (select count(*) from public.user_subscriptions where plan = 'pro'),
+    'premium_users', (select count(*) from public.user_subscriptions where plan = 'premium'),
     'motorcycles', (select count(*) from public.motorcycles),
     'routes', (select count(*) from public.routes),
     'community_routes', (select count(*) from public.routes where visibility = 'community'),
@@ -605,6 +743,8 @@ begin
 end;
 $$;
 
+drop function if exists public.admin_users();
+
 create or replace function public.admin_users()
 returns table (
   id uuid,
@@ -613,6 +753,9 @@ returns table (
   city text,
   rider_type text,
   is_public boolean,
+  plan text,
+  plan_status text,
+  plan_expires_at timestamptz,
   created_at timestamptz,
   motorcycles_count bigint,
   routes_count bigint,
@@ -628,6 +771,15 @@ begin
     raise exception 'Admin access required';
   end if;
 
+  insert into public.user_subscriptions (user_id, plan, status)
+  select p.id, 'free', 'active'
+  from public.profiles p
+  where not exists (
+    select 1
+    from public.user_subscriptions s
+    where s.user_id = p.id
+  );
+
   return query
   select
     p.id,
@@ -636,12 +788,16 @@ begin
     case when p.is_public then p.city else null end as city,
     case when p.is_public then p.rider_type else null end as rider_type,
     p.is_public,
+    coalesce(s.plan, 'free') as plan,
+    coalesce(s.status, 'active') as plan_status,
+    s.expires_at as plan_expires_at,
     p.created_at,
     (select count(*) from public.motorcycles m where m.owner_id = p.id) as motorcycles_count,
     (select count(*) from public.routes r where r.owner_id = p.id) as routes_count,
     (select count(*) from public.posts po where po.author_id = p.id) as posts_count,
     (select count(*) from public.club_members cm where cm.user_id = p.id) as clubs_count
   from public.profiles p
+  left join public.user_subscriptions s on s.user_id = p.id
   order by p.created_at desc;
 end;
 $$;
@@ -809,6 +965,15 @@ on conflict (code) do update set
   recommended_interval_days = excluded.recommended_interval_days,
   sort_order = excluded.sort_order,
   is_active = true;
+
+insert into public.user_subscriptions (user_id, plan, status)
+select p.id, 'free', 'active'
+from public.profiles p
+where not exists (
+  select 1
+  from public.user_subscriptions s
+  where s.user_id = p.id
+);
 
 insert into storage.buckets (id, name, public)
 values

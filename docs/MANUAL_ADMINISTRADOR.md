@@ -380,18 +380,46 @@ El panel incluye:
 
 - resumen general de usuarios, motos, rutas, publicaciones, clubes e invitaciones
 - listado de usuarios con datos enmascarados cuando aplica
+- administracion manual de licencias `Gratis`, `Pro` y `Premium`
 - listado de clubes con metricas
 - catalogo de mantenimientos sugeridos
 
 Las consultas se sirven por funciones RPC `security definer` que validan `public.is_current_user_admin()` antes de devolver datos.
 
+### Licencias manuales
+
+La base inicial de licencias vive en:
+
+`user_subscriptions`
+
+Para habilitarla en bases existentes, ejecutar:
+
+`supabase/manual_licenses_migration.sql`
+
+Los planes disponibles son:
+
+- `free`: usuario gratis
+- `pro`: licencia pro
+- `premium`: licencia premium
+
+Los estados disponibles son:
+
+- `active`: licencia activa
+- `trialing`: periodo de prueba
+- `past_due`: pago pendiente
+- `canceled`: licencia cancelada
+
+Desde `/app/admin`, en la vista **Usuarios**, un administrador puede cambiar plan y estado de forma manual. Esto no conecta pagos todavia; deja la estructura lista para que despues una pasarela como Wompi, Mercado Pago, PayU o Stripe actualice la misma tabla.
+
 ## Pendiente futuro: modulo admin
 
-La primera version del modulo admin es de lectura operativa. Mas adelante se puede ampliar para administrar:
+Mas adelante se puede ampliar para administrar:
 
 - mantenimientos sugeridos
 - categorias
 - intervalos recomendados
 - textos visibles en la app
 - tipos de documento
+- reglas y limites por licencia
+- integracion de pagos
 - otros listados configurables

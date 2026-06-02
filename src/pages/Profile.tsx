@@ -521,7 +521,7 @@ export function Profile() {
             {routes.length > 0 ? (
               <div className="space-y-2">
                 {routes.slice(0, 3).map((route) => (
-                  <div key={route.id} className="rounded-xl border border-white/5 bg-moto-darker p-3">
+                  <Link key={route.id} to={`/app/routes/${route.id}`} className="block rounded-xl border border-white/5 bg-moto-darker p-3 transition hover:border-moto-orange/50 hover:bg-moto-darker/80">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="truncate font-medium">{route.title}</p>
@@ -540,7 +540,7 @@ export function Profile() {
                         </Badge>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (
@@ -688,7 +688,7 @@ export function Profile() {
           <div className="mt-4 space-y-3">
             {routes.length > 0 ? (
               routes.map((route) => (
-                <div key={route.id} className="rounded-xl border border-white/5 bg-moto-darker p-3">
+                <Link key={route.id} to={`/app/routes/${route.id}`} className="block rounded-xl border border-white/5 bg-moto-darker p-3 transition hover:border-moto-orange/50 hover:bg-moto-darker/80" onClick={() => setShowRoutesPreview(false)}>
                   <div className="mb-2 flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate font-medium">{route.title}</p>
@@ -711,7 +711,7 @@ export function Profile() {
                     {route.distance_km ? `${route.distance_km.toLocaleString()} km` : 'Sin distancia'} ·{' '}
                     {route.duration_minutes ? `${route.duration_minutes} min` : 'Sin duracion'} · {formatRouteDates(route)}
                   </p>
-                </div>
+                </Link>
               ))
             ) : (
               <div className="rounded-xl border border-white/5 bg-moto-darker p-5 text-center text-gray-400">

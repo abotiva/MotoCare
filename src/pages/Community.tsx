@@ -812,7 +812,7 @@ export function Community() {
                       </div>
                     )}
                     {post.routes && (
-                      <div className="mt-4 rounded-xl border border-white/10 bg-moto-darker p-4">
+                      <Link to={`/app/routes/${post.routes.id}`} className="mt-4 block rounded-xl border border-white/10 bg-moto-darker p-4 transition hover:border-moto-orange/50 hover:bg-moto-darker/80">
                         <div className="mb-3 flex items-start justify-between gap-3">
                           <div className="min-w-0">
                             <p className="flex items-center gap-2 font-semibold">
@@ -835,7 +835,7 @@ export function Community() {
                             {formatRouteDates(post.routes)}
                           </span>
                         </div>
-                      </div>
+                      </Link>
                     )}
                     <div className="mt-4 flex items-center gap-6 border-t border-white/5 pt-3 text-sm text-gray-400">
                       <button
@@ -1097,7 +1097,7 @@ export function Community() {
                           </div>
                           <p className="whitespace-pre-wrap text-sm leading-6 text-gray-100">{post.content}</p>
                           {post.routes && (
-                            <div className="mt-4 rounded-xl border border-white/10 bg-moto-darker p-4">
+                            <Link to={`/app/routes/${post.routes.id}`} className="mt-4 block rounded-xl border border-white/10 bg-moto-darker p-4 transition hover:border-moto-orange/50 hover:bg-moto-darker/80">
                               <div className="mb-3 flex items-start justify-between gap-3">
                                 <div className="min-w-0">
                                   <p className="flex items-center gap-2 truncate font-semibold">
@@ -1120,7 +1120,7 @@ export function Community() {
                                   {formatRouteDates(post.routes)}
                                 </span>
                               </div>
-                            </div>
+                            </Link>
                           )}
                         </CardContent>
                       </Card>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { AlertTriangle, Bike, Database, Loader2, Lock, Route, Search, Shield, SlidersHorizontal, Users } from 'lucide-react'
+import { AlertTriangle, Bike, CreditCard, Database, Loader2, Lock, Route, Search, Shield, SlidersHorizontal, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
@@ -10,11 +10,16 @@ import { supabase } from '@/lib/supabase'
 import type { AdminClubRow, AdminMaintenanceSuggestionRow, AdminOverview, AdminUserRow } from '@/types/database'
 
 type AdminTab = 'usuarios' | 'clubes' | 'catalogos'
+type UserPlan = AdminUserRow['plan']
+type UserPlanStatus = AdminUserRow['plan_status']
 
 const emptyOverview: AdminOverview = {
   users: 0,
   public_users: 0,
   private_users: 0,
+  free_users: 0,
+  pro_users: 0,
+  premium_users: 0,
   motorcycles: 0,
   routes: 0,
   community_routes: 0,
@@ -34,6 +39,25 @@ function shortId(id: string) {
   return id.slice(0, 8)
 }
 
+const planLabels: Record<UserPlan, string> = {
+  free: 'Gratis',
+  pro: 'Pro',
+  premium: 'Premium',
+}
+
+const planStatusLabels: Record<UserPlanStatus, string> = {
+  active: 'Activa',
+  trialing: 'Prueba',
+  past_due: 'Pago pendiente',
+  canceled: 'Cancelada',
+}
+
+const planBadgeClasses: Record<UserPlan, string> = {
+  free: 'bg-white/10 text-gray-300',
+  pro: 'bg-sky-500/15 text-sky-300',
+  premium: 'bg-moto-orange text-moto-darker',
+}
+
 export function Admin() {
   const [activeTab, setActiveTab] = useState<AdminTab>('usuarios')
   const [overview, setOverview] = useState<AdminOverview>(emptyOverview)
@@ -43,12 +67,13 @@ export function Admin() {
   const [search, setSearch] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [hasAccess, setHasAccess] = useState(false)
+  const [savingLicenseUserId, setSavingLicenseUserId] = useState<string | null>(null)
 
   const filteredUsers = useMemo(() => {
     const term = search.trim().toLowerCase()
     if (!term) return users
     return users.filter((user) =>
-      [user.display_name, user.username, user.city, user.rider_type, user.id].some((value) => value?.toLowerCase().includes(term))
+      [user.display_name, user.username, user.city, user.rider_type, user.plan, user.plan_status, user.id].some((value) => value?.toLowerCase().includes(term))
     )
   }, [search, users])
 
@@ -118,6 +143,33 @@ export function Admin() {
     void loadAdminData()
   }, [])
 
+  const updateUserLicense = async (user: AdminUserRow, plan: UserPlan, status: UserPlanStatus = user.plan_status) => {
+    if (!supabase || savingLicenseUserId) return
+
+    setSavingLicenseUserId(user.id)
+    const previousUsers = users
+    setUsers((current) => current.map((item) => (item.id === user.id ? { ...item, plan, plan_status: status } : item)))
+
+    const { error } = await supabase.rpc('admin_set_user_subscription', {
+      target_user_id: user.id,
+      target_plan: plan,
+      target_status: status,
+      target_expires_at: user.plan_expires_at,
+      target_notes: null,
+    })
+
+    if (error) {
+      setUsers(previousUsers)
+      toast.error('No pudimos actualizar la licencia', { description: error.message })
+    } else {
+      toast.success('Licencia actualizada', { description: `${user.display_name || 'Usuario'} quedo en ${planLabels[plan]}.` })
+      const { data: nextOverview } = await supabase.rpc('admin_overview')
+      if (nextOverview) setOverview(nextOverview as AdminOverview)
+    }
+
+    setSavingLicenseUserId(null)
+  }
+
   if (isLoading) {
     return (
       <div className="grid min-h-[70vh] place-items-center text-moto-orange">
@@ -155,6 +207,9 @@ export function Admin() {
 
       <div className="mb-5 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))' }}>
         <MetricCard icon={Users} label="Usuarios" value={overview.users} detail={`${overview.private_users} privados`} />
+        <MetricCard icon={CreditCard} label="Gratis" value={overview.free_users} detail="Licencias free" />
+        <MetricCard icon={CreditCard} label="Pro" value={overview.pro_users} detail="Licencias pro" />
+        <MetricCard icon={CreditCard} label="Premium" value={overview.premium_users} detail="Licencias premium" />
         <MetricCard icon={Bike} label="Motos" value={overview.motorcycles} detail="Registradas" />
         <MetricCard icon={Route} label="Rutas" value={overview.routes} detail={`${overview.community_routes} comunidad`} />
         <MetricCard icon={Users} label="Clubes" value={overview.clubs} detail={`${overview.club_memberships} membresias`} />
@@ -181,7 +236,7 @@ export function Admin() {
         </CardContent>
       </Card>
 
-      {activeTab === 'usuarios' && <UsersTable users={filteredUsers} />}
+      {activeTab === 'usuarios' && <UsersTable users={filteredUsers} savingLicenseUserId={savingLicenseUserId} onUpdateLicense={updateUserLicense} />}
       {activeTab === 'clubes' && <ClubsTable clubs={filteredClubs} />}
       {activeTab === 'catalogos' && <SuggestionsTable suggestions={filteredSuggestions} />}
     </div>
@@ -218,21 +273,35 @@ function TabButton({ label, active, onClick }: { label: string; active: boolean;
   )
 }
 
-function UsersTable({ users }: { users: AdminUserRow[] }) {
+function UsersTable({
+  users,
+  savingLicenseUserId,
+  onUpdateLicense,
+}: {
+  users: AdminUserRow[]
+  savingLicenseUserId: string | null
+  onUpdateLicense: (user: AdminUserRow, plan: UserPlan, status?: UserPlanStatus) => void
+}) {
   return (
     <AdminTable title="Usuarios" description="Los perfiles privados aparecen enmascarados; solo se muestran metricas operativas.">
       {users.map((user) => (
-        <div key={user.id} className="grid gap-3 border-t border-white/5 p-4 md:grid-cols-[minmax(0,1.5fr)_120px_120px_120px_120px] md:items-center">
+        <div key={user.id} className="grid gap-3 border-t border-white/5 p-4 xl:grid-cols-[minmax(0,1.4fr)_220px_110px_110px_110px_110px] xl:items-center">
           <div className="min-w-0">
             <div className="mb-1 flex flex-wrap items-center gap-2">
               <p className="truncate font-medium">{user.display_name || 'Motero MotoCare'}</p>
               <Badge className={user.is_public ? 'bg-green-500/15 text-green-300' : 'bg-white/10 text-gray-300'}>
                 {user.is_public ? 'Publico' : 'Privado'}
               </Badge>
+              <Badge className={planBadgeClasses[user.plan]}>{planLabels[user.plan]}</Badge>
             </div>
             <p className="truncate text-sm text-gray-400">@{user.username || `usuario-${shortId(user.id)}`}</p>
             <p className="mt-1 text-xs text-gray-500">Alta: {formatDate(user.created_at)}</p>
           </div>
+          <LicenseEditor
+            user={user}
+            isSaving={savingLicenseUserId === user.id}
+            onUpdateLicense={onUpdateLicense}
+          />
           <AdminValue label="Ciudad" value={user.city || 'No visible'} />
           <AdminValue label="Motos" value={user.motorcycles_count.toLocaleString()} />
           <AdminValue label="Rutas" value={user.routes_count.toLocaleString()} />
@@ -240,6 +309,51 @@ function UsersTable({ users }: { users: AdminUserRow[] }) {
         </div>
       ))}
     </AdminTable>
+  )
+}
+
+function LicenseEditor({
+  user,
+  isSaving,
+  onUpdateLicense,
+}: {
+  user: AdminUserRow
+  isSaving: boolean
+  onUpdateLicense: (user: AdminUserRow, plan: UserPlan, status?: UserPlanStatus) => void
+}) {
+  return (
+    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+      <label className="min-w-0">
+        <span className="mb-1 block text-xs text-gray-500">Licencia</span>
+        <select
+          disabled={isSaving}
+          value={user.plan}
+          onChange={(event) => onUpdateLicense(user, event.target.value as UserPlan)}
+          className="w-full rounded-lg border border-white/10 bg-moto-darker px-3 py-2 text-sm text-white outline-none disabled:opacity-60"
+        >
+          <option value="free">Gratis</option>
+          <option value="pro">Pro</option>
+          <option value="premium">Premium</option>
+        </select>
+      </label>
+      <label className="min-w-0">
+        <span className="mb-1 block text-xs text-gray-500">Estado</span>
+        <select
+          disabled={isSaving}
+          value={user.plan_status}
+          onChange={(event) => onUpdateLicense(user, user.plan, event.target.value as UserPlanStatus)}
+          className="w-full rounded-lg border border-white/10 bg-moto-darker px-3 py-2 text-sm text-white outline-none disabled:opacity-60"
+        >
+          <option value="active">Activa</option>
+          <option value="trialing">Prueba</option>
+          <option value="past_due">Pago pendiente</option>
+          <option value="canceled">Cancelada</option>
+        </select>
+      </label>
+      <p className="text-xs text-gray-500 sm:col-span-2 xl:col-span-1">
+        {isSaving ? 'Guardando...' : `Estado: ${planStatusLabels[user.plan_status]}`}
+      </p>
+    </div>
   )
 }
 

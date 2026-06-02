@@ -506,14 +506,14 @@ export function Home() {
               {recentRoutes.length > 0 ? (
                 <div className="space-y-3">
                   {recentRoutes.map((route) => (
-                    <div key={route.id} className="rounded-xl bg-moto-darker p-3">
+                    <Link key={route.id} to={`/app/routes/${route.id}`} className="block rounded-xl bg-moto-darker p-3 transition hover:bg-moto-darker/80 hover:ring-1 hover:ring-moto-orange/40">
                       <p className="truncate font-medium">{route.title}</p>
                       <p className="text-sm text-gray-400">{route.origin || 'Origen'} - {route.destination || 'Destino'}</p>
                       <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
                         <Calendar className="h-3.5 w-3.5" />
                         {formatRouteDates(route)}
                       </p>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               ) : (

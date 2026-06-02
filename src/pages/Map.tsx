@@ -809,6 +809,9 @@ export function Map() {
                 <p className="text-sm text-gray-400">Creada</p>
                 <p className="mt-1 font-semibold">{new Date(selectedRoute.created_at).toLocaleDateString('es-CO')}</p>
               </div>
+              <Button asChild className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
+                <Link to={`/app/routes/${selectedRoute.id}`}>Ver detalle completo</Link>
+              </Button>
             </div>
           )}
         </DialogContent>

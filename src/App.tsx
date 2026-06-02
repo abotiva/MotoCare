@@ -6,6 +6,7 @@ import { Login } from './pages/Login'
 import { Home } from './pages/Home'
 import { Explore } from './pages/Explore'
 import { Map } from './pages/Map'
+import { RouteDetail } from './pages/RouteDetail'
 import { Marketplace } from './pages/Marketplace'
 import { Messages } from './pages/Messages'
 import { Clubs } from './pages/Clubs'
@@ -30,6 +31,7 @@ function App() {
           <Route path="home" element={<Home />} />
           <Route path="explore" element={<Explore />} />
           <Route path="map" element={<Map />} />
+          <Route path="routes/:routeId" element={<RouteDetail />} />
           <Route path="marketplace" element={<Marketplace />} />
           <Route path="messages" element={<Messages />} />
           <Route path="clubs" element={<Clubs />} />

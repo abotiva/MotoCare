@@ -256,6 +256,9 @@ export type AdminOverview = {
   users: number
   public_users: number
   private_users: number
+  free_users: number
+  pro_users: number
+  premium_users: number
   motorcycles: number
   routes: number
   community_routes: number
@@ -274,6 +277,9 @@ export type AdminUserRow = {
   city: string | null
   rider_type: string | null
   is_public: boolean
+  plan: 'free' | 'pro' | 'premium'
+  plan_status: 'active' | 'trialing' | 'past_due' | 'canceled'
+  plan_expires_at: string | null
   created_at: string
   motorcycles_count: number
   routes_count: number
