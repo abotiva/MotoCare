@@ -2,9 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { toast } from 'sonner'
 import {
+  BarChart3,
   Bike,
   CalendarClock,
   CheckCircle,
+  Clock,
+  DollarSign,
   ExternalLink,
   FileText,
   Gauge,
@@ -17,6 +20,7 @@ import {
   Wrench,
   XCircle,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -74,6 +78,8 @@ type CompletionForm = {
   next_due_date: string
   notes: string
 }
+
+type UserPlan = 'free' | 'pro' | 'premium'
 
 const emptyBikeForm: BikeForm = {
   brand: '',
@@ -140,6 +146,20 @@ function statusForDate(date: string | null) {
   return { label: `Vigente hasta ${date}`, tone: 'text-green-500' }
 }
 
+function formatMoney(value: number) {
+  return value.toLocaleString('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    maximumFractionDigits: 0,
+  })
+}
+
+function dateDistanceInDays(from: string, to: string) {
+  const fromTime = new Date(`${from}T00:00:00`).getTime()
+  const toTime = new Date(`${to}T00:00:00`).getTime()
+  return Math.max(0, Math.round(Math.abs(toTime - fromTime) / 86_400_000))
+}
+
 function defaultIntervalForReminder(title: string) {
   const normalizedTitle = title.toLowerCase()
   if (normalizedTitle.includes('aceite')) return 3000
@@ -148,6 +168,30 @@ function defaultIntervalForReminder(title: string) {
   if (normalizedTitle.includes('llanta')) return 12000
   if (normalizedTitle.includes('revision') || normalizedTitle.includes('revisión')) return 5000
   return 3000
+}
+
+function ReportCard({ icon: Icon, label, value, detail }: { icon: LucideIcon; label: string; value: string; detail: string }) {
+  return (
+    <Card className="border-white/5 bg-moto-darker py-0">
+      <CardContent className="p-4">
+        <div className="mb-3 grid h-10 w-10 place-items-center rounded-xl bg-moto-orange/20">
+          <Icon className="h-5 w-5 text-moto-orange" />
+        </div>
+        <p className="text-sm text-gray-400">{label}</p>
+        <p className="mt-1 text-xl font-bold">{value}</p>
+        <p className="mt-1 text-xs text-gray-500">{detail}</p>
+      </CardContent>
+    </Card>
+  )
+}
+
+function ReportLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-lg bg-moto-gray px-3 py-2">
+      <p className="min-w-0 truncate text-sm text-gray-400">{label}</p>
+      <p className="shrink-0 text-sm font-semibold text-white">{value}</p>
+    </div>
+  )
 }
 
 export function MyBikes() {
@@ -161,6 +205,8 @@ export function MyBikes() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [uploadingKey, setUploadingKey] = useState<string | null>(null)
+  const [userPlan, setUserPlan] = useState<UserPlan>('free')
+  const [isLoadingPlan, setIsLoadingPlan] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showAddBike, setShowAddBike] = useState(false)
   const [showAddService, setShowAddService] = useState(false)
@@ -186,6 +232,7 @@ export function MyBikes() {
   }
 
   const isNegativeNumber = (value: string) => value.trim() !== '' && Number(value) < 0
+  const canViewMaintenanceReports = userPlan === 'pro' || userPlan === 'premium'
 
   const selectedBike = useMemo(
     () => motorcycles.find((motorcycle) => motorcycle.id === selectedId) ?? motorcycles[0] ?? null,
@@ -229,6 +276,52 @@ export function MyBikes() {
     [maintenanceSuggestions, editReminderForm.suggestion_id]
   )
 
+  const maintenanceReport = useMemo(() => {
+    const ordered = [...selectedRecords].sort((a, b) => new Date(a.service_date).getTime() - new Date(b.service_date).getTime())
+    const now = new Date()
+    const currentYear = now.getFullYear()
+    const currentMonth = now.getMonth()
+    const recordsWithCost = ordered.filter((record) => record.cost !== null)
+    const totalSpent = recordsWithCost.reduce((total, record) => total + Number(record.cost ?? 0), 0)
+    const yearSpent = recordsWithCost.reduce((total, record) => {
+      const date = new Date(`${record.service_date}T00:00:00`)
+      return date.getFullYear() === currentYear ? total + Number(record.cost ?? 0) : total
+    }, 0)
+    const monthSpent = recordsWithCost.reduce((total, record) => {
+      const date = new Date(`${record.service_date}T00:00:00`)
+      return date.getFullYear() === currentYear && date.getMonth() === currentMonth ? total + Number(record.cost ?? 0) : total
+    }, 0)
+    const averageCost = recordsWithCost.length > 0 ? totalSpent / recordsWithCost.length : 0
+    const lastRecord = ordered.at(-1) ?? null
+    const daysSinceLast = lastRecord ? dateDistanceInDays(lastRecord.service_date, todayString()) : null
+    const gaps = ordered.slice(1).map((record, index) => ({
+      days: dateDistanceInDays(ordered[index].service_date, record.service_date),
+      km: Math.max(0, record.mileage - ordered[index].mileage),
+    }))
+    const averageDaysBetweenServices = gaps.length > 0 ? Math.round(gaps.reduce((total, gap) => total + gap.days, 0) / gaps.length) : null
+    const averageKmBetweenServices = gaps.length > 0 ? Math.round(gaps.reduce((total, gap) => total + gap.km, 0) / gaps.length) : null
+    const costByType = recordsWithCost.reduce<Record<string, number>>((totals, record) => {
+      totals[record.service_type] = (totals[record.service_type] ?? 0) + Number(record.cost ?? 0)
+      return totals
+    }, {})
+    const topExpenseTypes = Object.entries(costByType)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 4)
+
+    return {
+      totalServices: ordered.length,
+      totalSpent,
+      yearSpent,
+      monthSpent,
+      averageCost,
+      lastRecord,
+      daysSinceLast,
+      averageDaysBetweenServices,
+      averageKmBetweenServices,
+      topExpenseTypes,
+    }
+  }, [selectedRecords])
+
   const healthScore = useMemo(() => {
     if (!selectedBike) return 0
     const soatDays = daysUntil(selectedBike.soat_expires_on)
@@ -248,7 +341,9 @@ export function MyBikes() {
       setIsLoading(true)
       setError(null)
 
-      const [motorcyclesResult, recordsResult, remindersResult, documentsResult, suggestionsResult] = await Promise.all([
+      setIsLoadingPlan(true)
+
+      const [motorcyclesResult, recordsResult, remindersResult, documentsResult, suggestionsResult, subscriptionResult] = await Promise.all([
         client.from('motorcycles').select('*').eq('owner_id', user.id).order('created_at', { ascending: false }),
         client.from('maintenance_records').select('*').eq('owner_id', user.id).order('service_date', { ascending: false }),
         client.from('reminders').select('*').eq('owner_id', user.id).order('due_date', { ascending: true, nullsFirst: false }),
@@ -259,6 +354,7 @@ export function MyBikes() {
           .eq('is_active', true)
           .order('sort_order', { ascending: true })
           .order('name', { ascending: true }),
+        client.rpc('current_user_subscription'),
       ])
 
       if (motorcyclesResult.error || recordsResult.error || remindersResult.error || documentsResult.error) {
@@ -278,6 +374,14 @@ export function MyBikes() {
         setMaintenanceSuggestions((suggestionsResult.data ?? []) as MaintenanceSuggestion[])
         setSelectedId((current) => current ?? nextMotorcycles[0]?.id ?? null)
       }
+
+      if (subscriptionResult.error) {
+        setUserPlan('free')
+      } else {
+        const subscription = Array.isArray(subscriptionResult.data) ? subscriptionResult.data[0] : null
+        setUserPlan((subscription?.plan as UserPlan | undefined) ?? 'free')
+      }
+      setIsLoadingPlan(false)
 
       setIsLoading(false)
     }
@@ -1117,6 +1221,9 @@ export function MyBikes() {
                       <TabsTrigger value="history" className="flex-1 data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker">
                         Historial
                       </TabsTrigger>
+                      <TabsTrigger value="reports" className="flex-1 data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker">
+                        Informes
+                      </TabsTrigger>
                       <TabsTrigger value="documents" className="flex-1 data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker">
                         Documentos
                       </TabsTrigger>
@@ -1207,6 +1314,69 @@ export function MyBikes() {
                       ) : (
                         <div className="rounded-xl border border-white/5 bg-moto-darker p-5 text-center text-gray-400">
                           Aun no hay mantenimientos registrados.
+                        </div>
+                      )}
+                    </TabsContent>
+
+                    <TabsContent value="reports" className="space-y-4">
+                      {isLoadingPlan ? (
+                        <div className="grid min-h-48 place-items-center rounded-xl border border-white/5 bg-moto-darker text-moto-orange">
+                          <Loader2 className="h-7 w-7 animate-spin" />
+                        </div>
+                      ) : canViewMaintenanceReports ? (
+                        <>
+                          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                            <ReportCard icon={DollarSign} label="Gasto total" value={formatMoney(maintenanceReport.totalSpent)} detail={`${maintenanceReport.totalServices} servicios`} />
+                            <ReportCard icon={CalendarClock} label="Este ano" value={formatMoney(maintenanceReport.yearSpent)} detail={`Este mes: ${formatMoney(maintenanceReport.monthSpent)}`} />
+                            <ReportCard icon={BarChart3} label="Promedio por servicio" value={formatMoney(maintenanceReport.averageCost)} detail="Servicios con costo" />
+                            <ReportCard
+                              icon={Clock}
+                              label="Ultimo servicio"
+                              value={maintenanceReport.daysSinceLast !== null ? `${maintenanceReport.daysSinceLast} dias` : 'Sin datos'}
+                              detail={maintenanceReport.lastRecord?.service_type ?? 'Registra un mantenimiento'}
+                            />
+                          </div>
+
+                          <div className="grid gap-4 lg:grid-cols-2">
+                            <Card className="border-white/5 bg-moto-darker py-0">
+                              <CardContent className="p-4">
+                                <h3 className="mb-3 font-semibold">Tiempos y kilometraje</h3>
+                                <div className="space-y-3">
+                                  <ReportLine label="Promedio entre servicios" value={maintenanceReport.averageDaysBetweenServices !== null ? `${maintenanceReport.averageDaysBetweenServices} dias` : 'Sin datos suficientes'} />
+                                  <ReportLine label="Promedio entre kilometrajes" value={maintenanceReport.averageKmBetweenServices !== null ? `${maintenanceReport.averageKmBetweenServices.toLocaleString()} km` : 'Sin datos suficientes'} />
+                                  <ReportLine label="Ultimo kilometraje registrado" value={maintenanceReport.lastRecord ? `${maintenanceReport.lastRecord.mileage.toLocaleString()} km` : 'Sin registros'} />
+                                </div>
+                              </CardContent>
+                            </Card>
+
+                            <Card className="border-white/5 bg-moto-darker py-0">
+                              <CardContent className="p-4">
+                                <h3 className="mb-3 font-semibold">Gastos por tipo</h3>
+                                {maintenanceReport.topExpenseTypes.length > 0 ? (
+                                  <div className="space-y-3">
+                                    {maintenanceReport.topExpenseTypes.map(([serviceType, total]) => (
+                                      <ReportLine key={serviceType} label={serviceType} value={formatMoney(total)} />
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-gray-400">Agrega costos a tus mantenimientos para ver este informe.</p>
+                                )}
+                              </CardContent>
+                            </Card>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="rounded-xl border border-moto-orange/20 bg-moto-orange/10 p-5">
+                          <div className="mb-3 flex items-center gap-3">
+                            <div className="grid h-11 w-11 place-items-center rounded-xl bg-moto-orange text-moto-darker">
+                              <BarChart3 className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold">Informes disponibles desde Pro</h3>
+                              <p className="text-sm text-gray-300">Actualice su cuenta para ver gastos, tiempos y promedios de mantenimiento.</p>
+                            </div>
+                          </div>
+                          <Badge className="bg-moto-orange text-moto-darker">Pro / Premium</Badge>
                         </div>
                       )}
                     </TabsContent>

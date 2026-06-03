@@ -1,14 +1,18 @@
 // Service Worker para MotoCare PWA
-const CACHE_NAME = 'MotoCare-v1'
+const CACHE_VERSION = '0.1.0'
+const CACHE_NAME = `motocare-cache-${CACHE_VERSION}`
 const STATIC_ASSETS = [
   '/',
   '/index.html',
+  '/manifest.json',
   '/hero-motorcycle.jpg',
   '/app-mockup.jpg',
   '/community.jpg',
   '/feature-maintenance.jpg',
   '/feature-gps.jpg',
   '/feature-marketplace.jpg',
+  '/icon-192x192.png',
+  '/icon-512x512.png',
 ]
 
 self.addEventListener('install', (event) => {
@@ -17,7 +21,6 @@ self.addEventListener('install', (event) => {
       return cache.addAll(STATIC_ASSETS)
     })
   )
-  self.skipWaiting()
 })
 
 self.addEventListener('activate', (event) => {
@@ -25,7 +28,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
-          .filter((name) => name !== CACHE_NAME)
+          .filter((name) => name.startsWith('motocare-cache-') && name !== CACHE_NAME)
           .map((name) => caches.delete(name))
       )
     })
@@ -33,9 +36,42 @@ self.addEventListener('activate', (event) => {
   self.clients.claim()
 })
 
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting()
+  }
+
+  if (event.data?.type === 'CLEAR_OLD_CACHES') {
+    event.waitUntil(
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames
+            .filter((name) => name.startsWith('motocare-cache-') && name !== CACHE_NAME)
+            .map((name) => caches.delete(name))
+        )
+      })
+    )
+  }
+})
+
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return
   if (!event.request.url.startsWith(self.location.origin)) return
+
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          const cacheCopy = networkResponse.clone()
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put('/index.html', cacheCopy)
+          })
+          return networkResponse
+        })
+        .catch(() => caches.match('/index.html'))
+    )
+    return
+  }
 
   event.respondWith(
     caches.match(event.request).then((cached) => {

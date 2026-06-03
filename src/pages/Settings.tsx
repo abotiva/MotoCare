@@ -23,6 +23,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { useAuth } from '@/contexts/AuthContext'
+import { appVersion, buildTime } from '@/lib/appVersion'
 import { supabase, supabaseUrl } from '@/lib/supabase'
 
 type PreferenceKey = 'maintenance_alerts' | 'community_alerts' | 'route_alerts' | 'email_summary' | 'public_profile'
@@ -270,7 +271,11 @@ export function Settings() {
                 </div>
                 <div className="flex justify-between gap-3">
                   <span className="text-gray-400">Version</span>
-                  <span>MVP local</span>
+                  <span>{appVersion}</span>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-gray-400">Build</span>
+                  <span className="text-right">{new Date(buildTime).toLocaleString('es-CO')}</span>
                 </div>
                 <div className="flex justify-between gap-3">
                   <span className="text-gray-400">Preferencias</span>
