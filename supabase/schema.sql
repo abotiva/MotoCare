@@ -632,7 +632,7 @@ begin
 
   insert into public.user_subscriptions (user_id, plan, status)
   values (auth.uid(), 'free', 'active')
-  on conflict (user_id) do nothing;
+  on conflict on constraint user_subscriptions_pkey do nothing;
 
   return query
   select
@@ -693,7 +693,7 @@ begin
     target_notes,
     auth.uid()
   )
-  on conflict (user_id) do update set
+  on conflict on constraint user_subscriptions_pkey do update set
     plan = excluded.plan,
     status = excluded.status,
     expires_at = excluded.expires_at,
