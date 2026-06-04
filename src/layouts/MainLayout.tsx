@@ -19,7 +19,6 @@ import {
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { AppUpdatePrompt } from '@/components/AppUpdatePrompt'
-import { InstallPrompt } from '@/components/InstallPrompt'
 import { MotoCareLogo } from '@/components/MotoCareLogo'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuth } from '@/contexts/AuthContext'
@@ -399,8 +398,6 @@ export function MainLayout() {
           </div>
         )}
       </main>
-
-      <InstallPrompt />
       <AppUpdatePrompt />
     </div>
   )

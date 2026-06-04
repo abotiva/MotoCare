@@ -15,6 +15,7 @@ import { MyBikes } from './pages/MyBikes'
 import { Settings } from './pages/Settings'
 import { Admin } from './pages/Admin'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { InstallPrompt } from './components/InstallPrompt'
 import { Toaster } from './components/ui/sonner'
 
 function App() {
@@ -41,6 +42,7 @@ function App() {
           <Route path="admin" element={<Admin />} />
         </Route>
       </Routes>
+      <InstallPrompt />
       <Toaster richColors position="top-right" />
     </BrowserRouter>
   )

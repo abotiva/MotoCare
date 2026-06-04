@@ -59,29 +59,6 @@
       "purpose": "any maskable"
     }
   ],
-  "screenshots": [
-    {
-      "src": "/screenshot-home.png",
-      "sizes": "1170x2532",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Comunidad MotoCare"
-    },
-    {
-      "src": "/screenshot-map.png",
-      "sizes": "1170x2532",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Navegacion GPS para motos"
-    },
-    {
-      "src": "/screenshot-marketplace.png",
-      "sizes": "1170x2532",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Tienda para motos"
-    }
-  ],
   "categories": [
     "social",
     "navigation",
