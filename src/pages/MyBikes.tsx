@@ -1138,12 +1138,12 @@ export function MyBikes() {
         </Card>
       ) : (
         <>
-          <div className="mb-6 flex gap-4 overflow-x-auto pb-4">
+          <div className="mb-6 flex gap-3 overflow-x-auto pb-4">
             {motorcycles.map((motorcycle) => (
               <button
                 key={motorcycle.id}
                 onClick={() => setSelectedId(motorcycle.id)}
-                className={`flex flex-shrink-0 items-center gap-3 rounded-xl border p-3 transition-all ${
+                className={`flex w-64 flex-shrink-0 items-center gap-3 rounded-xl border p-3 transition-all sm:w-auto ${
                   selectedBike?.id === motorcycle.id ? 'border-moto-orange bg-moto-orange/20' : 'border-white/5 bg-moto-gray hover:border-white/20'
                 }`}
               >
@@ -1154,11 +1154,11 @@ export function MyBikes() {
                     <Bike className="h-8 w-8 text-moto-orange" />
                   )}
                 </div>
-                <div className="text-left">
-                  <p className="font-semibold">
+                <div className="min-w-0 text-left">
+                  <p className="truncate font-semibold">
                     {motorcycle.brand} {motorcycle.model}
                   </p>
-                  <p className="text-sm text-gray-400">
+                  <p className="truncate text-sm text-gray-400">
                     {motorcycle.year ?? 'Sin ano'} · {motorcycle.plate ?? 'Sin placa'}
                   </p>
                 </div>
@@ -1169,30 +1169,30 @@ export function MyBikes() {
           {selectedBike && (
             <div className="grid gap-6 lg:grid-cols-3">
               <Card className="overflow-hidden border-white/5 bg-moto-gray lg:col-span-2">
-                <div className="relative h-64 overflow-hidden">
+                <div className="relative min-h-[25rem] overflow-hidden sm:min-h-80">
                   <img src={selectedBike.image_url ?? '/hero-motorcycle.jpg'} alt={selectedBike.model} className="h-full w-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-moto-gray via-transparent to-transparent" />
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <div className="flex items-end justify-between gap-4">
-                      <div>
-                        <h2 className="text-3xl font-bold">
+                  <div className="absolute inset-0 bg-gradient-to-t from-moto-gray via-moto-gray/30 to-transparent" />
+                  <div className="absolute inset-x-4 bottom-4">
+                    <div className="space-y-4">
+                      <div className="max-w-full">
+                        <h2 className="text-2xl font-bold leading-tight sm:text-3xl">
                           {selectedBike.brand} {selectedBike.model}
                         </h2>
-                        <p className="text-gray-300">
+                        <p className="mt-1 text-sm text-gray-300 sm:text-base">
                           {selectedBike.year ?? 'Sin ano'} · {selectedBike.color ?? 'Sin color'} · {selectedBike.plate ?? 'Sin placa'}
                         </p>
                       </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <Badge className="bg-moto-orange px-4 py-1 text-lg text-moto-darker">{healthScore}% Salud</Badge>
-                        <Button size="sm" variant="outline" className="border-white/20 bg-black/20" onClick={() => openEditBike(selectedBike)}>
+                      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+                        <Badge className="col-span-2 justify-center bg-moto-orange px-4 py-2 text-sm text-moto-darker sm:col-span-1">{healthScore}% Salud</Badge>
+                        <Button size="sm" variant="outline" className="border-white/20 bg-black/30" onClick={() => openEditBike(selectedBike)}>
                           <Pencil className="mr-2 h-4 w-4" />
                           Editar
                         </Button>
-                        <Button size="sm" variant="outline" className="border-white/20 bg-black/20" onClick={openUpdateMileage}>
+                        <Button size="sm" variant="outline" className="border-white/20 bg-black/30" onClick={openUpdateMileage}>
                           <Gauge className="mr-2 h-4 w-4" />
-                          Actualizar km
+                          Km
                         </Button>
-                        <label className="inline-flex cursor-pointer items-center rounded-md border border-white/20 bg-black/20 px-3 py-2 text-sm transition-colors hover:bg-white/10">
+                        <label className="col-span-2 inline-flex cursor-pointer items-center justify-center rounded-md border border-white/20 bg-black/30 px-3 py-2 text-sm transition-colors hover:bg-white/10 sm:col-span-1">
                           {uploadingKey === 'photo' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ImageUp className="mr-2 h-4 w-4" />}
                           Foto
                           <input
@@ -1212,19 +1212,19 @@ export function MyBikes() {
                   </div>
                 </div>
 
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <Tabs defaultValue="reminders" className="w-full">
-                    <TabsList className="mb-4 w-full border-white/5 bg-moto-darker">
-                      <TabsTrigger value="reminders" className="flex-1 data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker">
+                    <TabsList className="mb-4 grid h-auto w-full grid-cols-2 gap-2 border-white/5 bg-moto-darker p-1 sm:grid-cols-4">
+                      <TabsTrigger value="reminders" className="min-w-0 data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker">
                         Pendientes
                       </TabsTrigger>
-                      <TabsTrigger value="history" className="flex-1 data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker">
+                      <TabsTrigger value="history" className="min-w-0 data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker">
                         Historial
                       </TabsTrigger>
-                      <TabsTrigger value="reports" className="flex-1 data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker">
+                      <TabsTrigger value="reports" className="min-w-0 data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker">
                         Informes
                       </TabsTrigger>
-                      <TabsTrigger value="documents" className="flex-1 data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker">
+                      <TabsTrigger value="documents" className="min-w-0 data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker">
                         Documentos
                       </TabsTrigger>
                     </TabsList>

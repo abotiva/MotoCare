@@ -40,6 +40,13 @@ const sidebarItems = [
   { path: '/app/settings', icon: Settings, label: 'Ajustes' },
 ]
 
+const mobileNavItems = [
+  { path: '/app/home', icon: Home, label: 'Inicio' },
+  { path: '/app/my-bikes', icon: Bike, label: 'Mi moto' },
+  { path: '/app/map', icon: MapIcon, label: 'Rutas' },
+  { path: '/app/messages', icon: MessageCircle, label: 'Comunidad' },
+]
+
 function initials(name: string | null | undefined, email: string | undefined) {
   const source = name || email || 'MC'
   return source
@@ -159,7 +166,7 @@ export function MainLayout() {
   }, [user?.id])
 
   return (
-    <div className="flex min-h-screen bg-moto-dark text-white">
+    <div className="flex min-h-screen overflow-x-hidden bg-moto-dark text-white">
       <aside className="fixed hidden h-full w-64 flex-col border-r border-white/5 bg-moto-darker lg:flex">
         <div className="border-b border-white/5 p-6">
           <NavLink to="/app/home">
@@ -238,13 +245,14 @@ export function MainLayout() {
       <main className="flex min-h-screen flex-1 flex-col lg:ml-64">
         <header className="sticky top-0 z-40 border-b border-white/5 bg-moto-dark/95 backdrop-blur-xl">
           <div className="flex h-16 items-center justify-between px-4 lg:px-6">
-            <div className="flex items-center gap-3 lg:hidden">
+            <div className="flex min-w-0 items-center gap-3 lg:hidden">
               <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="rounded-lg p-2 hover:bg-white/5">
                 {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
               <NavLink to="/app/home">
                 <MotoCareLogo compact />
               </NavLink>
+              <h1 className="truncate text-base font-semibold">{pageTitle}</h1>
             </div>
 
             <div className="hidden lg:block">
@@ -337,24 +345,24 @@ export function MainLayout() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-x-hidden overflow-y-auto">
           <Outlet />
         </div>
 
         <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-white/5 bg-moto-darker lg:hidden">
-          <div className="flex h-16 items-center justify-around">
-            {navItems.slice(0, 5).map((item) => (
+          <div className="grid h-16 grid-cols-4">
+            {mobileNavItems.map((item) => (
               <NavLink
                 key={item.path}
                 to={item.path}
                 className={({ isActive }) =>
-                  `flex h-full flex-1 flex-col items-center justify-center ${isActive ? 'text-moto-orange' : 'text-gray-400'}`
+                  `flex h-full min-w-0 flex-col items-center justify-center gap-1 ${isActive ? 'text-moto-orange' : 'text-gray-400'}`
                 }
               >
                 <div className="relative">
-                  <item.icon className="h-6 w-6" />
+                  <item.icon className="h-5 w-5" />
                 </div>
-                <span className="mt-1 text-[10px]">{item.label}</span>
+                <span className="max-w-full truncate px-1 text-[10px] font-medium">{item.label}</span>
               </NavLink>
             ))}
           </div>
