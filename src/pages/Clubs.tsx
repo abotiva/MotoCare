@@ -487,16 +487,16 @@ export function Clubs() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl p-4 pb-24 lg:p-6">
+    <div className="mx-auto max-w-7xl p-3 pb-24 sm:p-4 lg:p-6">
       <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
-        <div>
-          <h1 className="text-2xl font-bold">Clubes</h1>
-          <p className="text-gray-400">Crea clubes, administra miembros y prepara espacios privados para rodadas.</p>
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold sm:text-2xl">Clubes</h1>
+          <p className="text-sm leading-6 text-gray-400 sm:text-base">Crea clubes, administra miembros y prepara espacios privados para rodadas.</p>
         </div>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <div className="space-y-4">
+        <div className="order-2 space-y-4 lg:order-1">
           <Card className="border-white/5 bg-moto-gray py-0">
             <CardContent className="p-4">
               <h2 className="mb-3 font-semibold">Mis clubes</h2>
@@ -528,7 +528,7 @@ export function Clubs() {
 
           <Card className="border-white/5 bg-moto-gray py-0">
             <CardContent className="p-4">
-              <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                 <h2 className="font-semibold">Crear club</h2>
                 <Badge className={canCreateClub ? 'bg-moto-orange text-moto-darker' : 'bg-white/10 text-gray-300'}>
                   {canCreateClub ? 'Pro/Premium' : 'Requiere Pro'}
@@ -558,11 +558,11 @@ export function Clubs() {
         </div>
 
         {selectedClub ? (
-          <div className="space-y-5">
+          <div className="order-1 space-y-5 lg:order-2">
             <Card className="border-white/5 bg-moto-gray py-0">
-              <CardContent className="p-5">
-                <div className="flex flex-col gap-5 md:flex-row md:items-start">
-                  <div className="relative h-32 w-32 shrink-0 overflow-hidden rounded-2xl bg-moto-darker">
+              <CardContent className="p-4 sm:p-5">
+                <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+                  <div className="relative mx-auto h-32 w-32 shrink-0 overflow-hidden rounded-2xl bg-moto-darker sm:mx-0">
                     {selectedClub.image_url ? (
                       <button
                         type="button"
@@ -591,9 +591,9 @@ export function Clubs() {
                       </label>
                     )}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="mb-2 flex flex-wrap items-center gap-2">
-                      <h2 className="text-2xl font-bold">{selectedClub.name}</h2>
+                  <div className="min-w-0 flex-1 text-center sm:text-left">
+                    <div className="mb-2 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                      <h2 className="break-words text-2xl font-bold">{selectedClub.name}</h2>
                       {selectedClub.owner_id === user?.id && <Badge className="bg-moto-orange text-moto-darker">Fundador</Badge>}
                     </div>
                     <p className="text-gray-400">{selectedClub.city || 'Ciudad sin definir'}</p>
@@ -605,14 +605,14 @@ export function Clubs() {
 
             {canManageSelectedClub && (
               <Card className="border-white/5 bg-moto-gray py-0">
-                <CardContent className="p-5">
+                <CardContent className="p-4 sm:p-5">
                   <h2 className="mb-4 flex items-center gap-2 font-semibold">
                     <Edit3 className="h-4 w-4 text-moto-orange" />
                     Editar informacion
                   </h2>
                   <form className="grid gap-3 md:grid-cols-2" onSubmit={updateClub}>
-                    <input className="rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={clubForm.name} onChange={(event) => setClubForm({ ...clubForm, name: event.target.value })} placeholder="Nombre" />
-                    <input className="rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={clubForm.city} onChange={(event) => setClubForm({ ...clubForm, city: event.target.value })} placeholder="Ciudad" />
+                    <input className="min-w-0 rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={clubForm.name} onChange={(event) => setClubForm({ ...clubForm, name: event.target.value })} placeholder="Nombre" />
+                    <input className="min-w-0 rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={clubForm.city} onChange={(event) => setClubForm({ ...clubForm, city: event.target.value })} placeholder="Ciudad" />
                     <textarea className="h-20 resize-none rounded-lg border border-white/10 bg-moto-darker p-2 text-white md:col-span-2" value={clubForm.description} onChange={(event) => setClubForm({ ...clubForm, description: event.target.value })} placeholder="Descripcion" />
                     <Button type="submit" disabled={isSaving} className="md:col-span-2 bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
                       {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
@@ -624,14 +624,14 @@ export function Clubs() {
             )}
 
             <Card className="border-white/5 bg-moto-gray py-0">
-              <CardContent className="p-5">
+              <CardContent className="p-4 sm:p-5">
                 <div className="mb-4 flex flex-col justify-between gap-3 md:flex-row md:items-center">
                   <h2 className="flex items-center gap-2 font-semibold">
                     <Users className="h-5 w-5 text-moto-orange" />
                     Miembros
                   </h2>
                   {canManageSelectedClub && (
-                    <form className="relative flex gap-2" onSubmit={inviteMember}>
+                    <form className="relative grid gap-2 sm:flex" onSubmit={inviteMember}>
                       <div className="relative min-w-0 flex-1">
                         <input
                           className="w-full rounded-lg border border-white/10 bg-moto-darker px-3 py-2 text-sm text-white"
@@ -676,7 +676,7 @@ export function Clubs() {
                           </div>
                         )}
                       </div>
-                      <Button type="submit" disabled={isSaving} className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
+                      <Button type="submit" disabled={isSaving} className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark sm:w-auto">
                         <UserPlus className="mr-2 h-4 w-4" />
                         Invitar
                       </Button>
@@ -687,7 +687,7 @@ export function Clubs() {
                   {members.map((member) => {
                     const memberName = member.profiles?.full_name || member.profiles?.username || 'Motero MotoCare'
                     return (
-                      <div key={member.id} className="flex items-center justify-between gap-3 rounded-xl bg-moto-darker p-3">
+                      <div key={member.id} className="flex flex-col gap-3 rounded-xl bg-moto-darker p-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex min-w-0 items-center gap-3">
                           <Avatar className="h-10 w-10 bg-moto-gray">
                             <AvatarImage src={member.profiles?.avatar_url ?? undefined} />
@@ -698,7 +698,7 @@ export function Clubs() {
                             <p className="truncate text-xs text-gray-500">@{member.profiles?.username || 'motocare'} · {roleLabel(member.role)}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-end gap-2">
                           {member.role === 'owner' ? <Crown className="h-4 w-4 text-moto-orange" /> : <Shield className="h-4 w-4 text-gray-500" />}
                           {canManageSelectedClub && member.role !== 'owner' && (
                             <Button size="sm" variant="outline" className="border-red-500/30 text-red-300 hover:text-red-200" onClick={() => void removeMember(member)}>
@@ -721,7 +721,7 @@ export function Clubs() {
                       {pendingInvitations.map((invitation) => {
                         const invitedName = invitation.profiles?.full_name || invitation.profiles?.username || 'Motero MotoCare'
                         return (
-                          <div key={invitation.id} className="flex items-center justify-between gap-3 rounded-xl bg-moto-darker p-3">
+                          <div key={invitation.id} className="flex flex-col gap-3 rounded-xl bg-moto-darker p-3 sm:flex-row sm:items-center sm:justify-between">
                             <div className="flex min-w-0 items-center gap-3">
                               <Avatar className="h-10 w-10 bg-moto-gray">
                                 <AvatarImage src={invitation.profiles?.avatar_url ?? undefined} />
@@ -732,7 +732,7 @@ export function Clubs() {
                                 <p className="truncate text-xs text-gray-500">@{invitation.profiles?.username || 'motocare'} · pendiente de aprobacion</p>
                               </div>
                             </div>
-                            <Badge className="shrink-0 bg-yellow-500/15 text-yellow-300">Pendiente</Badge>
+                            <Badge className="w-fit shrink-0 bg-yellow-500/15 text-yellow-300">Pendiente</Badge>
                           </div>
                         )
                       })}

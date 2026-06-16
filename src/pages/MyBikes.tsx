@@ -1251,13 +1251,13 @@ export function MyBikes() {
                       </div>
                       {selectedReminders.length > 0 ? (
                         selectedReminders.map((reminder) => (
-                          <div key={reminder.id} className="flex items-center justify-between gap-3 rounded-xl bg-moto-darker p-3">
-                            <div className="flex items-center gap-3">
-                              <div className="grid h-10 w-10 place-items-center rounded-lg bg-yellow-500/20">
+                          <div key={reminder.id} className="flex flex-col gap-3 rounded-xl bg-moto-darker p-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex min-w-0 items-center gap-3">
+                              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-yellow-500/20">
                                 <CalendarClock className="h-5 w-5 text-yellow-400" />
                               </div>
-                              <div>
-                                <p className="font-medium">{reminder.title}</p>
+                              <div className="min-w-0">
+                                <p className="break-words font-medium">{reminder.title}</p>
                                 <p className="text-sm text-gray-400">
                                   {reminder.due_date ? `Fecha: ${reminder.due_date}` : ''}
                                   {reminder.due_mileage ? ` · ${reminder.due_mileage.toLocaleString()} km` : ''}
@@ -1278,15 +1278,15 @@ export function MyBikes() {
                                 )}
                               </div>
                             </div>
-                            <div className="flex shrink-0 gap-2">
-                              <Button size="sm" variant="outline" className="border-white/10" onClick={() => openEditReminder(reminder)}>
+                            <div className="grid grid-cols-3 gap-2 sm:flex sm:shrink-0">
+                              <Button size="sm" variant="outline" className="min-w-0 border-white/10 px-2 sm:px-3" onClick={() => openEditReminder(reminder)}>
                                 Editar
                               </Button>
-                              <Button size="sm" variant="outline" className="border-white/10" onClick={() => dismissReminder(reminder)}>
-                                <XCircle className="mr-2 h-4 w-4" />
+                              <Button size="sm" variant="outline" className="min-w-0 border-white/10 px-2 sm:px-3" onClick={() => dismissReminder(reminder)}>
+                                <XCircle className="mr-1 h-4 w-4 sm:mr-2" />
                                 Cancelar
                               </Button>
-                              <Button size="sm" variant="outline" className="border-white/10" onClick={() => openCompleteReminder(reminder)}>
+                              <Button size="sm" variant="outline" className="min-w-0 border-white/10 px-2 sm:px-3" onClick={() => openCompleteReminder(reminder)}>
                                 Completar
                               </Button>
                             </div>
