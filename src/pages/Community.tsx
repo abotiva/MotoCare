@@ -591,15 +591,15 @@ export function Community() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl p-4 pb-24 lg:p-6">
+    <div className="mx-auto max-w-6xl p-3 pb-24 sm:p-4 lg:p-6">
       <div className="mb-5 flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
-        <div>
-          <h1 className="text-2xl font-bold">Comunidad</h1>
-          <p className="text-gray-400">Comparte rutas, mantenimientos, planes y aprendizajes con otros moteros.</p>
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold sm:text-2xl">Comunidad</h1>
+          <p className="text-sm leading-6 text-gray-400 sm:text-base">Comparte rutas, mantenimientos, planes y aprendizajes con otros moteros.</p>
         </div>
       </div>
 
-      <div className="mb-5 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+      <div className="mb-5 grid gap-3 sm:grid-cols-3 sm:gap-4">
         <Card className="border-white/5 bg-moto-gray py-0">
           <CardContent className="flex items-center gap-4 p-4">
             <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-moto-orange/20">
@@ -636,12 +636,12 @@ export function Community() {
         </Card>
       </div>
 
-      <Tabs defaultValue="public" className="w-full">
-        <TabsList className="mb-5 w-full border-white/5 bg-moto-gray">
-          <TabsTrigger value="public" className="flex-1 data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker">
+      <Tabs defaultValue="public" className="w-full min-w-0">
+        <TabsList className="mb-5 grid h-auto w-full grid-cols-2 gap-1 border-white/5 bg-moto-gray p-1">
+          <TabsTrigger value="public" className="min-w-0 whitespace-normal px-2 py-2 text-xs leading-tight data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker sm:text-sm">
             Comunidad publica
           </TabsTrigger>
-          <TabsTrigger value="clubs" className="flex-1 data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker">
+          <TabsTrigger value="clubs" className="min-w-0 whitespace-normal px-2 py-2 text-xs leading-tight data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker sm:text-sm">
             Club privado
           </TabsTrigger>
         </TabsList>
@@ -650,13 +650,13 @@ export function Community() {
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-4">
           <Card className="border-white/5 bg-moto-gray py-0">
-            <CardContent className="p-4">
-              <form className="flex gap-4" onSubmit={handleCreatePost}>
-                <Avatar className="h-11 w-11">
+            <CardContent className="p-3 sm:p-4">
+              <form className="flex gap-3 sm:gap-4" onSubmit={handleCreatePost}>
+                <Avatar className="hidden h-11 w-11 sm:flex">
                   <AvatarImage src={profile?.avatar_url ?? undefined} />
                   <AvatarFallback>{initials(profile?.full_name, profile?.username)}</AvatarFallback>
                 </Avatar>
-                <div className="flex-1">
+                <div className="min-w-0 flex-1">
                   <textarea
                     className="h-24 w-full resize-none rounded-xl border border-white/10 bg-moto-darker p-3 text-sm text-white placeholder:text-gray-500"
                     value={newPost}
@@ -697,8 +697,8 @@ export function Community() {
                       ))}
                     </div>
                   )}
-                  <div className="mt-3 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
+                  <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-wrap items-center gap-3">
                       <span className="text-xs text-gray-500">{newPost.length}/500</span>
                       <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-gray-300 transition-colors hover:bg-white/5 hover:text-white">
                         <ImageIcon className="h-4 w-4" />
@@ -715,7 +715,7 @@ export function Community() {
                         />
                       </label>
                     </div>
-                    <Button type="submit" disabled={isSaving} className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
+                    <Button type="submit" disabled={isSaving} className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark sm:w-auto">
                       {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                       Publicar
                     </Button>
@@ -742,7 +742,7 @@ export function Community() {
               return (
                 <Card key={post.id} className="overflow-hidden border-white/5 bg-moto-gray py-0">
                   <CardHeader className="p-4 pb-0">
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="flex min-w-0 items-center gap-3">
                         <Avatar className="h-11 w-11">
                           <AvatarImage src={author?.avatar_url ?? undefined} />
@@ -755,10 +755,11 @@ export function Community() {
                           </p>
                         </div>
                       </div>
+                      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                       {author?.city && (
-                        <Badge className="bg-white/10 text-gray-300">
+                        <Badge className="max-w-full bg-white/10 text-gray-300">
                           <MapPin className="mr-1 h-3 w-3" />
-                          {author.city}
+                          <span className="truncate">{author.city}</span>
                         </Badge>
                       )}
                       {isOwnPost && (
@@ -771,6 +772,7 @@ export function Community() {
                           </Button>
                         </div>
                       )}
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="p-4">
@@ -794,7 +796,7 @@ export function Community() {
                             </option>
                           ))}
                         </select>
-                        <div className="flex justify-end gap-2">
+                        <div className="grid gap-2 sm:flex sm:justify-end">
                           <Button type="button" variant="outline" className="border-white/10" onClick={cancelEditingPost}>
                             Cancelar
                           </Button>
@@ -821,8 +823,8 @@ export function Community() {
                       </div>
                     )}
                     {post.routes && (
-                      <Link to={`/app/routes/${post.routes.id}`} className="mt-4 block rounded-xl border border-white/10 bg-moto-darker p-4 transition hover:border-moto-orange/50 hover:bg-moto-darker/80">
-                        <div className="mb-3 flex items-start justify-between gap-3">
+                      <Link to={`/app/routes/${post.routes.id}`} className="mt-4 block rounded-xl border border-white/10 bg-moto-darker p-3 transition hover:border-moto-orange/50 hover:bg-moto-darker/80 sm:p-4">
+                        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div className="min-w-0">
                             <p className="flex items-center gap-2 font-semibold">
                               <RouteIcon className="h-4 w-4 text-moto-orange" />
@@ -832,7 +834,7 @@ export function Community() {
                               {post.routes.origin || 'Origen sin definir'} - {post.routes.destination || 'Destino sin definir'}
                             </p>
                           </div>
-                          <Badge className="bg-sky-500/15 text-sky-300">
+                          <Badge className="w-fit bg-sky-500/15 text-sky-300">
                             {routeStatusLabels[post.routes.status ?? 'planned']}
                           </Badge>
                         </div>
@@ -846,7 +848,7 @@ export function Community() {
                         </div>
                       </Link>
                     )}
-                    <div className="mt-4 flex items-center gap-6 border-t border-white/5 pt-3 text-sm text-gray-400">
+                    <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-white/5 pt-3 text-sm text-gray-400">
                       <button
                         type="button"
                         disabled={likingPostId === post.id}
@@ -890,8 +892,8 @@ export function Community() {
                         ) : (
                           <p className="rounded-xl bg-moto-darker p-3 text-sm text-gray-500">Aun no hay comentarios.</p>
                         )}
-                        <form className="flex gap-3" onSubmit={(event) => void handleCreateComment(event, post)}>
-                          <Avatar className="h-9 w-9">
+                        <form className="flex gap-2 sm:gap-3" onSubmit={(event) => void handleCreateComment(event, post)}>
+                          <Avatar className="hidden h-9 w-9 sm:flex">
                             <AvatarImage src={profile?.avatar_url ?? undefined} />
                             <AvatarFallback>{initials(profile?.full_name, profile?.username)}</AvatarFallback>
                           </Avatar>
@@ -950,7 +952,7 @@ export function Community() {
                   Conectados
                 </button>
               </div>
-              <div className="max-h-[420px] space-y-2 overflow-y-auto pr-1">
+              <div className="max-h-72 space-y-2 overflow-y-auto pr-1 lg:max-h-[420px]">
                 {visibleProfiles.length > 0 ? (
                   visibleProfiles.map((publicProfile) => {
                     const online = isOnline(publicProfile.last_seen_at)
@@ -1026,7 +1028,7 @@ export function Community() {
                         </div>
                       </div>
                       <select
-                        className="rounded-xl border border-white/10 bg-moto-darker p-3 text-sm text-white"
+                        className="w-full rounded-xl border border-white/10 bg-moto-darker p-3 text-sm text-white md:w-auto"
                         value={selectedClubId}
                         onChange={(event) => setSelectedClubId(event.target.value)}
                       >
@@ -1037,12 +1039,12 @@ export function Community() {
                         ))}
                       </select>
                     </div>
-                    <form className="flex gap-4" onSubmit={handleCreateClubPost}>
-                      <Avatar className="h-11 w-11">
+                    <form className="flex gap-3 sm:gap-4" onSubmit={handleCreateClubPost}>
+                      <Avatar className="hidden h-11 w-11 sm:flex">
                         <AvatarImage src={profile?.avatar_url ?? undefined} />
                         <AvatarFallback>{initials(profile?.full_name, profile?.username)}</AvatarFallback>
                       </Avatar>
-                      <div className="flex-1">
+                      <div className="min-w-0 flex-1">
                         <textarea
                           className="h-24 w-full resize-none rounded-xl border border-white/10 bg-moto-darker p-3 text-sm text-white placeholder:text-gray-500"
                           value={clubPostContent}
@@ -1063,7 +1065,7 @@ export function Community() {
                               </option>
                             ))}
                           </select>
-                          <Button asChild variant="outline" className="border-white/10">
+                          <Button asChild variant="outline" className="w-full border-white/10 md:w-auto">
                             <Link to="/app/map">
                               <Plus className="mr-2 h-4 w-4" />
                               Crear ruta
@@ -1075,9 +1077,9 @@ export function Community() {
                             Esta ruta se compartira solo en el club seleccionado.
                           </div>
                         )}
-                        <div className="mt-3 flex items-center justify-between gap-3">
+                        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                           <span className="text-xs text-gray-500">{clubPostContent.length}/500</span>
-                          <Button type="submit" disabled={isSavingClubPost} className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
+                          <Button type="submit" disabled={isSavingClubPost} className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark sm:w-auto">
                             {isSavingClubPost ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
                             Publicar en club
                           </Button>
@@ -1106,8 +1108,8 @@ export function Community() {
                           </div>
                           <p className="whitespace-pre-wrap text-sm leading-6 text-gray-100">{post.content}</p>
                           {post.routes && (
-                            <Link to={`/app/routes/${post.routes.id}`} className="mt-4 block rounded-xl border border-white/10 bg-moto-darker p-4 transition hover:border-moto-orange/50 hover:bg-moto-darker/80">
-                              <div className="mb-3 flex items-start justify-between gap-3">
+                            <Link to={`/app/routes/${post.routes.id}`} className="mt-4 block rounded-xl border border-white/10 bg-moto-darker p-3 transition hover:border-moto-orange/50 hover:bg-moto-darker/80 sm:p-4">
+                              <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                 <div className="min-w-0">
                                   <p className="flex items-center gap-2 truncate font-semibold">
                                     <RouteIcon className="h-4 w-4 text-moto-orange" />
@@ -1117,7 +1119,7 @@ export function Community() {
                                     {post.routes.origin || 'Origen sin definir'} - {post.routes.destination || 'Destino sin definir'}
                                   </p>
                                 </div>
-                                <Badge className="shrink-0 bg-white/10 text-gray-300">
+                                <Badge className="w-fit shrink-0 bg-white/10 text-gray-300">
                                   {routeStatusLabels[post.routes.status ?? 'planned']}
                                 </Badge>
                               </div>
