@@ -161,34 +161,34 @@ export function Settings() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl p-3 pb-24 sm:p-4 lg:p-6">
+    <div className="mx-auto w-full max-w-5xl overflow-x-hidden p-3 pb-28 sm:p-4 lg:p-6">
       <div className="mb-6">
         <h1 className="mb-1 text-xl font-bold sm:text-2xl">Ajustes</h1>
         <p className="text-sm leading-6 text-gray-400 sm:text-base">Administra tu cuenta, privacidad y preferencias del MVP.</p>
       </div>
 
-      <Card className="mb-6 border-white/5 bg-moto-gray py-0">
+      <Card className="mb-6 overflow-hidden border-white/5 bg-moto-gray py-0">
         <CardContent className="p-4 sm:p-5">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-            <Avatar className="mx-auto h-20 w-20 sm:mx-0">
+            <Avatar className="mx-auto h-16 w-16 shrink-0 sm:mx-0 sm:h-20 sm:w-20">
               <AvatarImage src={profile?.avatar_url ?? undefined} />
               <AvatarFallback className="text-xl">{initials(profile?.full_name, user?.email)}</AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1 text-center sm:text-left">
               <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-                <h2 className="max-w-full break-words text-xl font-bold">{displayName}</h2>
-                <Badge className="bg-moto-orange text-moto-darker">{profile?.rider_type || 'Motero'}</Badge>
+                <h2 className="max-w-full break-words text-lg font-bold sm:text-xl">{displayName}</h2>
+                <Badge className="max-w-full bg-moto-orange text-moto-darker">{profile?.rider_type || 'Motero'}</Badge>
               </div>
-              <p className="text-gray-400">@{username}</p>
-              <div className="mt-2 flex flex-wrap justify-center gap-3 text-sm text-gray-500 sm:justify-start">
-                <span className="flex min-w-0 items-center gap-1">
-                  <Mail className="h-4 w-4" />
-                  <span className="truncate">{user?.email || 'Email no disponible'}</span>
+              <p className="break-words text-sm text-gray-400 sm:text-base">@{username}</p>
+              <div className="mt-2 flex flex-col items-center gap-2 text-sm text-gray-500 sm:flex-row sm:flex-wrap sm:items-start sm:justify-start">
+                <span className="flex max-w-full min-w-0 items-center justify-center gap-1 sm:justify-start">
+                  <Mail className="h-4 w-4 shrink-0" />
+                  <span className="min-w-0 break-all text-center sm:text-left">{user?.email || 'Email no disponible'}</span>
                 </span>
-                <span>{profile?.city || 'Ciudad sin definir'}</span>
+                <span className="break-words">{profile?.city || 'Ciudad sin definir'}</span>
               </div>
             </div>
-            <Button asChild className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark sm:w-auto">
+            <Button asChild className="w-full shrink-0 bg-moto-orange text-moto-darker hover:bg-moto-orange-dark sm:w-auto">
               <Link to="/app/profile">
                 <User className="mr-2 h-4 w-4" />
                 Editar perfil
@@ -198,8 +198,8 @@ export function Settings() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="space-y-5">
+      <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="min-w-0 space-y-5">
           <SettingsGroup icon={Bell} title="Notificaciones">
             {notificationPreferences.map((item) => (
               <ToggleRow key={item.id} item={item} checked={preferences[item.id]} onToggle={() => togglePreference(item.id)} />
@@ -241,7 +241,7 @@ export function Settings() {
           </SettingsGroup>
         </div>
 
-        <div className="space-y-5">
+        <div className="min-w-0 space-y-5">
           <Card className="border-white/5 bg-moto-gray py-0">
             <CardHeader className="p-4 pb-2">
               <h3 className="font-semibold">Accesos rapidos</h3>
@@ -265,19 +265,19 @@ export function Settings() {
                 </div>
               </div>
               <div className="space-y-3 text-sm">
-                <div className="flex flex-wrap justify-between gap-2">
+                <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-2">
                   <span className="text-gray-400">Proyecto Supabase</span>
-                  <span className="min-w-0 break-all text-right">{projectRef}</span>
+                  <span className="min-w-0 break-all sm:text-right">{projectRef}</span>
                 </div>
-                <div className="flex flex-wrap justify-between gap-2">
+                <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-2">
                   <span className="text-gray-400">Version</span>
                   <span>{appVersion}</span>
                 </div>
-                <div className="flex flex-wrap justify-between gap-2">
+                <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-2">
                   <span className="text-gray-400">Build</span>
-                  <span className="text-right">{new Date(buildTime).toLocaleString('es-CO')}</span>
+                  <span className="sm:text-right">{new Date(buildTime).toLocaleString('es-CO')}</span>
                 </div>
-                <div className="flex flex-wrap justify-between gap-2">
+                <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-2">
                   <span className="text-gray-400">Preferencias</span>
                   <span>Este navegador</span>
                 </div>
@@ -300,7 +300,7 @@ function SettingsGroup({
   children: ReactNode
 }) {
   return (
-    <Card className="overflow-hidden border-white/5 bg-moto-gray py-0">
+    <Card className="min-w-0 overflow-hidden border-white/5 bg-moto-gray py-0">
       <CardHeader className="p-4 pb-2">
         <div className="flex items-center gap-3">
           <div className="grid h-10 w-10 place-items-center rounded-xl bg-moto-orange/20">
@@ -318,10 +318,10 @@ function ToggleRow({ item, checked, onToggle }: { item: Preference; checked: boo
   return (
     <div>
       <Separator className="bg-white/5" />
-      <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <p className="font-medium">{item.label}</p>
-          <p className="text-sm text-gray-400">{item.description}</p>
+      <div className="flex items-center justify-between gap-3 p-4">
+        <div className="min-w-0 flex-1">
+          <p className="break-words font-medium">{item.label}</p>
+          <p className="mt-1 break-words text-sm leading-5 text-gray-400">{item.description}</p>
         </div>
         <Switch checked={checked} onCheckedChange={onToggle} className="shrink-0 data-[state=checked]:bg-moto-orange" />
       </div>
@@ -334,8 +334,8 @@ function InfoRow({ label, description }: { label: string; description: string })
     <div>
       <Separator className="bg-white/5" />
       <div className="p-4">
-        <p className="font-medium">{label}</p>
-        <p className="text-sm text-gray-400">{description}</p>
+        <p className="break-words font-medium">{label}</p>
+        <p className="mt-1 break-words text-sm leading-5 text-gray-400">{description}</p>
       </div>
     </div>
   )
@@ -346,9 +346,9 @@ function ActionRow({ label, description, action }: { label: string; description:
     <div>
       <Separator className="bg-white/5" />
       <div className="flex flex-col justify-between gap-3 p-4 sm:flex-row sm:items-center">
-        <div>
-          <p className="font-medium">{label}</p>
-          <p className="text-sm text-gray-400">{description}</p>
+        <div className="min-w-0">
+          <p className="break-words font-medium">{label}</p>
+          <p className="mt-1 break-words text-sm leading-5 text-gray-400">{description}</p>
         </div>
         <div className="w-full sm:w-auto">{action}</div>
       </div>
@@ -358,19 +358,19 @@ function ActionRow({ label, description, action }: { label: string; description:
 
 function QuickLink({ icon: Icon, label, description, to }: { icon: LucideIcon; label: string; description: string; to: string }) {
   return (
-    <Link to={to} className="block">
+    <Link to={to} className="block min-w-0">
       <Separator className="bg-white/5" />
-      <div className="flex items-center justify-between gap-3 p-4 transition-colors hover:bg-white/5">
+      <div className="flex min-w-0 items-center justify-between gap-3 p-4 transition-colors hover:bg-white/5">
         <div className="flex min-w-0 items-center gap-3">
           <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-moto-darker">
             <Icon className="h-5 w-5 text-moto-orange" />
           </div>
           <div className="min-w-0">
-            <p className="font-medium">{label}</p>
-            <p className="truncate text-sm text-gray-400">{description}</p>
+            <p className="truncate font-medium">{label}</p>
+            <p className="break-words text-sm leading-5 text-gray-400">{description}</p>
           </div>
         </div>
-        <ChevronRight className="h-5 w-5 text-gray-500" />
+        <ChevronRight className="h-5 w-5 shrink-0 text-gray-500" />
       </div>
     </Link>
   )
