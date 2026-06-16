@@ -120,7 +120,7 @@ export function RouteDetail() {
 
   if (!route) {
     return (
-      <div className="mx-auto max-w-3xl space-y-4">
+      <div className="mx-auto max-w-3xl space-y-4 p-4 pb-24 lg:p-6">
         <Button variant="ghost" className="text-gray-300" onClick={() => navigate(-1)}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Volver
@@ -142,14 +142,14 @@ export function RouteDetail() {
   const mapEmbedUrl = googleMapsEmbedUrl(route)
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="mx-auto max-w-6xl space-y-6 p-4 pb-24 lg:p-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Button variant="ghost" className="text-gray-300 hover:text-white" onClick={() => navigate(-1)}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Volver
         </Button>
         {route.owner_id === user?.id && (
-          <Button asChild className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
+          <Button asChild className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark sm:w-auto">
             <Link to="/app/map">Editar en Mis rutas</Link>
           </Button>
         )}
@@ -169,7 +169,7 @@ export function RouteDetail() {
                 </Badge>
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-white md:text-4xl">{route.title}</h1>
+                <h1 className="break-words text-2xl font-bold text-white md:text-4xl">{route.title}</h1>
                 <p className="mt-3 flex flex-wrap items-center gap-2 text-gray-300">
                   <MapPin className="h-5 w-5 text-moto-orange" />
                   {route.origin || 'Origen sin definir'} - {route.destination || 'Destino sin definir'}
@@ -229,12 +229,12 @@ export function RouteDetail() {
       </div>
 
       <Card className="border-white/5 bg-moto-gray py-0">
-        <CardHeader className="flex flex-row items-center justify-between gap-3 p-5">
+        <CardHeader className="flex flex-col items-start justify-between gap-3 p-5 sm:flex-row sm:items-center">
           <CardTitle className="flex items-center gap-2 text-xl">
             <Navigation className="h-5 w-5 text-moto-orange" />
             Mapa de la ruta
           </CardTitle>
-          <Button asChild variant="outline" className="border-white/10">
+          <Button asChild variant="outline" className="w-full border-white/10 sm:w-auto">
             <a href={googleMapsUrl(route)} target="_blank" rel="noreferrer">
               <ExternalLink className="mr-2 h-4 w-4" />
               Abrir en Google Maps
@@ -246,7 +246,7 @@ export function RouteDetail() {
             <iframe
               title={`Mapa de ${route.title}`}
               src={mapEmbedUrl}
-              className="h-[420px] w-full rounded-xl border border-white/10"
+              className="h-80 w-full rounded-xl border border-white/10 sm:h-[420px]"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
             />

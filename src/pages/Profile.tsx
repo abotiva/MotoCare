@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { ImageViewer } from '@/components/ImageViewer'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import type { Club, Motorcycle, Profile as ProfileType, RoutePlan } from '@/types/database'
@@ -107,6 +108,7 @@ export function Profile() {
   const [showEditProfile, setShowEditProfile] = useState(false)
   const [showAvatarPreview, setShowAvatarPreview] = useState(false)
   const [showRoutesPreview, setShowRoutesPreview] = useState(false)
+  const [viewerImage, setViewerImage] = useState<{ src: string; alt: string } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
@@ -263,12 +265,9 @@ export function Profile() {
   return (
     <div className="mx-auto max-w-6xl p-4 pb-24 lg:p-6">
       <Card className="mb-5 border-white/5 bg-moto-gray py-0">
-        <CardContent className="p-5">
-          <div
-            className="grid items-center gap-5"
-            style={{ gridTemplateColumns: 'minmax(96px, 112px) minmax(0, 1fr) 180px' }}
-          >
-            <div className="relative" style={{ width: 112, height: 112 }}>
+        <CardContent className="p-4 sm:p-5">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+            <div className="relative mx-auto h-28 w-28 shrink-0 sm:mx-0">
               <button
                 type="button"
                 className="block rounded-full"
@@ -296,9 +295,9 @@ export function Profile() {
                 </label>
             </div>
 
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1 text-center sm:text-left">
               <div className="mb-2 flex flex-wrap items-center gap-3">
-                <h1 className="text-3xl font-bold leading-tight">{visibleName}</h1>
+                <h1 className="w-full text-2xl font-bold leading-tight sm:w-auto sm:text-3xl">{visibleName}</h1>
                 <Badge className="bg-moto-orange text-moto-darker">{profile?.rider_type || 'Motero'}</Badge>
                 <Badge className={profile?.is_public === false ? 'bg-white/10 text-gray-300' : 'bg-green-500/15 text-green-300'}>
                   {profile?.is_public === false ? 'Privado' : 'Publico'}
@@ -306,16 +305,16 @@ export function Profile() {
               </div>
               <p className="mb-3 text-gray-400">@{username}</p>
               {profile?.bio && <p className="mb-3 max-w-2xl text-sm text-gray-300">{profile.bio}</p>}
-              <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-400">
-                <span className="flex items-center gap-1">
+              <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm text-gray-400 sm:justify-start">
+                <span className="flex min-w-0 items-center gap-1">
                   <MapPin className="h-4 w-4" />
                   {profile?.city || 'Ciudad sin definir'}
                 </span>
-                <span className="flex items-center gap-1">
+                <span className="flex min-w-0 items-center gap-1">
                   <Mail className="h-4 w-4" />
-                  {user?.email}
+                  <span className="truncate">{user?.email}</span>
                 </span>
-                <span className="flex items-center gap-1">
+                <span className="flex min-w-0 items-center gap-1">
                   <Calendar className="h-4 w-4" />
                   Se unio en {formatJoinDate(profile?.created_at)}
                 </span>
@@ -328,15 +327,15 @@ export function Profile() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 justify-self-end" style={{ width: 170 }}>
+            <div className="flex w-full flex-col gap-2 sm:w-44 sm:shrink-0">
               <Button
-                className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark"
+                className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark"
                 onClick={() => setShowEditProfile(true)}
               >
                 <Edit3 className="mr-2 h-4 w-4" />
                 Editar perfil
               </Button>
-              <label className="inline-flex cursor-pointer items-center justify-center rounded-md border border-white/10 px-4 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-white/5 hover:text-white">
+              <label className="inline-flex w-full cursor-pointer items-center justify-center rounded-md border border-white/10 px-4 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-white/5 hover:text-white">
                 {isUploadingAvatar ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}
                 Cambiar foto
                 <input
@@ -445,26 +444,26 @@ export function Profile() {
         </Card>
       </div>
 
-      <div className="grid gap-5" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         <Card className="border-white/5 bg-moto-gray py-0">
           <CardContent className="p-5">
             <h2 className="mb-4 text-lg font-semibold">Resumen</h2>
             <div className="space-y-3 text-sm">
-              <div className="flex justify-between gap-4">
+              <div className="flex flex-wrap justify-between gap-2">
                 <span className="text-gray-400">Nombre</span>
-                <span className="text-right">{visibleName}</span>
+                <span className="min-w-0 break-words text-right">{visibleName}</span>
               </div>
-              <div className="flex justify-between gap-4">
+              <div className="flex flex-wrap justify-between gap-2">
                 <span className="text-gray-400">Usuario</span>
-                <span className="text-right">@{username}</span>
+                <span className="min-w-0 break-words text-right">@{username}</span>
               </div>
-              <div className="flex justify-between gap-4">
+              <div className="flex flex-wrap justify-between gap-2">
                 <span className="text-gray-400">Ciudad</span>
                 <span className="text-right">{profile?.city || 'Sin definir'}</span>
               </div>
-              <div className="flex justify-between gap-4">
+              <div className="flex flex-wrap justify-between gap-2">
                 <span className="text-gray-400">Bio</span>
-                <span className="max-w-xs text-right">{profile?.bio || 'Sin definir'}</span>
+                <span className="min-w-0 max-w-full break-words text-right sm:max-w-xs">{profile?.bio || 'Sin definir'}</span>
               </div>
               <div className="flex justify-between gap-4">
                 <span className="text-gray-400">Enlace</span>
@@ -493,7 +492,18 @@ export function Profile() {
             <h2 className="mb-4 text-lg font-semibold">Moto principal</h2>
             {primaryBike ? (
               <div className="flex gap-4">
-                <img src={primaryBike.image_url ?? '/hero-motorcycle.jpg'} alt={primaryBike.model} className="h-24 w-32 rounded-xl object-cover" />
+                <button
+                  type="button"
+                  className="h-24 w-32 shrink-0 overflow-hidden rounded-xl text-left"
+                  onClick={() =>
+                    setViewerImage({
+                      src: primaryBike.image_url ?? '/hero-motorcycle.jpg',
+                      alt: `${primaryBike.brand} ${primaryBike.model}`,
+                    })
+                  }
+                >
+                  <img src={primaryBike.image_url ?? '/hero-motorcycle.jpg'} alt={primaryBike.model} className="h-full w-full object-cover transition hover:scale-[1.01]" />
+                </button>
                 <div>
                   <p className="font-semibold">
                     {primaryBike.brand} {primaryBike.model}
@@ -724,6 +734,13 @@ export function Profile() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ImageViewer
+        src={viewerImage?.src ?? null}
+        alt={viewerImage?.alt}
+        open={Boolean(viewerImage)}
+        onOpenChange={(open) => !open && setViewerImage(null)}
+      />
     </div>
   )
 }

@@ -93,10 +93,17 @@ export function MainLayout() {
   const avatarFallback = initials(profile?.full_name, user?.email)
 
   const pageTitle =
+    (location.pathname.startsWith('/app/routes/') ? 'Detalle de ruta' : null) ||
     navItems.find((item) => item.path === location.pathname)?.label ||
     sidebarItems.find((item) => item.path === location.pathname)?.label ||
     (location.pathname === '/app/admin' ? 'Administracion' : null) ||
     'Inicio'
+
+  const isItemActive = (path: string) => {
+    if (path === '/app/map' && location.pathname.startsWith('/app/routes/')) return true
+    if (path === '/app/messages' && location.pathname === '/app/community') return true
+    return location.pathname === path
+  }
 
   useEffect(() => {
     if (!supabase || !user) return
@@ -166,7 +173,7 @@ export function MainLayout() {
   }, [user?.id])
 
   return (
-    <div className="flex min-h-screen overflow-x-hidden bg-moto-dark text-white">
+    <div className="flex min-h-dvh overflow-x-hidden bg-moto-dark text-white">
       <aside className="fixed hidden h-full w-64 flex-col border-r border-white/5 bg-moto-darker lg:flex">
         <div className="border-b border-white/5 p-6">
           <NavLink to="/app/home">
@@ -180,9 +187,9 @@ export function MainLayout() {
             <NavLink
               key={item.path}
               to={item.path}
-              className={({ isActive }) =>
+              className={() =>
                 `flex items-center gap-3 rounded-xl px-3 py-3 transition-all duration-200 ${
-                  isActive ? 'bg-moto-orange text-moto-darker' : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                  isItemActive(item.path) ? 'bg-moto-orange text-moto-darker' : 'text-gray-400 hover:bg-white/5 hover:text-white'
                 }`
               }
             >
@@ -196,9 +203,9 @@ export function MainLayout() {
             <NavLink
               key={item.path}
               to={item.path}
-              className={({ isActive }) =>
+              className={() =>
                 `flex items-center gap-3 rounded-xl px-3 py-3 transition-all duration-200 ${
-                  isActive ? 'bg-moto-orange text-moto-darker' : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                  isItemActive(item.path) ? 'bg-moto-orange text-moto-darker' : 'text-gray-400 hover:bg-white/5 hover:text-white'
                 }`
               }
             >
@@ -209,9 +216,9 @@ export function MainLayout() {
           {isAdmin && (
             <NavLink
               to="/app/admin"
-              className={({ isActive }) =>
+              className={() =>
                 `flex items-center gap-3 rounded-xl px-3 py-3 transition-all duration-200 ${
-                  isActive ? 'bg-moto-orange text-moto-darker' : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                  isItemActive('/app/admin') ? 'bg-moto-orange text-moto-darker' : 'text-gray-400 hover:bg-white/5 hover:text-white'
                 }`
               }
             >
@@ -242,24 +249,24 @@ export function MainLayout() {
         </div>
       </aside>
 
-      <main className="flex min-h-screen flex-1 flex-col lg:ml-64">
+      <main className="min-w-0 flex min-h-dvh flex-1 flex-col lg:ml-64">
         <header className="sticky top-0 z-40 border-b border-white/5 bg-moto-dark/95 backdrop-blur-xl">
-          <div className="flex h-16 items-center justify-between px-4 lg:px-6">
+          <div className="flex min-h-16 items-center justify-between gap-2 px-3 py-2 lg:px-6">
             <div className="flex min-w-0 items-center gap-3 lg:hidden">
-              <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="rounded-lg p-2 hover:bg-white/5">
+              <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="shrink-0 rounded-lg p-2 hover:bg-white/5">
                 {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
               <NavLink to="/app/home">
                 <MotoCareLogo compact />
               </NavLink>
-              <h1 className="truncate text-base font-semibold">{pageTitle}</h1>
+              <h1 className="min-w-0 truncate text-sm font-semibold sm:text-base">{pageTitle}</h1>
             </div>
 
             <div className="hidden lg:block">
               <h1 className="text-xl font-semibold">{pageTitle}</h1>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex shrink-0 items-center gap-2 sm:gap-3">
               {showSearch ? (
                 <div className="hidden items-center gap-2 sm:flex">
                   <Input placeholder="Buscar..." className="w-64 border-white/10 bg-moto-darker" autoFocus />
@@ -345,7 +352,7 @@ export function MainLayout() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-x-hidden overflow-y-auto">
+        <div className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
           <Outlet />
         </div>
 
@@ -355,8 +362,8 @@ export function MainLayout() {
               <NavLink
                 key={item.path}
                 to={item.path}
-                className={({ isActive }) =>
-                  `flex h-full min-w-0 flex-col items-center justify-center gap-1 ${isActive ? 'text-moto-orange' : 'text-gray-400'}`
+                className={() =>
+                  `flex h-full min-w-0 flex-col items-center justify-center gap-1 ${isItemActive(item.path) ? 'text-moto-orange' : 'text-gray-400'}`
                 }
               >
                 <div className="relative">
@@ -369,7 +376,7 @@ export function MainLayout() {
         </nav>
 
         {isMobileMenuOpen && (
-          <div className="fixed inset-0 z-50 bg-moto-dark lg:hidden">
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-moto-dark pb-8 lg:hidden">
             <div className="flex items-center justify-between border-b border-white/5 p-4">
               <span className="text-lg font-bold">Menu</span>
               <button onClick={() => setIsMobileMenuOpen(false)} className="p-2">
@@ -382,9 +389,9 @@ export function MainLayout() {
                   key={item.path}
                   to={item.path}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={({ isActive }) =>
+                  className={() =>
                     `flex items-center gap-4 rounded-xl px-4 py-4 ${
-                      isActive ? 'bg-moto-orange text-moto-darker' : 'text-gray-400 hover:bg-white/5'
+                      isItemActive(item.path) ? 'bg-moto-orange text-moto-darker' : 'text-gray-400 hover:bg-white/5'
                     }`
                   }
                 >

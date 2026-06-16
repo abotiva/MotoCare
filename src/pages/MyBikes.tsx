@@ -26,6 +26,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { ImageViewer } from '@/components/ImageViewer'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import type { MaintenanceRecord, MaintenanceSuggestion, Motorcycle, MotorcycleDocument, Reminder } from '@/types/database'
@@ -219,6 +220,7 @@ export function MyBikes() {
   const [editingReminder, setEditingReminder] = useState<Reminder | null>(null)
   const [completingReminder, setCompletingReminder] = useState<Reminder | null>(null)
   const [selectedRecordDetail, setSelectedRecordDetail] = useState<MaintenanceRecord | null>(null)
+  const [viewerImage, setViewerImage] = useState<{ src: string; alt: string } | null>(null)
   const [bikeForm, setBikeForm] = useState<BikeForm>(emptyBikeForm)
   const [serviceForm, setServiceForm] = useState<ServiceForm>(emptyServiceForm)
   const [reminderForm, setReminderForm] = useState<ReminderForm>(emptyReminderForm)
@@ -1170,7 +1172,18 @@ export function MyBikes() {
             <div className="grid gap-6 lg:grid-cols-3">
               <Card className="overflow-hidden border-white/5 bg-moto-gray lg:col-span-2">
                 <div className="relative min-h-[25rem] overflow-hidden sm:min-h-80">
-                  <img src={selectedBike.image_url ?? '/hero-motorcycle.jpg'} alt={selectedBike.model} className="h-full w-full object-cover" />
+                  <button
+                    type="button"
+                    className="absolute inset-0 h-full w-full text-left"
+                    onClick={() =>
+                      setViewerImage({
+                        src: selectedBike.image_url ?? '/hero-motorcycle.jpg',
+                        alt: `${selectedBike.brand} ${selectedBike.model}`,
+                      })
+                    }
+                  >
+                    <img src={selectedBike.image_url ?? '/hero-motorcycle.jpg'} alt={selectedBike.model} className="h-full w-full object-cover transition hover:scale-[1.01]" />
+                  </button>
                   <div className="absolute inset-0 bg-gradient-to-t from-moto-gray via-moto-gray/30 to-transparent" />
                   <div className="absolute inset-x-4 bottom-4">
                     <div className="space-y-4">
@@ -1584,7 +1597,7 @@ export function MyBikes() {
             <DialogDescription className="text-gray-400">{editingBike ? 'Actualiza la hoja de vida y vencimientos.' : 'Crea la hoja de vida inicial de tu moto.'}</DialogDescription>
           </DialogHeader>
           <form className="mt-4 space-y-4" onSubmit={editingBike ? handleUpdateBike : handleCreateBike}>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <label>
                 <span className="mb-1 block text-sm text-gray-400">Marca</span>
                 <input className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={bikeForm.brand} onChange={(e) => setBikeForm({ ...bikeForm, brand: e.target.value })} placeholder="BMW" required />
@@ -1594,7 +1607,7 @@ export function MyBikes() {
                 <input className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={bikeForm.model} onChange={(e) => setBikeForm({ ...bikeForm, model: e.target.value })} placeholder="F 850 GS" required />
               </label>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <label>
                 <span className="mb-1 block text-sm text-gray-400">Ano</span>
                 <input type="number" className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={bikeForm.year} onChange={(e) => setBikeForm({ ...bikeForm, year: e.target.value })} placeholder="2024" />
@@ -1604,7 +1617,7 @@ export function MyBikes() {
                 <input className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={bikeForm.plate} onChange={(e) => setBikeForm({ ...bikeForm, plate: e.target.value.toUpperCase() })} placeholder="ABC123" />
               </label>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <label>
                 <span className="mb-1 block text-sm text-gray-400">Kilometraje</span>
                 <input type="number" className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={bikeForm.mileage} onChange={(e) => setBikeForm({ ...bikeForm, mileage: e.target.value })} placeholder="12500" />
@@ -1614,7 +1627,7 @@ export function MyBikes() {
                 <input className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={bikeForm.color} onChange={(e) => setBikeForm({ ...bikeForm, color: e.target.value })} placeholder="Negro" />
               </label>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <label>
                 <span className="mb-1 block text-sm text-gray-400">Vence SOAT</span>
                 <input type="date" className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={bikeForm.soat_expires_on} onChange={(e) => setBikeForm({ ...bikeForm, soat_expires_on: e.target.value })} />
@@ -1707,7 +1720,7 @@ export function MyBikes() {
                 <p className="text-sm text-gray-400">Servicio</p>
                 <p className="text-xl font-bold text-green-400">{selectedRecordDetail.service_type}</p>
               </div>
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid gap-4 text-sm sm:grid-cols-2">
                 <div className="rounded-xl border border-white/10 bg-moto-darker p-3">
                   <p className="text-gray-400">Fecha</p>
                   <p className="font-medium">{selectedRecordDetail.service_date}</p>
@@ -1776,7 +1789,7 @@ export function MyBikes() {
               <span className="mb-1 block text-sm text-gray-400">Tipo de servicio</span>
               <input className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={serviceForm.service_type} onChange={(e) => setServiceForm({ ...serviceForm, service_type: e.target.value })} required />
             </label>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <label>
                 <span className="mb-1 block text-sm text-gray-400">Fecha</span>
                 <input type="date" className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={serviceForm.service_date} onChange={(e) => setServiceForm({ ...serviceForm, service_date: e.target.value })} required />
@@ -1806,7 +1819,7 @@ export function MyBikes() {
             </label>
             <div className="rounded-xl border border-moto-orange/20 bg-moto-orange/10 p-3">
               <p className="mb-3 text-sm font-medium text-moto-orange">Proximo servicio</p>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <label>
                   <span className="mb-1 block text-sm text-gray-400">A los km</span>
                   <input
@@ -2130,6 +2143,12 @@ export function MyBikes() {
           </form>
         </DialogContent>
       </Dialog>
+      <ImageViewer
+        src={viewerImage?.src ?? null}
+        alt={viewerImage?.alt}
+        open={Boolean(viewerImage)}
+        onOpenChange={(open) => !open && setViewerImage(null)}
+      />
     </div>
   )
 }

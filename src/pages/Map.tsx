@@ -660,7 +660,7 @@ export function Map() {
               <span className="mb-1 block text-sm text-gray-400">Nombre</span>
               <input className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={routeForm.title} onChange={(event) => setRouteForm({ ...routeForm, title: event.target.value })} placeholder="Ruta a Guatavita" required />
             </label>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <label>
                 <span className="mb-1 block text-sm text-gray-400">Origen</span>
                 <input className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={routeForm.origin} onChange={(event) => setRouteForm({ ...routeForm, origin: event.target.value })} placeholder="Bogota" />
@@ -699,7 +699,7 @@ export function Map() {
                 </Button>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <label>
                 <span className="mb-1 block text-sm text-gray-400">Distancia km</span>
                 <input type="number" min={0} className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={routeForm.distance_km} onChange={(event) => setRouteForm({ ...routeForm, distance_km: event.target.value })} placeholder="120" />
@@ -709,7 +709,7 @@ export function Map() {
                 <input type="number" min={0} className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={routeForm.duration_minutes} onChange={(event) => setRouteForm({ ...routeForm, duration_minutes: event.target.value })} placeholder="165" />
               </label>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <label>
                 <span className="mb-1 block text-sm text-gray-400">Fecha inicio</span>
                 <input type="date" className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={routeForm.start_date} onChange={(event) => setRouteForm({ ...routeForm, start_date: event.target.value })} />
@@ -766,7 +766,7 @@ export function Map() {
                   {selectedRoute.origin || 'Origen sin definir'} → {selectedRoute.destination || 'Destino sin definir'}
                 </p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="rounded-xl border border-white/10 bg-moto-darker p-4">
                   <p className="text-sm text-gray-400">Distancia</p>
                   <p className="mt-1 font-semibold">{selectedRoute.distance_km ? `${selectedRoute.distance_km.toLocaleString()} km` : 'Sin definir'}</p>

@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ImageViewer } from '@/components/ImageViewer'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import type { Club, ClubPostWithAuthor, PostCommentWithAuthor, PostWithAuthor, RoutePlan } from '@/types/database'
@@ -106,6 +107,7 @@ export function Community() {
   const [likingPostId, setLikingPostId] = useState<string | null>(null)
   const [commentingPostId, setCommentingPostId] = useState<string | null>(null)
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null)
+  const [viewerImage, setViewerImage] = useState<{ src: string; alt: string } | null>(null)
 
   const myPostsCount = useMemo(() => posts.filter((post) => post.author_id === user?.id).length, [posts, user?.id])
   const routePostsCount = useMemo(() => posts.filter((post) => post.route_id).length, [posts])
@@ -807,7 +809,14 @@ export function Community() {
                     {postImages.length > 0 && (
                       <div className="mt-4 grid gap-2" style={{ gridTemplateColumns: postImages.length === 1 ? '1fr' : 'repeat(auto-fit, minmax(160px, 1fr))' }}>
                         {postImages.map((imageUrl, index) => (
-                          <img key={`${post.id}-${imageUrl}`} src={imageUrl} alt={`Publicacion ${index + 1}`} className="max-h-96 w-full rounded-xl object-cover" />
+                          <button
+                            key={`${post.id}-${imageUrl}`}
+                            type="button"
+                            className="overflow-hidden rounded-xl text-left"
+                            onClick={() => setViewerImage({ src: imageUrl, alt: `Publicacion ${index + 1}` })}
+                          >
+                            <img src={imageUrl} alt={`Publicacion ${index + 1}`} className="max-h-96 w-full object-cover transition hover:scale-[1.01]" />
+                          </button>
                         ))}
                       </div>
                     )}
@@ -1179,6 +1188,12 @@ export function Community() {
           )}
         </TabsContent>
       </Tabs>
+      <ImageViewer
+        src={viewerImage?.src ?? null}
+        alt={viewerImage?.alt}
+        open={Boolean(viewerImage)}
+        onOpenChange={(open) => !open && setViewerImage(null)}
+      />
     </div>
   )
 }

@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { ImageViewer } from '@/components/ImageViewer'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import type { Club, ClubInvitation, ClubMemberWithProfile, Profile } from '@/types/database'
@@ -74,6 +75,7 @@ export function Clubs() {
   const [isUploading, setIsUploading] = useState(false)
   const [userPlan, setUserPlan] = useState<UserPlan>('free')
   const [isLoadingPlan, setIsLoadingPlan] = useState(true)
+  const [viewerImage, setViewerImage] = useState<{ src: string; alt: string } | null>(null)
 
   const selectedClub = useMemo(
     () => clubs.find((club) => club.id === selectedClubId) ?? clubs[0] ?? null,
@@ -562,7 +564,13 @@ export function Clubs() {
                 <div className="flex flex-col gap-5 md:flex-row md:items-start">
                   <div className="relative h-32 w-32 shrink-0 overflow-hidden rounded-2xl bg-moto-darker">
                     {selectedClub.image_url ? (
-                      <img src={selectedClub.image_url} alt={selectedClub.name} className="h-full w-full object-cover" />
+                      <button
+                        type="button"
+                        className="h-full w-full text-left"
+                        onClick={() => setViewerImage({ src: selectedClub.image_url!, alt: selectedClub.name })}
+                      >
+                        <img src={selectedClub.image_url} alt={selectedClub.name} className="h-full w-full object-cover transition hover:scale-[1.01]" />
+                      </button>
                     ) : (
                       <div className="grid h-full w-full place-items-center text-3xl font-bold text-moto-orange">{initials(selectedClub.name)}</div>
                     )}
@@ -745,6 +753,12 @@ export function Clubs() {
           </Card>
         )}
       </div>
+      <ImageViewer
+        src={viewerImage?.src ?? null}
+        alt={viewerImage?.alt}
+        open={Boolean(viewerImage)}
+        onOpenChange={(open) => !open && setViewerImage(null)}
+      />
     </div>
   )
 }

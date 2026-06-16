@@ -39,6 +39,10 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Poppins', system-ui, sans-serif;
+    overflow-x: hidden;
+  }
+  #root {
+    min-height: 100dvh;
   }
 }
 
@@ -54,6 +58,13 @@
   }
   .glass-dark {
     @apply bg-black/20 backdrop-blur-xl border border-white/5;
+  }
+}
+
+@media (max-width: 640px) {
+  [role='dialog'] {
+    max-height: calc(100dvh - 1.5rem);
+    overflow-y: auto;
   }
 }
 

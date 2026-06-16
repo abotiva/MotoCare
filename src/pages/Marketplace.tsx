@@ -114,10 +114,10 @@ export function Marketplace() {
   )
 
   return (
-    <div className="max-w-7xl mx-auto p-4 lg:p-6">
+    <div className="mx-auto max-w-7xl p-4 pb-24 lg:p-6">
       {/* Header */}
       <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
-        <div>
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold mb-2">Marketplace</h1>
           <p className="text-gray-400">Compra y vende motos, repuestos y equipamiento</p>
         </div>
@@ -152,7 +152,7 @@ export function Marketplace() {
       </Card>
 
       {/* Search & Filters */}
-      <div className="flex flex-col lg:flex-row gap-4 mb-6">
+      <div className="mb-6 flex flex-col gap-4 lg:flex-row">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
           <Input
@@ -163,25 +163,25 @@ export function Marketplace() {
             className="pl-10 bg-moto-gray border-white/5 opacity-70"
           />
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="border-white/10" disabled>
+        <div className="grid grid-cols-2 gap-2 sm:flex">
+          <Button variant="outline" className="w-full border-white/10 sm:w-auto" disabled>
             <MapPin className="w-4 h-4 mr-2" />
             Ubicación
           </Button>
-          <Button variant="outline" className="border-white/10" disabled>
+          <Button variant="outline" className="w-full border-white/10 sm:w-auto" disabled>
             <Filter className="w-4 h-4 mr-2" />
             Filtros
           </Button>
-          <div className="flex border border-white/10 rounded-lg overflow-hidden">
+          <div className="col-span-2 flex overflow-hidden rounded-lg border border-white/10 sm:col-span-1">
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2 ${viewMode === 'grid' ? 'bg-moto-orange text-white' : 'text-gray-400'}`}
+              className={`flex flex-1 justify-center p-2 sm:flex-none ${viewMode === 'grid' ? 'bg-moto-orange text-white' : 'text-gray-400'}`}
             >
               <Grid3X3 className="w-5 h-5" />
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`p-2 ${viewMode === 'list' ? 'bg-moto-orange text-white' : 'text-gray-400'}`}
+              className={`flex flex-1 justify-center p-2 sm:flex-none ${viewMode === 'list' ? 'bg-moto-orange text-white' : 'text-gray-400'}`}
             >
               <List className="w-5 h-5" />
             </button>
@@ -210,8 +210,8 @@ export function Marketplace() {
 
       {/* Featured Section */}
       <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 className="flex min-w-0 items-center gap-2 text-lg font-semibold">
             <TrendingUp className="w-5 h-5 text-moto-orange" />
             Destacados
           </h2>
@@ -232,15 +232,15 @@ export function Marketplace() {
                 </button>
               </div>
               <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
+                <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
                     <h3 className="font-semibold text-lg">{listing.title}</h3>
                     <p className="text-sm text-gray-400 flex items-center gap-1">
                       <MapPin className="w-4 h-4" />
                       {listing.location}
                     </p>
                   </div>
-                  <div className="text-right">
+                  <div className="shrink-0 sm:text-right">
                     <p className="text-xl font-bold text-moto-orange">{formatPrice(listing.price)}</p>
                     {listing.originalPrice && (
                       <p className="text-sm text-gray-500 line-through">{formatPrice(listing.originalPrice)}</p>
@@ -251,13 +251,13 @@ export function Marketplace() {
                   <Badge variant="secondary">{listing.condition}</Badge>
                   {listing.mileage && <span>{listing.mileage}</span>}
                 </div>
-                <div className="flex items-center justify-between pt-3 border-t border-white/5">
-                  <div className="flex items-center gap-2">
+                <div className="flex flex-col gap-3 border-t border-white/5 pt-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 items-center gap-2">
                     <div className="w-8 h-8 rounded-full bg-moto-gray flex items-center justify-center">
                       <span className="text-sm font-medium">{listing.seller.name[0]}</span>
                     </div>
-                    <div>
-                      <p className="text-sm">{listing.seller.name}</p>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm">{listing.seller.name}</p>
                       <div className="flex items-center gap-1 text-xs text-gray-500">
                         <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
                         {listing.seller.rating}
@@ -265,7 +265,7 @@ export function Marketplace() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="grid grid-cols-2 gap-2 sm:flex">
                     <Button size="sm" variant="outline" className="border-white/10" disabled>
                       <MessageCircle className="w-4 h-4" />
                     </Button>
@@ -283,15 +283,15 @@ export function Marketplace() {
       {/* All Listings */}
       <div>
         <h2 className="text-lg font-semibold mb-4">Publicaciones recientes</h2>
-        <div className={viewMode === 'grid' ? 'grid sm:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-4'}>
+        <div className={viewMode === 'grid' ? 'grid gap-4 sm:grid-cols-2 lg:grid-cols-3' : 'space-y-4'}>
           {filteredListings.filter(l => !l.featured).map((listing) => (
             <Card 
               key={listing.id} 
               className={`bg-moto-gray border-white/5 overflow-hidden opacity-75 ${
-                viewMode === 'list' ? 'flex' : ''
+                viewMode === 'list' ? 'sm:flex' : ''
               }`}
             >
-              <div className={`relative overflow-hidden ${viewMode === 'list' ? 'w-48 flex-shrink-0' : 'h-48'}`}>
+              <div className={`relative overflow-hidden ${viewMode === 'list' ? 'h-48 sm:w-48 sm:flex-shrink-0' : 'h-48'}`}>
                 <img 
                   src={listing.image} 
                   alt={listing.title}
@@ -302,23 +302,23 @@ export function Marketplace() {
                 </button>
               </div>
               <CardContent className={`p-4 ${viewMode === 'list' ? 'flex-1' : ''}`}>
-                <div className="flex items-start justify-between mb-2">
-                  <div>
+                <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
                     <h3 className="font-semibold">{listing.title}</h3>
                     <p className="text-sm text-gray-400 flex items-center gap-1">
                       <MapPin className="w-3 h-3" />
                       {listing.location}
                     </p>
                   </div>
-                  <p className="text-lg font-bold text-moto-orange">{formatPrice(listing.price)}</p>
+                  <p className="shrink-0 text-lg font-bold text-moto-orange">{formatPrice(listing.price)}</p>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-400 mb-3">
                   <Badge variant="secondary" className="text-xs">{listing.condition}</Badge>
                   {listing.mileage && <span className="text-xs">{listing.mileage}</span>}
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">{listing.seller.name}</span>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <span className="truncate text-sm">{listing.seller.name}</span>
                     {listing.seller.verified && (
                       <Badge variant="secondary" className="text-[10px]">Verificado</Badge>
                     )}

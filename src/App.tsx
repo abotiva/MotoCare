@@ -35,12 +35,15 @@ function App() {
           <Route path="routes/:routeId" element={<RouteDetail />} />
           <Route path="marketplace" element={<Marketplace />} />
           <Route path="messages" element={<Messages />} />
+          <Route path="community" element={<Navigate to="/app/messages" replace />} />
           <Route path="clubs" element={<Clubs />} />
           <Route path="profile" element={<Profile />} />
           <Route path="my-bikes" element={<MyBikes />} />
           <Route path="settings" element={<Settings />} />
           <Route path="admin" element={<Admin />} />
+          <Route path="*" element={<Navigate to="/app/home" replace />} />
         </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <InstallPrompt />
       <Toaster richColors position="top-right" />

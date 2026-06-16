@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { ImageViewer } from '@/components/ImageViewer'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import type { Motorcycle, Notification, Reminder, RoutePlan } from '@/types/database'
@@ -124,6 +125,7 @@ export function Home() {
   const [reminders, setReminders] = useState<Reminder[]>([])
   const [routes, setRoutes] = useState<RoutePlan[]>([])
   const [notifications, setNotifications] = useState<Notification[]>([])
+  const [viewerImage, setViewerImage] = useState<{ src: string; alt: string } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   const primaryMotorcycle = useMemo(() => {
@@ -369,7 +371,13 @@ export function Home() {
               {primaryMotorcycle ? (
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                   {primaryMotorcycle.image_url ? (
-                    <img src={primaryMotorcycle.image_url} alt={primaryMotorcycle.model} className="h-32 w-full rounded-xl object-cover sm:w-48" />
+                    <button
+                      type="button"
+                      className="h-32 w-full overflow-hidden rounded-xl text-left sm:w-48"
+                      onClick={() => setViewerImage({ src: primaryMotorcycle.image_url!, alt: primaryMotorcycle.model })}
+                    >
+                      <img src={primaryMotorcycle.image_url} alt={primaryMotorcycle.model} className="h-full w-full object-cover transition hover:scale-[1.01]" />
+                    </button>
                   ) : (
                     <div className="grid h-32 w-full place-items-center rounded-xl bg-moto-darker sm:w-48">
                       <Bike className="h-12 w-12 text-gray-600" />
@@ -536,6 +544,12 @@ export function Home() {
           </Card>
         </div>
       </div>
+      <ImageViewer
+        src={viewerImage?.src ?? null}
+        alt={viewerImage?.alt}
+        open={Boolean(viewerImage)}
+        onOpenChange={(open) => !open && setViewerImage(null)}
+      />
     </div>
   )
 }
