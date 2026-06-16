@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { AlertTriangle, Bike, CreditCard, Database, Loader2, Lock, Route, Search, Shield, SlidersHorizontal, Users } from 'lucide-react'
+import { AlertTriangle, Bike, ChevronDown, ChevronUp, CreditCard, Database, Loader2, Lock, Route, Search, Shield, SlidersHorizontal, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
@@ -282,32 +282,82 @@ function UsersTable({
   savingLicenseUserId: string | null
   onUpdateLicense: (user: AdminUserRow, plan: UserPlan, status?: UserPlanStatus) => void
 }) {
+  const [openUserId, setOpenUserId] = useState<string | null>(null)
+
   return (
-    <AdminTable title="Usuarios" description="Los perfiles privados aparecen enmascarados; solo se muestran metricas operativas.">
-      {users.map((user) => (
-        <div key={user.id} className="grid gap-3 border-t border-white/5 p-4 xl:grid-cols-[minmax(0,1.4fr)_220px_110px_110px_110px_110px] xl:items-center">
-          <div className="min-w-0">
-            <div className="mb-1 flex flex-wrap items-center gap-2">
-              <p className="truncate font-medium">{user.display_name || 'Motero MotoCare'}</p>
-              <Badge className={user.is_public ? 'bg-green-500/15 text-green-300' : 'bg-white/10 text-gray-300'}>
-                {user.is_public ? 'Publico' : 'Privado'}
-              </Badge>
-              <Badge className={planBadgeClasses[user.plan]}>{planLabels[user.plan]}</Badge>
+    <AdminTable title="Usuarios" description="Listado basico para revisar rapido. Abra el detalle para licencia, metricas y datos operativos.">
+      {users.length > 0 ? (
+        users.map((user) => {
+          const isOpen = openUserId === user.id
+
+          return (
+            <div key={user.id} className="border-t border-white/5">
+              <div className="grid gap-3 p-4 md:grid-cols-[minmax(0,1fr)_140px_120px_120px] md:items-center">
+                <div className="min-w-0">
+                  <div className="mb-1 flex flex-wrap items-center gap-2">
+                    <p className="truncate font-medium">{user.display_name || 'Motero MotoCare'}</p>
+                    <Badge className={user.is_public ? 'bg-green-500/15 text-green-300' : 'bg-white/10 text-gray-300'}>
+                      {user.is_public ? 'Publico' : 'Privado'}
+                    </Badge>
+                  </div>
+                  <p className="truncate text-sm text-gray-400">@{user.username || `usuario-${shortId(user.id)}`}</p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 md:block">
+                  <p className="text-xs text-gray-500">Licencia</p>
+                  <Badge className={planBadgeClasses[user.plan]}>{planLabels[user.plan]}</Badge>
+                </div>
+
+                <AdminValue label="Estado" value={planStatusLabels[user.plan_status]} />
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full border-white/10 md:w-auto"
+                  onClick={() => setOpenUserId((current) => (current === user.id ? null : user.id))}
+                >
+                  {isOpen ? <ChevronUp className="mr-2 h-4 w-4" /> : <ChevronDown className="mr-2 h-4 w-4" />}
+                  {isOpen ? 'Ocultar' : 'Ver detalle'}
+                </Button>
+              </div>
+
+              {isOpen && (
+                <div className="border-t border-white/5 bg-moto-darker/50 p-4">
+                  <div className="grid gap-4 xl:grid-cols-[260px_minmax(0,1fr)]">
+                    <div>
+                      <h3 className="mb-3 text-sm font-semibold text-gray-300">Licencia</h3>
+                      <LicenseEditor
+                        user={user}
+                        isSaving={savingLicenseUserId === user.id}
+                        onUpdateLicense={onUpdateLicense}
+                      />
+                    </div>
+
+                    <div>
+                      <h3 className="mb-3 text-sm font-semibold text-gray-300">Datos operativos</h3>
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        <AdminValue label="Ciudad" value={user.city || 'No visible'} />
+                        <AdminValue label="Tipo de motero" value={user.rider_type || 'No visible'} />
+                        <AdminValue label="Fecha de alta" value={formatDate(user.created_at)} />
+                        <AdminValue label="Motos" value={user.motorcycles_count.toLocaleString()} />
+                        <AdminValue label="Rutas" value={user.routes_count.toLocaleString()} />
+                        <AdminValue label="Publicaciones" value={user.posts_count.toLocaleString()} />
+                        <AdminValue label="Clubes" value={user.clubs_count.toLocaleString()} />
+                        <AdminValue label="ID interno" value={shortId(user.id)} muted />
+                        <AdminValue label="Vencimiento" value={user.plan_expires_at ? formatDate(user.plan_expires_at) : 'Sin vencimiento'} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-            <p className="truncate text-sm text-gray-400">@{user.username || `usuario-${shortId(user.id)}`}</p>
-            <p className="mt-1 text-xs text-gray-500">Alta: {formatDate(user.created_at)}</p>
-          </div>
-          <LicenseEditor
-            user={user}
-            isSaving={savingLicenseUserId === user.id}
-            onUpdateLicense={onUpdateLicense}
-          />
-          <AdminValue label="Ciudad" value={user.city || 'No visible'} />
-          <AdminValue label="Motos" value={user.motorcycles_count.toLocaleString()} />
-          <AdminValue label="Rutas" value={user.routes_count.toLocaleString()} />
-          <AdminValue label="Clubes" value={user.clubs_count.toLocaleString()} />
+          )
+        })
+      ) : (
+        <div className="border-t border-white/5 p-6 text-center text-sm text-gray-400">
+          No hay usuarios para mostrar con el filtro actual.
         </div>
-      ))}
+      )}
     </AdminTable>
   )
 }
