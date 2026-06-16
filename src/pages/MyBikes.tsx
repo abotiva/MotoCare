@@ -28,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ImageViewer } from '@/components/ImageViewer'
 import { useAuth } from '@/contexts/AuthContext'
+import { useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
 import type { MaintenanceRecord, MaintenanceSuggestion, Motorcycle, MotorcycleDocument, Reminder } from '@/types/database'
 
@@ -79,8 +80,6 @@ type CompletionForm = {
   next_due_date: string
   notes: string
 }
-
-type UserPlan = 'free' | 'pro' | 'premium'
 
 const emptyBikeForm: BikeForm = {
   brand: '',
@@ -197,6 +196,7 @@ function ReportLine({ label, value }: { label: string; value: string }) {
 
 export function MyBikes() {
   const { user } = useAuth()
+  const { hasPlan, isLoadingSubscription } = useSubscription()
   const [motorcycles, setMotorcycles] = useState<Motorcycle[]>([])
   const [records, setRecords] = useState<MaintenanceRecord[]>([])
   const [reminders, setReminders] = useState<Reminder[]>([])
@@ -206,8 +206,6 @@ export function MyBikes() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [uploadingKey, setUploadingKey] = useState<string | null>(null)
-  const [userPlan, setUserPlan] = useState<UserPlan>('free')
-  const [isLoadingPlan, setIsLoadingPlan] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showAddBike, setShowAddBike] = useState(false)
   const [showAddService, setShowAddService] = useState(false)
@@ -234,7 +232,7 @@ export function MyBikes() {
   }
 
   const isNegativeNumber = (value: string) => value.trim() !== '' && Number(value) < 0
-  const canViewMaintenanceReports = userPlan === 'pro' || userPlan === 'premium'
+  const canViewMaintenanceReports = hasPlan('pro')
 
   const selectedBike = useMemo(
     () => motorcycles.find((motorcycle) => motorcycle.id === selectedId) ?? motorcycles[0] ?? null,
@@ -343,9 +341,7 @@ export function MyBikes() {
       setIsLoading(true)
       setError(null)
 
-      setIsLoadingPlan(true)
-
-      const [motorcyclesResult, recordsResult, remindersResult, documentsResult, suggestionsResult, subscriptionResult] = await Promise.all([
+      const [motorcyclesResult, recordsResult, remindersResult, documentsResult, suggestionsResult] = await Promise.all([
         client.from('motorcycles').select('*').eq('owner_id', user.id).order('created_at', { ascending: false }),
         client.from('maintenance_records').select('*').eq('owner_id', user.id).order('service_date', { ascending: false }),
         client.from('reminders').select('*').eq('owner_id', user.id).order('due_date', { ascending: true, nullsFirst: false }),
@@ -356,7 +352,6 @@ export function MyBikes() {
           .eq('is_active', true)
           .order('sort_order', { ascending: true })
           .order('name', { ascending: true }),
-        client.rpc('current_user_subscription'),
       ])
 
       if (motorcyclesResult.error || recordsResult.error || remindersResult.error || documentsResult.error) {
@@ -376,14 +371,6 @@ export function MyBikes() {
         setMaintenanceSuggestions((suggestionsResult.data ?? []) as MaintenanceSuggestion[])
         setSelectedId((current) => current ?? nextMotorcycles[0]?.id ?? null)
       }
-
-      if (subscriptionResult.error) {
-        setUserPlan('free')
-      } else {
-        const subscription = Array.isArray(subscriptionResult.data) ? subscriptionResult.data[0] : null
-        setUserPlan((subscription?.plan as UserPlan | undefined) ?? 'free')
-      }
-      setIsLoadingPlan(false)
 
       setIsLoading(false)
     }
@@ -1332,7 +1319,7 @@ export function MyBikes() {
                     </TabsContent>
 
                     <TabsContent value="reports" className="space-y-4">
-                      {isLoadingPlan ? (
+                      {isLoadingSubscription ? (
                         <div className="grid min-h-48 place-items-center rounded-xl border border-white/5 bg-moto-darker text-moto-orange">
                           <Loader2 className="h-7 w-7 animate-spin" />
                         </div>

@@ -14,6 +14,7 @@ import { Profile } from './pages/Profile'
 import { MyBikes } from './pages/MyBikes'
 import { Settings } from './pages/Settings'
 import { Admin } from './pages/Admin'
+import { Notifications } from './pages/Notifications'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { InstallPrompt } from './components/InstallPrompt'
 import { Toaster } from './components/ui/sonner'
@@ -40,6 +41,7 @@ function App() {
           <Route path="profile" element={<Profile />} />
           <Route path="my-bikes" element={<MyBikes />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="notifications" element={<Notifications />} />
           <Route path="admin" element={<Admin />} />
           <Route path="*" element={<Navigate to="/app/home" replace />} />
         </Route>

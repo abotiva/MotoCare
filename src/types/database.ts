@@ -14,6 +14,18 @@ export type Profile = {
   updated_at: string
 }
 
+export type UserPlan = 'free' | 'pro' | 'premium'
+
+export type UserPlanStatus = 'active' | 'trialing' | 'past_due' | 'canceled'
+
+export type UserSubscription = {
+  user_id: string
+  plan: UserPlan
+  status: UserPlanStatus
+  expires_at: string | null
+  updated_at: string | null
+}
+
 export type Motorcycle = {
   id: string
   owner_id: string
@@ -111,6 +123,7 @@ export type Notification = {
   read_at: string | null
   created_at: string
   routes?: {
+    id?: string
     title: string
     start_date: string | null
     end_date: string | null
@@ -277,8 +290,8 @@ export type AdminUserRow = {
   city: string | null
   rider_type: string | null
   is_public: boolean
-  plan: 'free' | 'pro' | 'premium'
-  plan_status: 'active' | 'trialing' | 'past_due' | 'canceled'
+  plan: UserPlan
+  plan_status: UserPlanStatus
   plan_expires_at: string | null
   created_at: string
   motorcycles_count: number

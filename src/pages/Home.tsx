@@ -431,7 +431,9 @@ export function Home() {
             <CardContent className="p-5">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <h2 className="text-lg font-semibold">Notificaciones</h2>
-                <Bell className="h-5 w-5 text-moto-orange" />
+                <Button asChild size="sm" variant="outline" className="border-white/10">
+                  <Link to="/app/notifications">Ver todas</Link>
+                </Button>
               </div>
 
               {notifications.length > 0 ? (

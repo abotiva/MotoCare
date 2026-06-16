@@ -36,6 +36,7 @@ const navItems = [
 
 const sidebarItems = [
   { path: '/app/profile', icon: User, label: 'Mi perfil' },
+  { path: '/app/notifications', icon: Bell, label: 'Notificaciones' },
   { path: '/app/my-bikes', icon: Bike, label: 'Mi moto' },
   { path: '/app/settings', icon: Settings, label: 'Ajustes' },
 ]
@@ -303,7 +304,7 @@ export function MainLayout() {
                         <p className="font-semibold">Notificaciones</p>
                         <p className="text-xs text-gray-500">{unreadNotifications} pendientes</p>
                       </div>
-                      <Link to="/app/home" className="text-sm font-medium text-moto-orange hover:text-moto-orange-dark">
+                      <Link to="/app/notifications" className="text-sm font-medium text-moto-orange hover:text-moto-orange-dark">
                         Ver todas
                       </Link>
                     </div>
@@ -315,7 +316,7 @@ export function MainLayout() {
                           return (
                             <Link
                               key={notification.id}
-                              to="/app/home"
+                              to="/app/notifications"
                               className="block rounded-xl p-3 transition-colors hover:bg-white/5"
                             >
                               <p className="line-clamp-1 text-sm font-semibold">{preview.title}</p>
@@ -332,7 +333,7 @@ export function MainLayout() {
 
                     <div className="border-t border-white/10 p-3">
                       <Link
-                        to="/app/home"
+                        to="/app/notifications"
                         className="block rounded-xl bg-moto-orange px-3 py-2 text-center text-sm font-semibold text-moto-darker transition-colors hover:bg-moto-orange-dark"
                       >
                         Gestionar notificaciones
