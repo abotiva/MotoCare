@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -6,7 +6,6 @@ import {
   Bike,
   Bookmark,
   ChevronRight,
-  Database,
   KeyRound,
   LogOut,
   Mail,
@@ -23,8 +22,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { useAuth } from '@/contexts/AuthContext'
-import { appVersion, buildTime } from '@/lib/appVersion'
-import { supabase, supabaseUrl } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 
 type PreferenceKey = 'maintenance_alerts' | 'community_alerts' | 'route_alerts' | 'email_summary' | 'public_profile'
 
@@ -100,10 +98,6 @@ export function Settings() {
 
   const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Motero MotoCare'
   const username = profile?.username || user?.email?.split('@')[0] || 'motocare'
-  const projectRef = useMemo(() => {
-    if (!supabaseUrl) return 'Sin configurar'
-    return supabaseUrl.replace('https://', '').split('.')[0]
-  }, [])
 
   useEffect(() => {
     setPreferences(loadPreferences())
@@ -250,38 +244,6 @@ export function Settings() {
               <QuickLink icon={Bike} label="Mi moto" description="Motos, documentos y mantenimientos" to="/app/my-bikes" />
               <QuickLink icon={Route} label="Rutas" description="Crear, editar y guardar rutas" to="/app/map" />
               <QuickLink icon={Bookmark} label="Explorar" description="Rutas publicas y guardadas" to="/app/explore" />
-            </CardContent>
-          </Card>
-
-          <Card className="border-white/5 bg-moto-gray py-0">
-            <CardContent className="p-5">
-              <div className="mb-4 flex items-center gap-3">
-                <div className="grid h-10 w-10 place-items-center rounded-xl bg-moto-orange/20">
-                  <Database className="h-5 w-5 text-moto-orange" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">Datos de la app</h3>
-                  <p className="text-sm text-gray-400">Estado tecnico del MVP</p>
-                </div>
-              </div>
-              <div className="space-y-3 text-sm">
-                <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-2">
-                  <span className="text-gray-400">Proyecto Supabase</span>
-                  <span className="min-w-0 break-all sm:text-right">{projectRef}</span>
-                </div>
-                <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-2">
-                  <span className="text-gray-400">Version</span>
-                  <span>{appVersion}</span>
-                </div>
-                <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-2">
-                  <span className="text-gray-400">Build</span>
-                  <span className="sm:text-right">{new Date(buildTime).toLocaleString('es-CO')}</span>
-                </div>
-                <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-2">
-                  <span className="text-gray-400">Preferencias</span>
-                  <span>Este navegador</span>
-                </div>
-              </div>
             </CardContent>
           </Card>
         </div>

@@ -6,7 +6,8 @@ import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { supabase } from '@/lib/supabase'
+import { appVersion, buildTime } from '@/lib/appVersion'
+import { supabase, supabaseUrl } from '@/lib/supabase'
 import type { AdminClubRow, AdminMaintenanceSuggestionRow, AdminOverview, AdminUserRow } from '@/types/database'
 
 type AdminTab = 'usuarios' | 'clubes' | 'catalogos'
@@ -68,6 +69,10 @@ export function Admin() {
   const [isLoading, setIsLoading] = useState(true)
   const [hasAccess, setHasAccess] = useState(false)
   const [savingLicenseUserId, setSavingLicenseUserId] = useState<string | null>(null)
+  const projectRef = useMemo(() => {
+    if (!supabaseUrl) return 'Sin configurar'
+    return supabaseUrl.replace('https://', '').split('.')[0]
+  }, [])
 
   const filteredUsers = useMemo(() => {
     const term = search.trim().toLowerCase()
@@ -217,6 +222,8 @@ export function Admin() {
         <MetricCard icon={SlidersHorizontal} label="Catalogo" value={overview.active_maintenance_suggestions} detail={`${overview.maintenance_suggestions} totales`} />
       </div>
 
+      <AppDataCard projectRef={projectRef} />
+
       <Card className="mb-5 border-white/5 bg-moto-gray py-0">
         <CardContent className="flex flex-col gap-3 p-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap gap-2">
@@ -240,6 +247,42 @@ export function Admin() {
       {activeTab === 'clubes' && <ClubsTable clubs={filteredClubs} />}
       {activeTab === 'catalogos' && <SuggestionsTable suggestions={filteredSuggestions} />}
     </div>
+  )
+}
+
+function AppDataCard({ projectRef }: { projectRef: string }) {
+  return (
+    <Card className="mb-5 border-white/5 bg-moto-gray py-0">
+      <CardContent className="p-5">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="grid h-10 w-10 place-items-center rounded-xl bg-moto-orange/20">
+            <Database className="h-5 w-5 text-moto-orange" />
+          </div>
+          <div>
+            <h3 className="font-semibold">Datos de la app</h3>
+            <p className="text-sm text-gray-400">Estado tecnico del MVP</p>
+          </div>
+        </div>
+        <div className="grid gap-3 text-sm md:grid-cols-4">
+          <div className="min-w-0">
+            <p className="text-gray-400">Proyecto Supabase</p>
+            <p className="break-all font-medium">{projectRef}</p>
+          </div>
+          <div>
+            <p className="text-gray-400">Version</p>
+            <p className="font-medium">{appVersion}</p>
+          </div>
+          <div>
+            <p className="text-gray-400">Build</p>
+            <p className="font-medium">{new Date(buildTime).toLocaleString('es-CO')}</p>
+          </div>
+          <div>
+            <p className="text-gray-400">Preferencias</p>
+            <p className="font-medium">Este navegador</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
