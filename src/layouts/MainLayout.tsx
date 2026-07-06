@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
+  BarChart3,
   Bell,
   Bike,
-  Compass,
+  CalendarClock,
+  Crown,
+  FileText,
   Home,
   Map as MapIcon,
   Menu,
@@ -15,6 +18,7 @@ import {
   ShieldCheck,
   User,
   Users,
+  Wrench,
   X,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -27,25 +31,31 @@ import type { Notification } from '@/types/database'
 
 const navItems = [
   { path: '/app/home', icon: Home, label: 'Inicio' },
-  { path: '/app/explore', icon: Compass, label: 'Explorar' },
+  { path: '/app/my-bikes', icon: Bike, label: 'Hoja de vida' },
+  { path: '/app/my-bikes#history', icon: Wrench, label: 'Mantenimientos' },
+  { path: '/app/my-bikes#reminders', icon: CalendarClock, label: 'Programados' },
+  { path: '/app/my-bikes#documents', icon: FileText, label: 'Documentos' },
+  { path: '/app/my-bikes#reports', icon: BarChart3, label: 'Reportes' },
+]
+
+const premiumItems = [
   { path: '/app/map', icon: MapIcon, label: 'Rutas' },
-  { path: '/app/marketplace', icon: ShoppingBag, label: 'Tienda' },
   { path: '/app/messages', icon: MessageCircle, label: 'Comunidad' },
   { path: '/app/clubs', icon: Users, label: 'Clubes' },
+  { path: '/app/marketplace', icon: ShoppingBag, label: 'Tienda' },
 ]
 
 const sidebarItems = [
   { path: '/app/profile', icon: User, label: 'Mi perfil' },
   { path: '/app/notifications', icon: Bell, label: 'Notificaciones' },
-  { path: '/app/my-bikes', icon: Bike, label: 'Mi moto' },
   { path: '/app/settings', icon: Settings, label: 'Ajustes' },
 ]
 
 const mobileNavItems = [
   { path: '/app/home', icon: Home, label: 'Inicio' },
-  { path: '/app/my-bikes', icon: Bike, label: 'Mi moto' },
-  { path: '/app/map', icon: MapIcon, label: 'Rutas' },
-  { path: '/app/messages', icon: MessageCircle, label: 'Comunidad' },
+  { path: '/app/my-bikes', icon: Bike, label: 'Hoja de vida' },
+  { path: '/app/my-bikes#history', icon: Wrench, label: 'Servicios' },
+  { path: '/app/my-bikes#reminders', icon: CalendarClock, label: 'Agenda' },
 ]
 
 function initials(name: string | null | undefined, email: string | undefined) {
@@ -96,12 +106,17 @@ export function MainLayout() {
 
   const pageTitle =
     (location.pathname.startsWith('/app/routes/') ? 'Detalle de ruta' : null) ||
+    [...navItems, ...premiumItems].find((item) => item.path === `${location.pathname}${location.hash}`)?.label ||
     navItems.find((item) => item.path === location.pathname)?.label ||
+    premiumItems.find((item) => item.path === location.pathname)?.label ||
     sidebarItems.find((item) => item.path === location.pathname)?.label ||
     (location.pathname === '/app/admin' ? 'Administracion' : null) ||
     'Inicio'
 
   const isItemActive = (path: string) => {
+    const currentPath = `${location.pathname}${location.hash}`
+    if (path.includes('#')) return currentPath === path
+    if (path === '/app/my-bikes') return location.pathname === path && !location.hash
     if (path === '/app/map' && location.pathname.startsWith('/app/routes/')) return true
     if (path === '/app/messages' && location.pathname === '/app/community') return true
     return location.pathname === path
@@ -197,6 +212,28 @@ export function MainLayout() {
             >
               <item.icon className="h-5 w-5" />
               <span className="flex-1">{item.label}</span>
+            </NavLink>
+          ))}
+
+          <div className="mb-3 mt-6 flex items-center justify-between gap-3 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+            <span>Premium</span>
+            <Crown className="h-3.5 w-3.5 text-moto-orange" />
+          </div>
+          {premiumItems.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={() =>
+                `flex items-center gap-3 rounded-xl px-3 py-3 transition-all duration-200 ${
+                  isItemActive(item.path) ? 'bg-moto-orange text-moto-darker' : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                }`
+              }
+            >
+              <item.icon className="h-5 w-5" />
+              <span className="flex-1">{item.label}</span>
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${isItemActive(item.path) ? 'bg-moto-darker/15 text-moto-darker' : 'bg-white/10 text-gray-300'}`}>
+                Premium
+              </span>
             </NavLink>
           ))}
 
@@ -386,7 +423,7 @@ export function MainLayout() {
               </button>
             </div>
             <nav className="space-y-1 p-4">
-              {[...navItems, ...sidebarItems, ...(isAdmin ? [{ path: '/app/admin', icon: ShieldCheck, label: 'Administracion' }] : [])].map((item) => (
+              {[...navItems, ...premiumItems, ...sidebarItems, ...(isAdmin ? [{ path: '/app/admin', icon: ShieldCheck, label: 'Administracion' }] : [])].map((item) => (
                 <NavLink
                   key={item.path}
                   to={item.path}

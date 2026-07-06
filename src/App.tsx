@@ -4,7 +4,6 @@ import { MainLayout } from './layouts/MainLayout'
 import { LandingPage } from './pages/LandingPage'
 import { Login } from './pages/Login'
 import { Home } from './pages/Home'
-import { Explore } from './pages/Explore'
 import { Map } from './pages/Map'
 import { RouteDetail } from './pages/RouteDetail'
 import { Marketplace } from './pages/Marketplace'
@@ -23,15 +22,15 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Landing Page - Página pública */}
+        {/* Landing Page - pagina publica */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         
-        {/* App Routes - Con navegación principal */}
+        {/* App Routes - con navegacion principal */}
         <Route path="/app" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
           <Route index element={<Navigate to="/app/home" replace />} />
           <Route path="home" element={<Home />} />
-          <Route path="explore" element={<Explore />} />
+          <Route path="explore" element={<Navigate to="/app/home" replace />} />
           <Route path="map" element={<Map />} />
           <Route path="routes/:routeId" element={<RouteDetail />} />
           <Route path="marketplace" element={<Marketplace />} />

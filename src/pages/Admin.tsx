@@ -21,6 +21,7 @@ const emptyOverview: AdminOverview = {
   free_users: 0,
   pro_users: 0,
   premium_users: 0,
+  business_users: 0,
   motorcycles: 0,
   routes: 0,
   community_routes: 0,
@@ -41,9 +42,10 @@ function shortId(id: string) {
 }
 
 const planLabels: Record<UserPlan, string> = {
-  free: 'Gratis',
-  pro: 'Pro',
+  free: 'Free',
+  pro: 'Premium',
   premium: 'Premium',
+  business: 'Business',
 }
 
 const planStatusLabels: Record<UserPlanStatus, string> = {
@@ -55,8 +57,9 @@ const planStatusLabels: Record<UserPlanStatus, string> = {
 
 const planBadgeClasses: Record<UserPlan, string> = {
   free: 'bg-white/10 text-gray-300',
-  pro: 'bg-sky-500/15 text-sky-300',
+  pro: 'bg-moto-orange text-moto-darker',
   premium: 'bg-moto-orange text-moto-darker',
+  business: 'bg-violet-500/15 text-violet-200',
 }
 
 export function Admin() {
@@ -212,9 +215,8 @@ export function Admin() {
 
       <div className="mb-5 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))' }}>
         <MetricCard icon={Users} label="Usuarios" value={overview.users} detail={`${overview.private_users} privados`} />
-        <MetricCard icon={CreditCard} label="Gratis" value={overview.free_users} detail="Licencias free" />
-        <MetricCard icon={CreditCard} label="Pro" value={overview.pro_users} detail="Licencias pro" />
-        <MetricCard icon={CreditCard} label="Premium" value={overview.premium_users} detail="Licencias premium" />
+        <MetricCard icon={CreditCard} label="Free" value={overview.free_users} detail="Usuarios base" />
+        <MetricCard icon={CreditCard} label="Premium" value={overview.premium_users + overview.pro_users} detail="Incluye Pro legado" />
         <MetricCard icon={Bike} label="Motos" value={overview.motorcycles} detail="Registradas" />
         <MetricCard icon={Route} label="Rutas" value={overview.routes} detail={`${overview.community_routes} comunidad`} />
         <MetricCard icon={Users} label="Clubes" value={overview.clubs} detail={`${overview.club_memberships} membresias`} />
@@ -420,12 +422,11 @@ function LicenseEditor({
         <span className="mb-1 block text-xs text-gray-500">Licencia</span>
         <select
           disabled={isSaving}
-          value={user.plan}
+          value={user.plan === 'pro' ? 'premium' : user.plan}
           onChange={(event) => onUpdateLicense(user, event.target.value as UserPlan)}
           className="w-full rounded-lg border border-white/10 bg-moto-darker px-3 py-2 text-sm text-white outline-none disabled:opacity-60"
         >
-          <option value="free">Gratis</option>
-          <option value="pro">Pro</option>
+          <option value="free">Free</option>
           <option value="premium">Premium</option>
         </select>
       </label>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { AlertTriangle, Bell, Bike, Calendar, CheckCircle2, Compass, Loader2, MessageCircle, Plus, Route, Settings, UserPlus, Wrench, X } from 'lucide-react'
+import { AlertTriangle, Bell, Bike, Calendar, CheckCircle2, FileText, Loader2, Plus, Settings, UserPlus, Wrench, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -9,20 +9,20 @@ import { Card, CardContent } from '@/components/ui/card'
 import { ImageViewer } from '@/components/ImageViewer'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
-import type { Motorcycle, Notification, Reminder, RoutePlan } from '@/types/database'
+import type { MaintenanceRecord, Motorcycle, Notification, Reminder } from '@/types/database'
 
 type HomeStats = {
   motorcycles: number
   pendingReminders: number
-  routes: number
-  communityPosts: number
+  maintenanceRecords: number
+  documents: number
 }
 
 const emptyStats: HomeStats = {
   motorcycles: 0,
   pendingReminders: 0,
-  routes: 0,
-  communityPosts: 0,
+  maintenanceRecords: 0,
+  documents: 0,
 }
 
 function initials(name: string | null | undefined, email: string | undefined) {
@@ -42,14 +42,6 @@ function daysUntil(date: string | null) {
   const target = new Date(date)
   target.setHours(0, 0, 0, 0)
   return Math.ceil((target.getTime() - today.getTime()) / 86_400_000)
-}
-
-function formatRouteDates(route: RoutePlan) {
-  if (!route.start_date && !route.end_date) return 'Sin fechas'
-  const formatDate = (date: string) => new Date(`${date}T00:00:00`).toLocaleDateString('es-CO')
-  if (route.start_date && route.end_date) return `${formatDate(route.start_date)} - ${formatDate(route.end_date)}`
-  if (route.start_date) return `Inicia ${formatDate(route.start_date)}`
-  return `Finaliza ${formatDate(route.end_date!)}`
 }
 
 function formatDate(value: string) {
@@ -100,30 +92,12 @@ function notificationDisplay(notification: Notification) {
   }
 }
 
-function routeOverdueNotificationRow(route: RoutePlan) {
-  if (route.status !== 'in_progress' || !route.end_date) return null
-
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const endDate = new Date(`${route.end_date}T08:00:00`)
-  if (endDate >= today) return null
-
-  return {
-    user_id: route.owner_id,
-    type: 'route_overdue',
-    title: 'Ruta en curso vencida',
-    message: `La ruta "${route.title}" sigue en curso y ya paso su fecha final.`,
-    route_id: route.id,
-    scheduled_for: endDate.toISOString(),
-  }
-}
-
 export function Home() {
   const { user, profile } = useAuth()
   const [stats, setStats] = useState<HomeStats>(emptyStats)
   const [motorcycles, setMotorcycles] = useState<Motorcycle[]>([])
   const [reminders, setReminders] = useState<Reminder[]>([])
-  const [routes, setRoutes] = useState<RoutePlan[]>([])
+  const [maintenanceRecords, setMaintenanceRecords] = useState<MaintenanceRecord[]>([])
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [viewerImage, setViewerImage] = useState<{ src: string; alt: string } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -143,7 +117,7 @@ export function Home() {
       .slice(0, 3)
   }, [primaryMotorcycle, reminders])
 
-  const recentRoutes = useMemo(() => routes.slice(0, 3), [routes])
+  const recentMaintenanceRecords = useMemo(() => maintenanceRecords.slice(0, 3), [maintenanceRecords])
 
   const profileCompletion = useMemo(() => {
     const checks = [
@@ -161,13 +135,12 @@ export function Home() {
     if (!supabase || !user) return
     setIsLoading(true)
     const todayIso = new Date().toISOString()
-    const todayDate = todayIso.slice(0, 10)
 
-    const [motorcyclesResult, remindersResult, routesResult, postsResult, notificationsResult, overdueRoutesResult] = await Promise.all([
+    const [motorcyclesResult, remindersResult, maintenanceResult, documentsResult, notificationsResult] = await Promise.all([
       supabase.from('motorcycles').select('*').eq('owner_id', user.id).order('created_at', { ascending: false }),
       supabase.from('reminders').select('*').eq('owner_id', user.id).eq('status', 'pending').order('due_date', { ascending: true, nullsFirst: false }),
-      supabase.from('routes').select('*', { count: 'exact' }).eq('owner_id', user.id).order('created_at', { ascending: false }).limit(5),
-      supabase.from('posts').select('id', { count: 'exact', head: true }),
+      supabase.from('maintenance_records').select('*', { count: 'exact' }).eq('owner_id', user.id).order('service_date', { ascending: false }).limit(5),
+      supabase.from('motorcycle_documents').select('id', { count: 'exact', head: true }).eq('owner_id', user.id),
       supabase
         .from('notifications')
         .select('*, routes:route_id(title, start_date, end_date, status), club_invitations:club_invitation_id(*, clubs:club_id(id, name, image_url, city))')
@@ -176,7 +149,6 @@ export function Home() {
         .lte('scheduled_for', todayIso)
         .order('scheduled_for', { ascending: true })
         .limit(5),
-      supabase.from('routes').select('*').eq('owner_id', user.id).eq('status', 'in_progress').lt('end_date', todayDate),
     ])
 
     if (motorcyclesResult.error) {
@@ -195,17 +167,17 @@ export function Home() {
       setStats((current) => ({ ...current, pendingReminders: nextReminders.length }))
     }
 
-    if (routesResult.error) {
-      toast.error('No pudimos cargar rutas', { description: routesResult.error.message })
+    if (maintenanceResult.error) {
+      toast.error('No pudimos cargar mantenimientos', { description: maintenanceResult.error.message })
     } else {
-      setRoutes((routesResult.data ?? []) as RoutePlan[])
-      setStats((current) => ({ ...current, routes: routesResult.count ?? 0 }))
+      setMaintenanceRecords((maintenanceResult.data ?? []) as MaintenanceRecord[])
+      setStats((current) => ({ ...current, maintenanceRecords: maintenanceResult.count ?? 0 }))
     }
 
-    if (postsResult.error) {
-      toast.error('No pudimos cargar comunidad', { description: postsResult.error.message })
+    if (documentsResult.error) {
+      toast.error('No pudimos cargar documentos', { description: documentsResult.error.message })
     } else {
-      setStats((current) => ({ ...current, communityPosts: postsResult.count ?? 0 }))
+      setStats((current) => ({ ...current, documents: documentsResult.count ?? 0 }))
     }
 
     if (notificationsResult.error) {
@@ -214,46 +186,7 @@ export function Home() {
       setNotifications((notificationsResult.data ?? []) as Notification[])
     }
 
-    if (overdueRoutesResult.error) {
-      toast.error('No pudimos revisar rutas vencidas', { description: overdueRoutesResult.error.message })
-    } else {
-      await ensureOverdueNotifications((overdueRoutesResult.data ?? []) as RoutePlan[])
-    }
-
     setIsLoading(false)
-  }
-
-  const ensureOverdueNotifications = async (overdueRoutes: RoutePlan[]) => {
-    if (!supabase || !user || overdueRoutes.length === 0) return
-
-    const routeIds = overdueRoutes.map((route) => route.id)
-    const { data: existing, error: existingError } = await supabase
-      .from('notifications')
-      .select('route_id')
-      .eq('user_id', user.id)
-      .eq('type', 'route_overdue')
-      .in('route_id', routeIds)
-
-    if (existingError) {
-      toast.error('No pudimos validar alertas de rutas vencidas', { description: existingError.message })
-      return
-    }
-
-    const existingRouteIds = new Set((existing ?? []).map((notification) => notification.route_id))
-    const rows = overdueRoutes
-      .filter((route) => !existingRouteIds.has(route.id))
-      .map(routeOverdueNotificationRow)
-      .filter((row): row is NonNullable<ReturnType<typeof routeOverdueNotificationRow>> => Boolean(row))
-
-    if (rows.length === 0) return
-
-    const { data, error } = await supabase.from('notifications').insert(rows).select('*')
-
-    if (error) {
-      toast.error('No pudimos crear alertas de rutas vencidas', { description: error.message })
-    } else {
-      setNotifications((current) => [...current, ...((data ?? []) as Notification[])].slice(0, 5))
-    }
   }
 
   useEffect(() => {
@@ -338,15 +271,15 @@ export function Home() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button asChild className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
-            <Link to="/app/my-bikes">
+            <Link to="/app/my-bikes#history">
               <Plus className="mr-2 h-4 w-4" />
               Registrar servicio
             </Link>
           </Button>
           <Button asChild variant="outline" className="border-white/10">
-            <Link to="/app/map">
-              <Route className="mr-2 h-4 w-4" />
-              Nueva ruta
+            <Link to="/app/my-bikes#reminders">
+              <Calendar className="mr-2 h-4 w-4" />
+              Programar pendiente
             </Link>
           </Button>
         </div>
@@ -354,9 +287,9 @@ export function Home() {
 
       <div className="mb-5 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
         <MetricCard icon={Bike} label="Motos" value={stats.motorcycles} tone="orange" to="/app/my-bikes" />
-        <MetricCard icon={Wrench} label="Pendientes" value={stats.pendingReminders} tone="yellow" to="/app/my-bikes" />
-        <MetricCard icon={Route} label="Mis rutas" value={stats.routes} tone="sky" to="/app/map" />
-        <MetricCard icon={MessageCircle} label="Comunidad" value={stats.communityPosts} tone="green" to="/app/messages" />
+        <MetricCard icon={Calendar} label="Programados" value={stats.pendingReminders} tone="yellow" to="/app/my-bikes#reminders" />
+        <MetricCard icon={Wrench} label="Servicios" value={stats.maintenanceRecords} tone="sky" to="/app/my-bikes#history" />
+        <MetricCard icon={FileText} label="Documentos" value={stats.documents} tone="green" to="/app/my-bikes#documents" />
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -501,7 +434,7 @@ export function Home() {
                 <div className="mb-4 h-2 overflow-hidden rounded-full bg-moto-darker">
                   <div className="h-full bg-moto-orange" style={{ width: `${profileCompletion}%` }} />
                 </div>
-                <p className="mb-4 text-sm text-gray-400">Completa tu perfil para que otros moteros identifiquen mejor tus rutas y publicaciones.</p>
+                <p className="mb-4 text-sm text-gray-400">Completa tu perfil y deja tu hoja de vida lista para respaldar el historial de tu moto.</p>
                 <Button asChild variant="outline" className="w-full border-white/10">
                   <Link to="/app/profile">
                     <Settings className="mr-2 h-4 w-4" />
@@ -514,22 +447,22 @@ export function Home() {
 
           <Card className="border-white/5 bg-moto-gray py-0">
             <CardContent className="p-5">
-              <h2 className="mb-4 font-semibold">Rutas recientes</h2>
-              {recentRoutes.length > 0 ? (
+              <h2 className="mb-4 font-semibold">Ultimos mantenimientos</h2>
+              {recentMaintenanceRecords.length > 0 ? (
                 <div className="space-y-3">
-                  {recentRoutes.map((route) => (
-                    <Link key={route.id} to={`/app/routes/${route.id}`} className="block rounded-xl bg-moto-darker p-3 transition hover:bg-moto-darker/80 hover:ring-1 hover:ring-moto-orange/40">
-                      <p className="truncate font-medium">{route.title}</p>
-                      <p className="text-sm text-gray-400">{route.origin || 'Origen'} - {route.destination || 'Destino'}</p>
+                  {recentMaintenanceRecords.map((record) => (
+                    <Link key={record.id} to="/app/my-bikes#history" className="block rounded-xl bg-moto-darker p-3 transition hover:bg-moto-darker/80 hover:ring-1 hover:ring-moto-orange/40">
+                      <p className="truncate font-medium">{record.service_type}</p>
+                      <p className="text-sm text-gray-400">{record.mileage.toLocaleString()} km{record.cost ? ` - ${record.cost.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}` : ''}</p>
                       <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
                         <Calendar className="h-3.5 w-3.5" />
-                        {formatRouteDates(route)}
+                        {formatDate(record.service_date)}
                       </p>
                     </Link>
                   ))}
                 </div>
               ) : (
-                <EmptyState icon={Compass} text="Aun no tienes rutas creadas." actionLabel="Crear ruta" to="/app/map" />
+                <EmptyState icon={Wrench} text="Aun no tienes mantenimientos registrados." actionLabel="Registrar servicio" to="/app/my-bikes#history" />
               )}
             </CardContent>
           </Card>
@@ -538,11 +471,11 @@ export function Home() {
             <CardContent className="p-5">
               <h2 className="mb-3 font-semibold">Siguiente paso recomendado</h2>
               {stats.pendingReminders > 0 ? (
-                <p className="text-sm text-gray-400">Revise sus pendientes de mantenimiento antes de planear la proxima ruta.</p>
-              ) : stats.routes === 0 ? (
-                <p className="text-sm text-gray-400">Cree su primera ruta para empezar a alimentar comunidad y explorar.</p>
+                <p className="text-sm text-gray-400">Revise sus pendientes y cierre el proximo mantenimiento para mantener la hoja de vida al dia.</p>
+              ) : stats.maintenanceRecords === 0 ? (
+                <p className="text-sm text-gray-400">Registre el primer servicio realizado para empezar el historial verificable de su moto.</p>
               ) : (
-                <p className="text-sm text-gray-400">Publique una ruta o experiencia para mantener activa la comunidad.</p>
+                <p className="text-sm text-gray-400">Suba documentos clave como SOAT o revision tecnica para completar el expediente.</p>
               )}
             </CardContent>
           </Card>

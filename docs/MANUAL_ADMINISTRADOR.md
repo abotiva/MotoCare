@@ -158,6 +158,7 @@ El modulo **Rutas** usa la tabla `routes`.
 Campos principales:
 
 - `owner_id`
+- `motorcycle_id`
 - `title`
 - `origin`
 - `destination`
@@ -188,6 +189,10 @@ Si la base de datos ya estaba creada antes de esta mejora, ejecutar:
 Para habilitar fecha de inicio y fecha final en bases existentes, ejecutar:
 
 `supabase/route_dates_migration.sql`
+
+Para asociar cada ruta a la moto que se usara, ejecutar:
+
+`supabase/route_motorcycle_migration.sql`
 
 ## Notificaciones
 
@@ -305,19 +310,8 @@ Para habilitar rutas adjuntas en mensajes privados de club, ejecutar:
 
 ## Explorar
 
-El modulo **Explorar** consume datos reales de Supabase:
+El modulo **Explorar** fue retirado de la navegacion activa. Las tablas relacionadas (`routes` con `visibility = community`, `saved_routes` y publicaciones con rutas adjuntas) se conservan para una futura experiencia Premium, pero no se presentan como seccion principal del MVP actual.
 
-- `routes` con `visibility = community`
-- `profiles` del propietario de cada ruta
-- `posts`
-- rutas adjuntas por `posts.route_id`
-- rutas guardadas por `saved_routes`
-
-La busqueda se ejecuta en frontend sobre los registros cargados inicialmente. Para una comunidad grande, se recomienda mover la busqueda a consultas paginadas en Supabase.
-
-Para habilitar guardados en bases existentes, ejecutar:
-
-`supabase/saved_routes_migration.sql`
 
 ## Google Maps
 
@@ -380,7 +374,7 @@ El panel incluye:
 
 - resumen general de usuarios, motos, rutas, publicaciones, clubes e invitaciones
 - listado de usuarios con datos enmascarados cuando aplica
-- administracion manual de licencias `Gratis`, `Pro` y `Premium`
+- administracion manual de licencias `Free` y `Premium`
 - listado de clubes con metricas
 - catalogo de mantenimientos sugeridos
 
@@ -396,11 +390,14 @@ Para habilitarla en bases existentes, ejecutar:
 
 `supabase/manual_licenses_migration.sql`
 
-Los planes disponibles son:
+Los planes de usuario disponibles son:
 
-- `free`: usuario gratis
-- `pro`: licencia pro
-- `premium`: licencia premium
+- `free`: usuario base
+- `premium`: usuario premium
+
+El valor `pro` puede existir como dato heredado en bases antiguas y la UI lo trata como equivalente a `premium`.
+
+La licencia `business` queda reservada para tiendas y aliados. Su alcance esta por definir y no se aplica en el MVP actual.
 
 Los estados disponibles son:
 

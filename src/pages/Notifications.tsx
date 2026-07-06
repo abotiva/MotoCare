@@ -206,7 +206,7 @@ export function Notifications() {
             <div className="min-w-0">
               <p className="font-semibold">Alcance segun licencia</p>
               <p className="text-sm leading-6 text-gray-400">
-                Gratis recibe alertas internas. Pro mantiene reportes y clubes. Premium queda reservado para alertas avanzadas, resumenes y reglas personalizadas.
+                Free recibe alertas internas de mantenimiento. Premium habilita informes, clubes y alertas avanzadas; Business queda reservado para tiendas.
               </p>
             </div>
           </div>

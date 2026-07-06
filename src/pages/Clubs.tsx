@@ -87,11 +87,11 @@ export function Clubs() {
   )
 
   const canManageSelectedClub = selectedClub?.owner_id === user?.id || selectedMembership?.role === 'owner' || selectedMembership?.role === 'admin'
-  const canCreateClub = hasPlan('pro')
+  const canCreateClub = hasPlan('premium')
 
   const showUpgradeForClubCreation = () => {
     toast.info('Actualice su cuenta para poder crear un club', {
-      description: 'La creacion de clubes esta disponible para licencias Pro y Premium.',
+      description: 'La creacion de clubes esta disponible para licencias Premium.',
     })
   }
 
@@ -512,7 +512,7 @@ export function Clubs() {
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                 <h2 className="font-semibold">Crear club</h2>
                 <Badge className={canCreateClub ? 'bg-moto-orange text-moto-darker' : 'bg-white/10 text-gray-300'}>
-                  {canCreateClub ? 'Pro/Premium' : 'Requiere Pro'}
+                  {canCreateClub ? 'Premium' : 'Requiere Premium'}
                 </Badge>
               </div>
               {!canCreateClub && (

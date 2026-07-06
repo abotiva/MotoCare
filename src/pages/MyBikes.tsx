@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
+import { useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
   BarChart3,
@@ -166,8 +167,16 @@ function defaultIntervalForReminder(title: string) {
   if (normalizedTitle.includes('freno')) return 8000
   if (normalizedTitle.includes('arrastre') || normalizedTitle.includes('cadena')) return 10000
   if (normalizedTitle.includes('llanta')) return 12000
-  if (normalizedTitle.includes('revision') || normalizedTitle.includes('revisión')) return 5000
+  if (normalizedTitle.includes('revision')) return 5000
   return 3000
+}
+
+type BikeTab = 'reminders' | 'history' | 'reports' | 'documents'
+
+function tabFromHash(hash: string): BikeTab {
+  const value = hash.replace('#', '')
+  if (value === 'reminders' || value === 'history' || value === 'reports' || value === 'documents') return value
+  return 'history'
 }
 
 function ReportCard({ icon: Icon, label, value, detail }: { icon: LucideIcon; label: string; value: string; detail: string }) {
@@ -197,6 +206,8 @@ function ReportLine({ label, value }: { label: string; value: string }) {
 export function MyBikes() {
   const { user } = useAuth()
   const { hasPlan, isLoadingSubscription } = useSubscription()
+  const location = useLocation()
+  const [activeTab, setActiveTab] = useState<BikeTab>(() => tabFromHash(location.hash))
   const [motorcycles, setMotorcycles] = useState<Motorcycle[]>([])
   const [records, setRecords] = useState<MaintenanceRecord[]>([])
   const [reminders, setReminders] = useState<Reminder[]>([])
@@ -232,7 +243,11 @@ export function MyBikes() {
   }
 
   const isNegativeNumber = (value: string) => value.trim() !== '' && Number(value) < 0
-  const canViewMaintenanceReports = hasPlan('pro')
+  const canViewMaintenanceReports = hasPlan('premium')
+
+  useEffect(() => {
+    setActiveTab(tabFromHash(location.hash))
+  }, [location.hash])
 
   const selectedBike = useMemo(
     () => motorcycles.find((motorcycle) => motorcycle.id === selectedId) ?? motorcycles[0] ?? null,
@@ -1148,7 +1163,7 @@ export function MyBikes() {
                     {motorcycle.brand} {motorcycle.model}
                   </p>
                   <p className="truncate text-sm text-gray-400">
-                    {motorcycle.year ?? 'Sin ano'} · {motorcycle.plate ?? 'Sin placa'}
+                    {motorcycle.year ?? 'Sin ano'} - {motorcycle.plate ?? 'Sin placa'}
                   </p>
                 </div>
               </button>
@@ -1179,7 +1194,7 @@ export function MyBikes() {
                           {selectedBike.brand} {selectedBike.model}
                         </h2>
                         <p className="mt-1 text-sm text-gray-300 sm:text-base">
-                          {selectedBike.year ?? 'Sin ano'} · {selectedBike.color ?? 'Sin color'} · {selectedBike.plate ?? 'Sin placa'}
+                          {selectedBike.year ?? 'Sin ano'} - {selectedBike.color ?? 'Sin color'} - {selectedBike.plate ?? 'Sin placa'}
                         </p>
                       </div>
                       <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
@@ -1213,7 +1228,7 @@ export function MyBikes() {
                 </div>
 
                 <CardContent className="p-4 sm:p-6">
-                  <Tabs defaultValue="reminders" className="w-full">
+                  <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as BikeTab)} className="w-full">
                     <TabsList className="mb-4 grid h-auto w-full grid-cols-2 gap-2 border-white/5 bg-moto-darker p-1 sm:grid-cols-4">
                       <TabsTrigger value="reminders" className="min-w-0 data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker">
                         Pendientes
@@ -1247,7 +1262,7 @@ export function MyBikes() {
                                 <p className="break-words font-medium">{reminder.title}</p>
                                 <p className="text-sm text-gray-400">
                                   {reminder.due_date ? `Fecha: ${reminder.due_date}` : ''}
-                                  {reminder.due_mileage ? ` · ${reminder.due_mileage.toLocaleString()} km` : ''}
+                                  {reminder.due_mileage ? ` - ${reminder.due_mileage.toLocaleString()} km` : ''}
                                 </p>
                                 {reminder.due_mileage && selectedBike && (
                                   <p
@@ -1297,7 +1312,7 @@ export function MyBikes() {
                               <div>
                                 <p className="font-medium">{record.service_type}</p>
                                 <p className="text-sm text-gray-400">
-                                  {record.mileage.toLocaleString()} km · {record.service_date}
+                                  {record.mileage.toLocaleString()} km - {record.service_date}
                                 </p>
                               </div>
                             </div>
@@ -1372,11 +1387,11 @@ export function MyBikes() {
                               <BarChart3 className="h-5 w-5" />
                             </div>
                             <div>
-                              <h3 className="font-semibold">Informes disponibles desde Pro</h3>
+                              <h3 className="font-semibold">Informes disponibles desde Premium</h3>
                               <p className="text-sm text-gray-300">Actualice su cuenta para ver gastos, tiempos y promedios de mantenimiento.</p>
                             </div>
                           </div>
-                          <Badge className="bg-moto-orange text-moto-darker">Pro / Premium</Badge>
+                          <Badge className="bg-moto-orange text-moto-darker">Premium</Badge>
                         </div>
                       )}
                     </TabsContent>

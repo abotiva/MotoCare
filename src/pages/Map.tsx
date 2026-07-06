@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { Calendar, CheckCircle2, Clock, Edit3, Eye, EyeOff, Flag, Loader2, MapPin, Navigation, PlayCircle, Plus, Route, Save, Trash2 } from 'lucide-react'
+import { Bike, Calendar, CheckCircle2, Clock, Edit3, Eye, EyeOff, Flag, Loader2, MapPin, Navigation, PlayCircle, Plus, Route, Save, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -9,9 +9,10 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
-import type { RoutePlan } from '@/types/database'
+import type { Motorcycle, RoutePlan } from '@/types/database'
 
 type RouteForm = {
+  motorcycle_id: string
   title: string
   origin: string
   destination: string
@@ -24,6 +25,7 @@ type RouteForm = {
 }
 
 const emptyRouteForm: RouteForm = {
+  motorcycle_id: '',
   title: '',
   origin: '',
   destination: '',
@@ -81,6 +83,10 @@ function routeSearchValue(route: RoutePlan) {
 function routeFormSearchValue(routeForm: RouteForm) {
   const points = [routeForm.origin.trim(), routeForm.destination.trim()].filter(Boolean)
   return points.length > 0 ? points.join(' to ') : routeForm.title.trim()
+}
+
+function motorcycleLabel(motorcycle: Pick<Motorcycle, 'brand' | 'model' | 'plate'>) {
+  return `${motorcycle.brand} ${motorcycle.model}${motorcycle.plate ? ` - ${motorcycle.plate}` : ''}`
 }
 
 function googleMapsUrl(route: RoutePlan) {
@@ -177,6 +183,7 @@ function RouteCard({
   onDelete,
   onToggleVisibility,
   onUpdateStatus,
+  motorcycleName,
 }: {
   route: RoutePlan
   isOwner: boolean
@@ -185,6 +192,7 @@ function RouteCard({
   onDelete?: (route: RoutePlan) => void
   onToggleVisibility?: (route: RoutePlan) => void
   onUpdateStatus?: (route: RoutePlan, status: RoutePlan['status']) => void
+  motorcycleName?: string
 }) {
   const status = getRouteStatus(route)
   const StatusIcon = status.icon
@@ -210,6 +218,10 @@ function RouteCard({
       </div>
 
       <div className="mb-4 flex flex-wrap gap-3 text-sm text-gray-400">
+        <span className="flex items-center gap-1">
+          <Bike className="h-4 w-4 text-moto-orange" />
+          {motorcycleName ?? 'Sin moto asignada'}
+        </span>
         <span className="flex items-center gap-1">
           <Route className="h-4 w-4 text-moto-orange" />
           {route.distance_km ? `${route.distance_km.toLocaleString()} km` : 'Sin distancia'}
@@ -264,6 +276,7 @@ function RouteCard({
 
 export function Map() {
   const { user } = useAuth()
+  const [motorcycles, setMotorcycles] = useState<Motorcycle[]>([])
   const [myRoutes, setMyRoutes] = useState<RoutePlan[]>([])
   const [routeForm, setRouteForm] = useState<RouteForm>(emptyRouteForm)
   const [editingRoute, setEditingRoute] = useState<RoutePlan | null>(null)
@@ -288,11 +301,27 @@ export function Map() {
     [myRoutes]
   )
 
+  const motorcyclesById = useMemo(() => new globalThis.Map(motorcycles.map((motorcycle) => [motorcycle.id, motorcycle])), [motorcycles])
+
+  const motorcycleNameFor = (route: RoutePlan) => {
+    const motorcycle = route.motorcycle_id ? motorcyclesById.get(route.motorcycle_id) : null
+    return motorcycle ? motorcycleLabel(motorcycle) : undefined
+  }
+
   const loadRoutes = async () => {
     if (!supabase || !user) return
     setIsLoading(true)
 
-    const myRoutesResult = await supabase.from('routes').select('*').eq('owner_id', user.id).order('created_at', { ascending: false })
+    const [motorcyclesResult, myRoutesResult] = await Promise.all([
+      supabase.from('motorcycles').select('*').eq('owner_id', user.id).order('created_at', { ascending: false }),
+      supabase.from('routes').select('*').eq('owner_id', user.id).order('created_at', { ascending: false }),
+    ])
+
+    if (motorcyclesResult.error) {
+      toast.error('No pudimos cargar tus motos', { description: motorcyclesResult.error.message })
+    } else {
+      setMotorcycles((motorcyclesResult.data ?? []) as Motorcycle[])
+    }
 
     if (myRoutesResult.error) {
       toast.error('No pudimos cargar tus rutas', { description: myRoutesResult.error.message })
@@ -318,13 +347,14 @@ export function Map() {
 
   const openCreateRoute = () => {
     setEditingRoute(null)
-    setRouteForm(emptyRouteForm)
+    setRouteForm({ ...emptyRouteForm, motorcycle_id: motorcycles[0]?.id ?? '' })
     setShowCreateRoute(true)
   }
 
   const openEditRoute = (route: RoutePlan) => {
     setEditingRoute(route)
     setRouteForm({
+      motorcycle_id: route.motorcycle_id ?? '',
       title: route.title,
       origin: route.origin ?? '',
       destination: route.destination ?? '',
@@ -360,17 +390,18 @@ export function Map() {
     setIsSaving(true)
 
     const payload = {
-        owner_id: user.id,
-        title: routeForm.title.trim(),
-        origin: routeForm.origin.trim() || null,
-        destination: routeForm.destination.trim() || null,
-        distance_km: routeForm.distance_km ? Number(routeForm.distance_km) : null,
-        duration_minutes: routeForm.duration_minutes ? Number(routeForm.duration_minutes) : null,
-        start_date: routeForm.start_date || null,
-        end_date: routeForm.end_date || null,
-        visibility: routeForm.visibility,
-        status: routeForm.status,
-      }
+      owner_id: user.id,
+      motorcycle_id: routeForm.motorcycle_id || null,
+      title: routeForm.title.trim(),
+      origin: routeForm.origin.trim() || null,
+      destination: routeForm.destination.trim() || null,
+      distance_km: routeForm.distance_km ? Number(routeForm.distance_km) : null,
+      duration_minutes: routeForm.duration_minutes ? Number(routeForm.duration_minutes) : null,
+      start_date: routeForm.start_date || null,
+      end_date: routeForm.end_date || null,
+      visibility: routeForm.visibility,
+      status: routeForm.status,
+    }
 
     const query = editingRoute
       ? supabase.from('routes').update(payload).eq('id', editingRoute.id).eq('owner_id', user.id)
@@ -618,6 +649,7 @@ export function Map() {
                 onDelete={deleteRoute}
                 onToggleVisibility={toggleRouteVisibility}
                 onUpdateStatus={updateRouteStatus}
+                motorcycleName={motorcycleNameFor(route)}
               />
             ))
           ) : (
@@ -632,12 +664,12 @@ export function Map() {
 
         <Card className="h-fit border-white/5 bg-moto-gray py-0">
           <CardContent className="p-5">
-            <h2 className="mb-2 font-semibold">Descubrir rutas</h2>
+            <h2 className="mb-2 font-semibold">Rutas comunitarias</h2>
             <p className="mb-4 text-sm leading-6 text-gray-400">
-              Las rutas de otros moteros viven en Explorar. Asi este modulo queda dedicado a planear y administrar tus propias rutas.
+              El descubrimiento de rutas de otros moteros quedara reservado para licencias Premium. Por ahora este modulo se enfoca en planear y administrar tus propias rutas.
             </p>
             <Button asChild variant="outline" className="w-full border-white/10">
-              <Link to="/app/explore">Ir a Explorar</Link>
+              <Link to="/app/my-bikes">Volver a Mi moto</Link>
             </Button>
           </CardContent>
         </Card>
@@ -658,6 +690,21 @@ export function Map() {
             </DialogDescription>
           </DialogHeader>
           <form className="mt-4 space-y-4" onSubmit={handleSubmitRoute}>
+            <label>
+              <span className="mb-1 block text-sm text-gray-400">Moto para esta ruta</span>
+              <select
+                className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white"
+                value={routeForm.motorcycle_id}
+                onChange={(event) => setRouteForm({ ...routeForm, motorcycle_id: event.target.value })}
+              >
+                <option value="">Sin moto asignada</option>
+                {motorcycles.map((motorcycle) => (
+                  <option key={motorcycle.id} value={motorcycle.id}>
+                    {motorcycleLabel(motorcycle)}
+                  </option>
+                ))}
+              </select>
+            </label>
             <label>
               <span className="mb-1 block text-sm text-gray-400">Nombre</span>
               <input className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={routeForm.title} onChange={(event) => setRouteForm({ ...routeForm, title: event.target.value })} placeholder="Ruta a Guatavita" required />
@@ -777,6 +824,12 @@ export function Map() {
                   <p className="text-sm text-gray-400">Duracion</p>
                   <p className="mt-1 font-semibold">{formatDuration(selectedRoute.duration_minutes)}</p>
                 </div>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-moto-darker p-4">
+                <p className="text-sm text-gray-400">Moto</p>
+                <p className="mt-1 font-semibold">
+                  {motorcycleNameFor(selectedRoute) ?? 'Sin moto asignada'}
+                </p>
               </div>
               <div className="rounded-xl border border-white/10 bg-moto-darker p-4">
                 <p className="text-sm text-gray-400">Fechas</p>

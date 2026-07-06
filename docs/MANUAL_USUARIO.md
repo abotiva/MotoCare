@@ -10,19 +10,19 @@ Funciones disponibles:
 
 - ver resumen de motos registradas
 - ver pendientes activos
-- ver cantidad de rutas creadas
-- ver actividad de comunidad
+- ver cantidad de mantenimientos registrados
+- ver documentos cargados
 - ver moto principal
 - ver pendientes importantes
 - ver avance de perfil
-- ver rutas recientes
-- acceder rapidamente a registrar servicio, crear ruta, Mi moto y Mi perfil
+- ver mantenimientos recientes
+- acceder rapidamente a registrar servicio, programar pendiente, Hoja de vida y Mi perfil
 
-La seccion **Comunidad** queda separada como feed social.
+Las secciones **Rutas**, **Comunidad**, **Clubes** y **Tienda** quedan separadas como funciones Premium.
 
-## Mi moto
+## Hoja de vida
 
-El modulo **Mi moto** permite llevar la hoja de vida basica de una motocicleta.
+El modulo **Hoja de vida** permite llevar la informacion principal de una motocicleta. En el menu tambien se puede entrar directamente a **Mantenimientos**, **Programados**, **Documentos** e **Informes**.
 
 Funciones disponibles:
 
@@ -37,7 +37,7 @@ Funciones disponibles:
 
 ## Crear recordatorio por kilometraje
 
-Desde **Mi moto**, el usuario puede crear un pendiente usando **Nuevo por km** o **Crear recordatorio km**.
+Desde **Hoja de vida**, el usuario puede crear un pendiente usando **Nuevo por km** o **Crear recordatorio km**.
 
 El formulario muestra:
 
@@ -178,11 +178,12 @@ Todas las invitaciones pendientes aparecen en **Inicio**, dentro de **Notificaci
 
 ## Rutas
 
-El modulo **Rutas** permite crear rutas manuales sin usar GPS ni mapas pagos en esta fase del MVP.
+El modulo **Rutas** permite crear rutas manuales sin usar GPS ni mapas pagos en esta fase del MVP. En la arquitectura actual queda agrupado como funcionalidad Premium.
 
 Funciones disponibles:
 
 - crear ruta
+- seleccionar la moto que se usara en la ruta
 - definir origen y destino
 - registrar distancia estimada
 - registrar duracion estimada
@@ -196,13 +197,14 @@ Funciones disponibles:
 - ver rutas compartidas por otros moteros
 - ver detalle de una ruta
 - editar una ruta propia
+- cambiar la moto asociada a una ruta propia
 - eliminar una ruta propia
 - cambiar una ruta propia entre privada y comunidad
 - cambiar el estado de una ruta propia
 
 ## Comunidad
 
-El modulo **Comunidad** permite publicar mensajes cortos para otros moteros.
+El modulo **Comunidad** permite publicar mensajes cortos para otros moteros. En la arquitectura actual queda agrupado como funcionalidad Premium.
 
 Funciones disponibles:
 
@@ -230,7 +232,7 @@ Las imagenes de publicaciones aceptan archivos de imagen de hasta 5 MB cada una.
 
 ## Clubes
 
-El modulo **Clubes** permite crear y administrar clubes moteros.
+El modulo **Clubes** permite crear y administrar clubes moteros. En la arquitectura actual queda agrupado como funcionalidad Premium.
 
 Funciones disponibles:
 
@@ -247,21 +249,9 @@ En esta version, el fundador del club administra miembros. Los mensajes privados
 
 ## Explorar
 
-El modulo **Explorar** permite descubrir contenido compartido por la comunidad.
+El modulo **Explorar** fue retirado de la navegacion activa. El descubrimiento de rutas publicas, rutas guardadas y contenido comunitario quedara reservado para licencias Premium en una etapa posterior.
 
-Funciones disponibles:
-
-- buscar rutas publicas por nombre, origen, destino, ciudad o motero
-- ver rutas marcadas como comunidad
-- ver autor de cada ruta compartida
-- guardar rutas para despues
-- quitar rutas guardadas
-- consultar la pestana de rutas guardadas
-- ver publicaciones recientes
-- ver publicaciones que tienen una ruta adjunta
-- consultar un resumen de actividad comunitaria
-
-Explorar solo muestra contenido publico o visible para comunidad.
+Las rutas propias se administran desde **Rutas** y la hoja de vida de la moto desde **Hoja de vida**.
 
 ## Ajustes
 
@@ -270,7 +260,7 @@ El modulo **Ajustes** permite revisar informacion de cuenta y configurar prefere
 Funciones disponibles:
 
 - ver resumen de perfil
-- abrir Mi perfil, Mi moto, Rutas y Explorar
+- abrir Mi perfil, Hoja de vida y Rutas
 - activar o desactivar preferencias de notificaciones
 - activar o desactivar perfil visible
 - solicitar correo para cambio de contrasena

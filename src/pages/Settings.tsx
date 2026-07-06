@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom'
 import {
   Bell,
   Bike,
-  Bookmark,
   ChevronRight,
   KeyRound,
   LogOut,
@@ -209,7 +208,7 @@ export function Settings() {
                 onToggle={() => togglePreference(item.id)}
               />
             ))}
-            <InfoRow label="Rutas privadas" description="Las rutas privadas solo las ve usted. Las rutas comunidad aparecen en Explorar." />
+            <InfoRow label="Rutas privadas" description="Las rutas privadas solo las ve usted. Las funciones comunitarias quedaran reservadas para licencias Premium." />
           </SettingsGroup>
 
           <SettingsGroup icon={KeyRound} title="Seguridad">
@@ -243,7 +242,6 @@ export function Settings() {
             <CardContent className="p-0">
               <QuickLink icon={Bike} label="Mi moto" description="Motos, documentos y mantenimientos" to="/app/my-bikes" />
               <QuickLink icon={Route} label="Rutas" description="Crear, editar y guardar rutas" to="/app/map" />
-              <QuickLink icon={Bookmark} label="Explorar" description="Rutas publicas y guardadas" to="/app/explore" />
             </CardContent>
           </Card>
         </div>

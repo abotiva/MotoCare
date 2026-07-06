@@ -1,6 +1,6 @@
 # MotoCare MVP Alpha
 
-MotoCare es una app MVP para moteros enfocada en mantenimiento de la moto, rutas, comunidad, clubes y perfil del usuario.
+MotoCare es una app MVP para moteros enfocada en la hoja de vida de la moto, mantenimientos realizados, mantenimientos programados, documentos y perfil del usuario.
 
 Estado actual: **MVP Alpha**. No es una version publica 1.0.
 
@@ -8,13 +8,22 @@ Estado actual: **MVP Alpha**. No es una version publica 1.0.
 
 - Login con Supabase Auth.
 - Perfil de usuario con avatar, bio, ciudad, moto principal y clubes.
-- Mi moto: motos, documentos, kilometraje, mantenimientos, recordatorios y pendientes.
-- Rutas: creacion manual, estado, fechas, notificaciones y mapas embebidos.
-- Comunidad: publicaciones, imagenes, likes, comentarios y rutas adjuntas.
-- Clubes: crear club, editar informacion, imagen, miembros y mensajes privados.
-- Explorar: rutas publicas, publicaciones y rutas guardadas.
+- Hoja de vida: motos, documentos, kilometraje, mantenimientos realizados, recordatorios y pendientes programados.
+- Dashboard principal enfocado en motos, servicios, programados y documentos.
+- Rutas: creacion manual, estado, fechas, notificaciones y mapas embebidos. Esta funcionalidad queda orientada a Premium.
+- Comunidad: publicaciones, imagenes, likes, comentarios y rutas adjuntas. Esta funcionalidad queda orientada a Premium.
+- Clubes: crear club, editar informacion, imagen, miembros y mensajes privados. Esta funcionalidad queda orientada a Premium.
+- Explorar: modulo retirado de la navegacion activa; las rutas comunitarias se reservaran para Premium.
 - Tienda/Marketplace: pantalla visual en estado proximamente.
 - Ajustes basicos de cuenta y preferencias locales.
+
+## Arquitectura de producto
+
+- Usuarios Free: hoja de vida de la moto, mantenimientos realizados, pendientes programados y documentos.
+- Usuarios Premium: informes de mantenimiento y modulos avanzados como rutas, comunidad, clubes y tienda.
+- Business: licencia futura para tiendas y aliados; el alcance queda por definir y no se aplica en el MVP actual.
+
+El menu principal prioriza Inicio, Hoja de vida, Mantenimientos, Programados, Documentos y Reportes. Rutas, Comunidad, Clubes y Tienda quedan agrupados como funciones Premium.
 
 ## Stack
 
@@ -50,6 +59,7 @@ Para bases existentes, revisar y ejecutar las migraciones necesarias en `supabas
 - `profile_bio_social_migration.sql`
 - `route_status_migration.sql`
 - `route_dates_migration.sql`
+- `route_motorcycle_migration.sql`
 - `notifications_migration.sql`
 - `saved_routes_migration.sql`
 - `post_images_migration.sql`

@@ -14,7 +14,7 @@ export type Profile = {
   updated_at: string
 }
 
-export type UserPlan = 'free' | 'pro' | 'premium'
+export type UserPlan = 'free' | 'pro' | 'premium' | 'business'
 
 export type UserPlanStatus = 'active' | 'trialing' | 'past_due' | 'canceled'
 
@@ -84,6 +84,7 @@ export type MaintenanceSuggestion = {
 export type RoutePlan = {
   id: string
   owner_id: string
+  motorcycle_id: string | null
   title: string
   origin: string | null
   destination: string | null
@@ -102,6 +103,12 @@ export type RouteWithOwner = RoutePlan & {
     username: string | null
     city: string | null
     avatar_url: string | null
+  } | null
+  motorcycles?: {
+    id: string
+    brand: string
+    model: string
+    plate: string | null
   } | null
 }
 
@@ -272,6 +279,7 @@ export type AdminOverview = {
   free_users: number
   pro_users: number
   premium_users: number
+  business_users?: number
   motorcycles: number
   routes: number
   community_routes: number

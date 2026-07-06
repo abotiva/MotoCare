@@ -90,6 +90,7 @@ create table if not exists public.motorcycle_documents (
 create table if not exists public.routes (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references public.profiles(id) on delete cascade,
+  motorcycle_id uuid references public.motorcycles(id) on delete set null,
   title text not null,
   origin text,
   destination text,
@@ -372,7 +373,19 @@ for select using (
 );
 
 create policy "routes_own_write" on public.routes
-for all using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
+for all using (auth.uid() = owner_id)
+with check (
+  auth.uid() = owner_id
+  and (
+    motorcycle_id is null
+    or exists (
+      select 1
+      from public.motorcycles m
+      where m.id = routes.motorcycle_id
+        and m.owner_id = auth.uid()
+    )
+  )
+);
 
 create policy "posts_read_all" on public.posts
 for select using (true);
@@ -570,6 +583,7 @@ create index if not exists maintenance_suggestions_active_order_idx on public.ma
 create index if not exists motorcycle_documents_motorcycle_id_idx on public.motorcycle_documents(motorcycle_id);
 create index if not exists routes_visibility_idx on public.routes(visibility);
 create index if not exists routes_start_date_idx on public.routes(start_date);
+create index if not exists routes_motorcycle_id_idx on public.routes(motorcycle_id);
 create index if not exists posts_created_at_idx on public.posts(created_at desc);
 create index if not exists post_images_post_id_idx on public.post_images(post_id, sort_order);
 create index if not exists saved_routes_user_id_idx on public.saved_routes(user_id);

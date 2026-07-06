@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Calendar, CheckCircle2, Clock, ExternalLink, Flag, Loader2, MapPin, Navigation, PlayCircle, Route as RouteIcon, UserRound } from 'lucide-react'
+import { ArrowLeft, Bike, Calendar, CheckCircle2, Clock, ExternalLink, Flag, Loader2, MapPin, Navigation, PlayCircle, Route as RouteIcon, UserRound } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -78,6 +78,11 @@ function googleMapsEmbedUrl(route: RouteWithOwner) {
   return `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${encodeURIComponent(routeSearchValue(route))}`
 }
 
+function routeMotorcycleLabel(route: RouteWithOwner) {
+  if (!route.motorcycles) return 'Sin moto asignada'
+  return `${route.motorcycles.brand} ${route.motorcycles.model}${route.motorcycles.plate ? ` - ${route.motorcycles.plate}` : ''}`
+}
+
 export function RouteDetail() {
   const { routeId } = useParams()
   const navigate = useNavigate()
@@ -92,7 +97,7 @@ export function RouteDetail() {
       setIsLoading(true)
       const { data, error } = await supabase
         .from('routes')
-        .select('*, profiles:owner_id(full_name, username, city, avatar_url)')
+        .select('*, profiles:owner_id(full_name, username, city, avatar_url), motorcycles:motorcycle_id(id, brand, model, plate)')
         .eq('id', routeId)
         .maybeSingle()
 
@@ -192,7 +197,18 @@ export function RouteDetail() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card className="border-white/5 bg-moto-gray py-0">
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="rounded-xl bg-moto-orange/15 p-3">
+              <Bike className="h-5 w-5 text-moto-orange" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm text-gray-400">Moto</p>
+              <p className="truncate text-lg font-semibold">{routeMotorcycleLabel(route)}</p>
+            </div>
+          </CardContent>
+        </Card>
         <Card className="border-white/5 bg-moto-gray py-0">
           <CardContent className="flex items-center gap-3 p-4">
             <div className="rounded-xl bg-moto-orange/15 p-3">
