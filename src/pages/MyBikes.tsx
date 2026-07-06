@@ -204,7 +204,7 @@ function ReportLine({ label, value }: { label: string; value: string }) {
 }
 
 export function MyBikes() {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const { hasPlan, isLoadingSubscription } = useSubscription()
   const location = useLocation()
   const [activeTab, setActiveTab] = useState<BikeTab>(() => tabFromHash(location.hash))
@@ -249,9 +249,17 @@ export function MyBikes() {
     setActiveTab(tabFromHash(location.hash))
   }, [location.hash])
 
+  const orderedMotorcycles = useMemo(() => {
+    return [...motorcycles].sort((a, b) => {
+      if (a.id === profile?.primary_motorcycle_id) return -1
+      if (b.id === profile?.primary_motorcycle_id) return 1
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    })
+  }, [motorcycles, profile?.primary_motorcycle_id])
+
   const selectedBike = useMemo(
-    () => motorcycles.find((motorcycle) => motorcycle.id === selectedId) ?? motorcycles[0] ?? null,
-    [motorcycles, selectedId]
+    () => motorcycles.find((motorcycle) => motorcycle.id === selectedId) ?? orderedMotorcycles[0] ?? null,
+    [motorcycles, orderedMotorcycles, selectedId]
   )
 
   const selectedRecords = useMemo(
@@ -1100,21 +1108,24 @@ export function MyBikes() {
           <h1 className="mb-1 text-2xl font-bold">Mi moto</h1>
           <p className="text-gray-400">Hoja de vida, mantenimientos y vencimientos en un solo lugar.</p>
         </div>
-        <div className="flex gap-3">
-          <Button className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={openCreateBike}>
-            <Plus className="mr-2 h-5 w-5" />
-            Agregar moto
+        <div className="grid w-full grid-cols-3 gap-2 sm:w-auto sm:flex sm:flex-wrap sm:gap-3">
+          <Button className="min-w-0 bg-moto-orange px-2 text-xs text-moto-darker hover:bg-moto-orange-dark sm:px-4 sm:text-sm" onClick={openCreateBike}>
+            <Plus className="mr-1 h-4 w-4 sm:mr-2 sm:h-5 sm:w-5" />
+            <span className="sm:hidden">Moto</span>
+            <span className="hidden sm:inline">Agregar moto</span>
           </Button>
           {selectedBike && (
-            <Button variant="outline" className="border-white/10" onClick={openCreateService}>
-              <Wrench className="mr-2 h-5 w-5" />
-              Registrar servicio
+            <Button variant="outline" className="min-w-0 border-white/10 px-2 text-xs sm:px-4 sm:text-sm" onClick={openCreateService}>
+              <Wrench className="mr-1 h-4 w-4 sm:mr-2 sm:h-5 sm:w-5" />
+              <span className="sm:hidden">Servicio</span>
+              <span className="hidden sm:inline">Registrar servicio</span>
             </Button>
           )}
           {selectedBike && (
-            <Button variant="outline" className="border-white/10" onClick={openMileageReminder}>
-              <Gauge className="mr-2 h-5 w-5" />
-              Recordatorio km
+            <Button variant="outline" className="min-w-0 border-white/10 px-2 text-xs sm:px-4 sm:text-sm" onClick={openMileageReminder}>
+              <Gauge className="mr-1 h-4 w-4 sm:mr-2 sm:h-5 sm:w-5" />
+              <span className="sm:hidden">Km</span>
+              <span className="hidden sm:inline">Recordatorio km</span>
             </Button>
           )}
         </div>
@@ -1142,16 +1153,16 @@ export function MyBikes() {
         </Card>
       ) : (
         <>
-          <div className="mb-6 flex gap-3 overflow-x-auto pb-4">
-            {motorcycles.map((motorcycle) => (
+          <div className="mb-6 grid gap-3">
+            {orderedMotorcycles.map((motorcycle) => (
               <button
                 key={motorcycle.id}
                 onClick={() => setSelectedId(motorcycle.id)}
-                className={`flex w-64 flex-shrink-0 items-center gap-3 rounded-xl border p-3 transition-all sm:w-auto ${
+                className={`flex min-w-0 items-center gap-3 rounded-xl border p-3 transition-all ${
                   selectedBike?.id === motorcycle.id ? 'border-moto-orange bg-moto-orange/20' : 'border-white/5 bg-moto-gray hover:border-white/20'
                 }`}
               >
-                <div className="grid h-16 w-16 place-items-center overflow-hidden rounded-lg bg-moto-darker">
+                <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-lg bg-moto-darker">
                   {motorcycle.image_url ? (
                     <img src={motorcycle.image_url} alt={`${motorcycle.brand} ${motorcycle.model}`} className="h-full w-full object-cover" />
                   ) : (
@@ -1159,9 +1170,14 @@ export function MyBikes() {
                   )}
                 </div>
                 <div className="min-w-0 text-left">
-                  <p className="truncate font-semibold">
-                    {motorcycle.brand} {motorcycle.model}
-                  </p>
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
+                    <p className="truncate font-semibold">
+                      {motorcycle.brand} {motorcycle.model}
+                    </p>
+                    {motorcycle.id === profile?.primary_motorcycle_id && (
+                      <Badge className="shrink-0 bg-moto-orange text-moto-darker">Principal</Badge>
+                    )}
+                  </div>
                   <p className="truncate text-sm text-gray-400">
                     {motorcycle.year ?? 'Sin ano'} - {motorcycle.plate ?? 'Sin placa'}
                   </p>
@@ -1304,23 +1320,23 @@ export function MyBikes() {
                     <TabsContent value="history" className="space-y-2">
                       {selectedRecords.length > 0 ? (
                         selectedRecords.map((record) => (
-                          <div key={record.id} className="flex items-center justify-between gap-3 rounded-xl bg-moto-darker p-3">
-                            <div className="flex items-center gap-3">
-                              <div className="grid h-10 w-10 place-items-center rounded-lg bg-green-500/20">
+                          <div key={record.id} className="flex flex-col gap-3 rounded-xl bg-moto-darker p-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex min-w-0 items-center gap-3">
+                              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-green-500/20">
                                 <CheckCircle className="h-5 w-5 text-green-500" />
                               </div>
-                              <div>
-                                <p className="font-medium">{record.service_type}</p>
+                              <div className="min-w-0">
+                                <p className="truncate font-medium">{record.service_type}</p>
                                 <p className="text-sm text-gray-400">
                                   {record.mileage.toLocaleString()} km - {record.service_date}
                                 </p>
                               </div>
                             </div>
-                            <div className="flex shrink-0 items-center gap-2">
-                              <Button size="sm" variant="outline" className="border-white/10" onClick={() => openRecordDetail(record)}>
+                            <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0 sm:items-center">
+                              <Button size="sm" variant="outline" className="min-w-0 border-white/10 px-2 sm:px-3" onClick={() => openRecordDetail(record)}>
                                 Ver detalle
                               </Button>
-                              <Badge variant="secondary" className="bg-green-500/20 text-green-500">
+                              <Badge variant="secondary" className="min-w-0 justify-center truncate bg-green-500/20 px-1 text-[11px] text-green-500 sm:px-2 sm:text-xs">
                                 Completado
                               </Badge>
                             </div>

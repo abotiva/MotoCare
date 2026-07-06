@@ -269,25 +269,27 @@ export function Home() {
             <p className="text-gray-400">Este es el estado actual de tu MotoCare.</p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
+        <div className="grid w-full grid-cols-2 gap-2 sm:w-auto sm:flex sm:flex-wrap">
+          <Button asChild className="min-w-0 bg-moto-orange px-3 text-moto-darker hover:bg-moto-orange-dark sm:px-4">
             <Link to="/app/my-bikes#history">
-              <Plus className="mr-2 h-4 w-4" />
-              Registrar servicio
+              <Plus className="mr-1.5 h-4 w-4 sm:mr-2" />
+              <span className="sm:hidden">Servicio</span>
+              <span className="hidden sm:inline">Registrar servicio</span>
             </Link>
           </Button>
-          <Button asChild variant="outline" className="border-white/10">
+          <Button asChild variant="outline" className="min-w-0 border-white/10 px-3 sm:px-4">
             <Link to="/app/my-bikes#reminders">
-              <Calendar className="mr-2 h-4 w-4" />
-              Programar pendiente
+              <Calendar className="mr-1.5 h-4 w-4 sm:mr-2" />
+              <span className="sm:hidden">Pendiente</span>
+              <span className="hidden sm:inline">Programar pendiente</span>
             </Link>
           </Button>
         </div>
       </div>
 
-      <div className="mb-5 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+      <div className="mb-4 grid grid-cols-4 gap-2 sm:mb-5 sm:gap-4">
         <MetricCard icon={Bike} label="Motos" value={stats.motorcycles} tone="orange" to="/app/my-bikes" />
-        <MetricCard icon={Calendar} label="Programados" value={stats.pendingReminders} tone="yellow" to="/app/my-bikes#reminders" />
+        <MetricCard icon={Calendar} label="Programados" mobileLabel="Agenda" value={stats.pendingReminders} tone="yellow" to="/app/my-bikes#reminders" />
         <MetricCard icon={Wrench} label="Servicios" value={stats.maintenanceRecords} tone="sky" to="/app/my-bikes#history" />
         <MetricCard icon={FileText} label="Documentos" value={stats.documents} tone="green" to="/app/my-bikes#documents" />
       </div>
@@ -494,12 +496,14 @@ export function Home() {
 function MetricCard({
   icon: Icon,
   label,
+  mobileLabel,
   value,
   tone,
   to,
 }: {
   icon: typeof Bike
   label: string
+  mobileLabel?: string
   value: number
   tone: 'orange' | 'yellow' | 'sky' | 'green'
   to: string
@@ -512,15 +516,18 @@ function MetricCard({
   }
 
   return (
-    <Link to={to} className="block rounded-xl focus:outline-none focus:ring-2 focus:ring-moto-orange focus:ring-offset-2 focus:ring-offset-moto-dark">
-      <Card className="border-white/5 bg-moto-gray py-0 transition-colors hover:border-moto-orange/40 hover:bg-white/5">
-        <CardContent className="flex items-center gap-4 p-4">
-          <div className={`grid h-12 w-12 place-items-center rounded-xl ${tones[tone]}`}>
-            <Icon className="h-6 w-6" />
+    <Link to={to} className="block min-w-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-moto-orange focus:ring-offset-2 focus:ring-offset-moto-dark">
+      <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0 transition-colors hover:border-moto-orange/40 hover:bg-white/5">
+        <CardContent className="flex min-w-0 flex-col items-center gap-1.5 p-2 text-center sm:flex-row sm:gap-4 sm:p-4 sm:text-left">
+          <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg sm:h-12 sm:w-12 sm:rounded-xl ${tones[tone]}`}>
+            <Icon className="h-4 w-4 sm:h-6 sm:w-6" />
           </div>
-          <div>
-            <p className="text-sm text-gray-400">{label}</p>
-            <p className="text-xl font-bold">{value}</p>
+          <div className="min-w-0">
+            <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">
+              <span className="sm:hidden">{mobileLabel ?? label}</span>
+              <span className="hidden sm:inline">{label}</span>
+            </p>
+            <p className="text-base font-bold leading-tight sm:text-xl">{value}</p>
           </div>
         </CardContent>
       </Card>

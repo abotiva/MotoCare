@@ -32,8 +32,14 @@ import type { Notification } from '@/types/database'
 const navItems = [
   { path: '/app/home', icon: Home, label: 'Inicio' },
   { path: '/app/my-bikes', icon: Bike, label: 'Hoja de vida' },
-  { path: '/app/my-bikes#history', icon: Wrench, label: 'Mantenimientos' },
+]
+
+const maintenanceItems = [
+  { path: '/app/my-bikes#history', icon: Wrench, label: 'Realizados' },
   { path: '/app/my-bikes#reminders', icon: CalendarClock, label: 'Programados' },
+]
+
+const documentItems = [
   { path: '/app/my-bikes#documents', icon: FileText, label: 'Documentos' },
   { path: '/app/my-bikes#reports', icon: BarChart3, label: 'Reportes' },
 ]
@@ -54,8 +60,8 @@ const sidebarItems = [
 const mobileNavItems = [
   { path: '/app/home', icon: Home, label: 'Inicio' },
   { path: '/app/my-bikes', icon: Bike, label: 'Hoja de vida' },
-  { path: '/app/my-bikes#history', icon: Wrench, label: 'Servicios' },
-  { path: '/app/my-bikes#reminders', icon: CalendarClock, label: 'Agenda' },
+  { path: '/app/my-bikes#history', icon: Wrench, label: 'Realizados' },
+  { path: '/app/my-bikes#reminders', icon: CalendarClock, label: 'Programados' },
 ]
 
 function initials(name: string | null | undefined, email: string | undefined) {
@@ -106,7 +112,7 @@ export function MainLayout() {
 
   const pageTitle =
     (location.pathname.startsWith('/app/routes/') ? 'Detalle de ruta' : null) ||
-    [...navItems, ...premiumItems].find((item) => item.path === `${location.pathname}${location.hash}`)?.label ||
+    [...navItems, ...maintenanceItems, ...documentItems, ...premiumItems].find((item) => item.path === `${location.pathname}${location.hash}`)?.label ||
     navItems.find((item) => item.path === location.pathname)?.label ||
     premiumItems.find((item) => item.path === location.pathname)?.label ||
     sidebarItems.find((item) => item.path === location.pathname)?.label ||
@@ -121,6 +127,8 @@ export function MainLayout() {
     if (path === '/app/messages' && location.pathname === '/app/community') return true
     return location.pathname === path
   }
+
+  const isMaintenanceActive = maintenanceItems.some((item) => isItemActive(item.path))
 
   useEffect(() => {
     if (!supabase || !userId) return
@@ -234,6 +242,44 @@ export function MainLayout() {
               <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${isItemActive(item.path) ? 'bg-moto-darker/15 text-moto-darker' : 'bg-white/10 text-gray-300'}`}>
                 Premium
               </span>
+            </NavLink>
+          ))}
+
+          <div className="mt-2 rounded-xl bg-white/[0.03] p-1">
+            <div className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold ${isMaintenanceActive ? 'text-white' : 'text-gray-400'}`}>
+              <Wrench className="h-5 w-5" />
+              <span className="flex-1">Mantenimientos</span>
+            </div>
+            <div className="space-y-1 pl-5">
+              {maintenanceItems.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={() =>
+                    `flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200 ${
+                      isItemActive(item.path) ? 'bg-moto-orange text-moto-darker' : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                    }`
+                  }
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
+            </div>
+          </div>
+
+          {documentItems.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={() =>
+                `flex items-center gap-3 rounded-xl px-3 py-3 transition-all duration-200 ${
+                  isItemActive(item.path) ? 'bg-moto-orange text-moto-darker' : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                }`
+              }
+            >
+              <item.icon className="h-5 w-5" />
+              <span className="flex-1">{item.label}</span>
             </NavLink>
           ))}
 
@@ -423,7 +469,45 @@ export function MainLayout() {
               </button>
             </div>
             <nav className="space-y-1 p-4">
-              {[...navItems, ...premiumItems, ...sidebarItems, ...(isAdmin ? [{ path: '/app/admin', icon: ShieldCheck, label: 'Administracion' }] : [])].map((item) => (
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={() =>
+                    `flex items-center gap-4 rounded-xl px-4 py-4 ${
+                      isItemActive(item.path) ? 'bg-moto-orange text-moto-darker' : 'text-gray-400 hover:bg-white/5'
+                    }`
+                  }
+                >
+                  <item.icon className="h-6 w-6" />
+                  <span className="text-lg">{item.label}</span>
+                </NavLink>
+              ))}
+              <div className="rounded-xl bg-white/[0.03] p-2">
+                <div className={`flex items-center gap-4 px-2 py-3 ${isMaintenanceActive ? 'text-white' : 'text-gray-400'}`}>
+                  <Wrench className="h-6 w-6" />
+                  <span className="text-lg font-semibold">Mantenimientos</span>
+                </div>
+                <div className="space-y-1 pl-6">
+                  {maintenanceItems.map((item) => (
+                    <NavLink
+                      key={item.path}
+                      to={item.path}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={() =>
+                        `flex items-center gap-3 rounded-xl px-4 py-3 ${
+                          isItemActive(item.path) ? 'bg-moto-orange text-moto-darker' : 'text-gray-400 hover:bg-white/5'
+                        }`
+                      }
+                    >
+                      <item.icon className="h-5 w-5" />
+                      <span>{item.label}</span>
+                    </NavLink>
+                  ))}
+                </div>
+              </div>
+              {[...documentItems, ...premiumItems, ...sidebarItems, ...(isAdmin ? [{ path: '/app/admin', icon: ShieldCheck, label: 'Administracion' }] : [])].map((item) => (
                 <NavLink
                   key={item.path}
                   to={item.path}
