@@ -223,28 +223,6 @@ export function MainLayout() {
             </NavLink>
           ))}
 
-          <div className="mb-3 mt-6 flex items-center justify-between gap-3 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
-            <span>Premium</span>
-            <Crown className="h-3.5 w-3.5 text-moto-orange" />
-          </div>
-          {premiumItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={() =>
-                `flex items-center gap-3 rounded-xl px-3 py-3 transition-all duration-200 ${
-                  isItemActive(item.path) ? 'bg-moto-orange text-moto-darker' : 'text-gray-400 hover:bg-white/5 hover:text-white'
-                }`
-              }
-            >
-              <item.icon className="h-5 w-5" />
-              <span className="flex-1">{item.label}</span>
-              <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${isItemActive(item.path) ? 'bg-moto-darker/15 text-moto-darker' : 'bg-white/10 text-gray-300'}`}>
-                Premium
-              </span>
-            </NavLink>
-          ))}
-
           <div className="mt-2 rounded-xl bg-white/[0.03] p-1">
             <div className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold ${isMaintenanceActive ? 'text-white' : 'text-gray-400'}`}>
               <Wrench className="h-5 w-5" />
@@ -280,6 +258,28 @@ export function MainLayout() {
             >
               <item.icon className="h-5 w-5" />
               <span className="flex-1">{item.label}</span>
+            </NavLink>
+          ))}
+
+          <div className="mb-3 mt-6 flex items-center justify-between gap-3 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+            <span>Premium</span>
+            <Crown className="h-3.5 w-3.5 text-moto-orange" />
+          </div>
+          {premiumItems.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={() =>
+                `flex items-center gap-3 rounded-xl px-3 py-3 transition-all duration-200 ${
+                  isItemActive(item.path) ? 'bg-moto-orange text-moto-darker' : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                }`
+              }
+            >
+              <item.icon className="h-5 w-5" />
+              <span className="flex-1">{item.label}</span>
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${isItemActive(item.path) ? 'bg-moto-darker/15 text-moto-darker' : 'bg-white/10 text-gray-300'}`}>
+                Premium
+              </span>
             </NavLink>
           ))}
 
@@ -507,7 +507,45 @@ export function MainLayout() {
                   ))}
                 </div>
               </div>
-              {[...documentItems, ...premiumItems, ...sidebarItems, ...(isAdmin ? [{ path: '/app/admin', icon: ShieldCheck, label: 'Administracion' }] : [])].map((item) => (
+              {documentItems.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={() =>
+                    `flex items-center gap-4 rounded-xl px-4 py-4 ${
+                      isItemActive(item.path) ? 'bg-moto-orange text-moto-darker' : 'text-gray-400 hover:bg-white/5'
+                    }`
+                  }
+                >
+                  <item.icon className="h-6 w-6" />
+                  <span className="text-lg">{item.label}</span>
+                </NavLink>
+              ))}
+              <div className="mt-5 flex items-center justify-between gap-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <span>Premium</span>
+                <Crown className="h-4 w-4 text-moto-orange" />
+              </div>
+              {premiumItems.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={() =>
+                    `flex items-center gap-4 rounded-xl px-4 py-4 ${
+                      isItemActive(item.path) ? 'bg-moto-orange text-moto-darker' : 'text-gray-400 hover:bg-white/5'
+                    }`
+                  }
+                >
+                  <item.icon className="h-6 w-6" />
+                  <span className="min-w-0 flex-1 text-lg">{item.label}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${isItemActive(item.path) ? 'bg-moto-darker/15 text-moto-darker' : 'bg-white/10 text-gray-300'}`}>
+                    Premium
+                  </span>
+                </NavLink>
+              ))}
+              <div className="mt-5 px-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Personal</div>
+              {[...sidebarItems, ...(isAdmin ? [{ path: '/app/admin', icon: ShieldCheck, label: 'Administracion' }] : [])].map((item) => (
                 <NavLink
                   key={item.path}
                   to={item.path}
