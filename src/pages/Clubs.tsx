@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Camera, Crown, Edit3, Loader2, Plus, Save, Shield, Trash2, UserPlus, Users } from 'lucide-react'
 import { toast } from 'sonner'
@@ -60,6 +60,7 @@ function roleLabel(role: ClubMemberWithProfile['role']) {
 
 export function Clubs() {
   const { user } = useAuth()
+  const userId = user?.id
   const { hasPlan, isLoadingSubscription } = useSubscription()
   const [clubs, setClubs] = useState<Club[]>([])
   const [members, setMembers] = useState<ClubMemberWithProfile[]>([])
@@ -94,14 +95,47 @@ export function Clubs() {
     })
   }
 
-  const loadClubs = async () => {
-    if (!supabase || !user) return
+  const loadMembers = useCallback(async (clubId: string) => {
+    if (!supabase) return
+
+    const { data, error } = await supabase
+      .from('club_members')
+      .select('*, profiles:user_id(full_name, username, city, avatar_url, is_public)')
+      .eq('club_id', clubId)
+      .order('created_at', { ascending: true })
+
+    if (error) {
+      toast.error('No pudimos cargar miembros', { description: error.message })
+    } else {
+      setMembers((data ?? []) as ClubMemberWithProfile[])
+    }
+  }, [])
+
+  const loadPendingInvitations = useCallback(async (clubId: string) => {
+    if (!supabase) return
+
+    const { data, error } = await supabase
+      .from('club_invitations')
+      .select('*, profiles:invited_user_id(full_name, username, city, avatar_url)')
+      .eq('club_id', clubId)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      toast.error('No pudimos cargar invitaciones pendientes', { description: error.message })
+    } else {
+      setPendingInvitations((data ?? []) as ClubInvitationWithProfile[])
+    }
+  }, [])
+
+  const loadClubs = useCallback(async () => {
+    if (!supabase || !userId) return
     setIsLoading(true)
 
     const { data, error } = await supabase
       .from('club_members')
       .select('role, clubs:club_id(*)')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -124,44 +158,11 @@ export function Clubs() {
     }
 
     setIsLoading(false)
-  }
-
-  const loadMembers = async (clubId: string) => {
-    if (!supabase) return
-
-    const { data, error } = await supabase
-      .from('club_members')
-      .select('*, profiles:user_id(full_name, username, city, avatar_url, is_public)')
-      .eq('club_id', clubId)
-      .order('created_at', { ascending: true })
-
-    if (error) {
-      toast.error('No pudimos cargar miembros', { description: error.message })
-    } else {
-      setMembers((data ?? []) as ClubMemberWithProfile[])
-    }
-  }
-
-  const loadPendingInvitations = async (clubId: string) => {
-    if (!supabase) return
-
-    const { data, error } = await supabase
-      .from('club_invitations')
-      .select('*, profiles:invited_user_id(full_name, username, city, avatar_url)')
-      .eq('club_id', clubId)
-      .eq('status', 'pending')
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      toast.error('No pudimos cargar invitaciones pendientes', { description: error.message })
-    } else {
-      setPendingInvitations((data ?? []) as ClubInvitationWithProfile[])
-    }
-  }
+  }, [loadMembers, loadPendingInvitations, selectedClubId, userId])
 
   useEffect(() => {
     void loadClubs()
-  }, [user?.id])
+  }, [loadClubs])
 
   useEffect(() => {
     if (!selectedClub) {
@@ -178,7 +179,7 @@ export function Clubs() {
     })
     void loadMembers(selectedClub.id)
     void loadPendingInvitations(selectedClub.id)
-  }, [selectedClub?.id])
+  }, [loadMembers, loadPendingInvitations, selectedClub])
 
   useEffect(() => {
     if (!supabase || !selectedClub || !canManageSelectedClub) {
@@ -215,11 +216,11 @@ export function Clubs() {
       cancelled = true
       window.clearTimeout(timeout)
     }
-  }, [canManageSelectedClub, inviteUsername, selectedClub?.id])
+  }, [canManageSelectedClub, inviteUsername, selectedClub])
 
   const createClub = async (event: FormEvent) => {
     event.preventDefault()
-    if (!supabase || !user) return
+    if (!supabase || !userId) return
 
     if (!canCreateClub) {
       showUpgradeForClubCreation()
@@ -646,7 +647,7 @@ export function Clubs() {
                                     <div className="min-w-0">
                                       <p className="truncate text-sm font-medium">{suggestionName}</p>
                                       <p className="truncate text-xs text-gray-500">
-                                        @{suggestion.username || 'motocare'}{suggestion.city ? ` · ${suggestion.city}` : ''}
+                                        @{suggestion.username || 'motocare'}{suggestion.city ? ` - ${suggestion.city}` : ''}
                                       </p>
                                     </div>
                                   </button>
@@ -675,7 +676,7 @@ export function Clubs() {
                           </Avatar>
                           <div className="min-w-0">
                             <p className="truncate font-medium">{memberName}</p>
-                            <p className="truncate text-xs text-gray-500">@{member.profiles?.username || 'motocare'} · {roleLabel(member.role)}</p>
+                            <p className="truncate text-xs text-gray-500">@{member.profiles?.username || 'motocare'} - {roleLabel(member.role)}</p>
                           </div>
                         </div>
                         <div className="flex items-center justify-end gap-2">
@@ -709,7 +710,7 @@ export function Clubs() {
                               </Avatar>
                               <div className="min-w-0">
                                 <p className="truncate font-medium">{invitedName}</p>
-                                <p className="truncate text-xs text-gray-500">@{invitation.profiles?.username || 'motocare'} · pendiente de aprobacion</p>
+                                <p className="truncate text-xs text-gray-500">@{invitation.profiles?.username || 'motocare'} - pendiente de aprobacion</p>
                               </div>
                             </div>
                             <Badge className="w-fit shrink-0 bg-yellow-500/15 text-yellow-300">Pendiente</Badge>

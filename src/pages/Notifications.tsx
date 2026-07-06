@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Bell, Calendar, Check, CheckCheck, Crown, Loader2, Route, Shield, Users, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -50,6 +50,7 @@ function notificationText(notification: Notification) {
 
 export function Notifications() {
   const { user } = useAuth()
+  const userId = user?.id
   const { effectivePlan, isLoadingSubscription, hasPlan } = useSubscription()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [filter, setFilter] = useState<NotificationFilter>('unread')
@@ -69,14 +70,14 @@ export function Notifications() {
     return notifications
   }, [filter, notifications])
 
-  const loadNotifications = async () => {
-    if (!supabase || !user) return
+  const loadNotifications = useCallback(async () => {
+    if (!supabase || !userId) return
     setIsLoading(true)
 
     const { data, error } = await supabase
       .from('notifications')
       .select('*, routes:route_id(id, title, start_date, end_date, status), club_invitations:club_invitation_id(*, clubs:club_id(id, name, image_url, city))')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .lte('scheduled_for', new Date().toISOString())
       .order('read_at', { ascending: true, nullsFirst: true })
       .order('scheduled_for', { ascending: false })
@@ -89,11 +90,11 @@ export function Notifications() {
     }
 
     setIsLoading(false)
-  }
+  }, [userId])
 
   useEffect(() => {
     void loadNotifications()
-  }, [user?.id])
+  }, [loadNotifications])
 
   const markAsRead = async (notification: Notification) => {
     if (!supabase || notification.read_at) return
@@ -119,7 +120,7 @@ export function Notifications() {
     const { error } = await supabase
       .from('notifications')
       .update({ read_at: readAt })
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .is('read_at', null)
       .lte('scheduled_for', new Date().toISOString())
 

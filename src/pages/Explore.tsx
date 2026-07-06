@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Bookmark, BookmarkCheck, Calendar, Clock, Loader2, MapPin, MessageCircle, Route as RouteIcon, Search, Star, TrendingUp, Users } from 'lucide-react'
 import { toast } from 'sonner'
@@ -56,6 +56,7 @@ const routeStatusLabels: Record<RouteWithOwner['status'], string> = {
 
 export function Explore() {
   const { user } = useAuth()
+  const userId = user?.id
   const [searchQuery, setSearchQuery] = useState('')
   const [routes, setRoutes] = useState<RouteWithOwner[]>([])
   const [posts, setPosts] = useState<PostWithAuthor[]>([])
@@ -92,7 +93,7 @@ export function Explore() {
   const totalKm = useMemo(() => routes.reduce((total, route) => total + (route.distance_km ?? 0), 0), [routes])
   const savedRoutes = useMemo(() => routes.filter((route) => savedRouteIds.includes(route.id)), [routes, savedRouteIds])
 
-  const loadExplore = async () => {
+  const loadExplore = useCallback(async () => {
     if (!supabase) return
     setIsLoading(true)
 
@@ -108,8 +109,8 @@ export function Explore() {
         .select('*, profiles:author_id(full_name, username, city, avatar_url), routes:route_id(id, owner_id, title, origin, destination, distance_km, duration_minutes, start_date, end_date, visibility, status, created_at)')
         .order('created_at', { ascending: false })
         .limit(30),
-      user
-        ? supabase.from('saved_routes').select('route_id').eq('user_id', user.id)
+      userId
+        ? supabase.from('saved_routes').select('route_id').eq('user_id', userId)
         : Promise.resolve({ data: [], error: null }),
     ])
 
@@ -132,11 +133,11 @@ export function Explore() {
     }
 
     setIsLoading(false)
-  }
+  }, [userId])
 
   useEffect(() => {
     void loadExplore()
-  }, [user?.id])
+  }, [loadExplore])
 
   const toggleSavedRoute = async (route: RouteWithOwner) => {
     if (!supabase || !user || savingRouteId) return
@@ -399,7 +400,7 @@ export function Explore() {
                       </Avatar>
                       <div className="min-w-0">
                         <p className="truncate font-medium">{authorName}</p>
-                        <p className="text-xs text-gray-500">@{author?.username || 'motocare'} · {relativeDate(post.created_at)}</p>
+                        <p className="text-xs text-gray-500">@{author?.username || 'motocare'} - {relativeDate(post.created_at)}</p>
                       </div>
                     </div>
                     <p className="whitespace-pre-wrap text-sm leading-6 text-gray-100">{post.content}</p>

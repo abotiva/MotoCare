@@ -255,15 +255,21 @@ export function Community() {
   useEffect(() => {
     void loadFeed()
     void loadPublicProfiles()
+    // Public community feed is intentionally refreshed when the authenticated user changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
   useEffect(() => {
     void loadMyRoutes()
-  }, [user])
+    // User routes are intentionally refreshed when the authenticated user changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id])
 
   useEffect(() => {
     void loadMyClubs()
-  }, [user])
+    // User clubs are intentionally refreshed when the authenticated user changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id])
 
   useEffect(() => {
     if (selectedClubId) void loadClubPosts(selectedClubId)
@@ -672,7 +678,7 @@ export function Community() {
                     <option value="">Publicar sin adjuntar ruta</option>
                     {myRoutes.map((route) => (
                       <option key={route.id} value={route.id}>
-                        {route.title} · {route.origin || 'Origen'} - {route.destination || 'Destino'} · {routeStatusLabels[route.status ?? 'planned']}
+                        {route.title} - {route.origin || 'Origen'} - {route.destination || 'Destino'} - {routeStatusLabels[route.status ?? 'planned']}
                       </option>
                     ))}
                   </select>
@@ -751,7 +757,7 @@ export function Community() {
                         <div className="min-w-0">
                           <p className="truncate font-semibold">{authorName}</p>
                           <p className="text-xs text-gray-500">
-                            @{authorUsername} · {relativeDate(post.created_at)}
+                            @{authorUsername} - {relativeDate(post.created_at)}
                           </p>
                         </div>
                       </div>
@@ -969,7 +975,7 @@ export function Community() {
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">{name}</p>
                           <p className="truncate text-xs text-gray-500">
-                            @{publicProfile.username || 'motocare'}{publicProfile.city ? ` · ${publicProfile.city}` : ''}
+                            @{publicProfile.username || 'motocare'}{publicProfile.city ? ` - ${publicProfile.city}` : ''}
                           </p>
                         </div>
                       </div>
@@ -1061,7 +1067,7 @@ export function Community() {
                             <option value="">Compartir sin adjuntar ruta</option>
                             {myRoutes.map((route) => (
                               <option key={route.id} value={route.id}>
-                                {route.title} · {route.origin || 'Origen'} - {route.destination || 'Destino'} · {routeStatusLabels[route.status ?? 'planned']}
+                                {route.title} - {route.origin || 'Origen'} - {route.destination || 'Destino'} - {routeStatusLabels[route.status ?? 'planned']}
                               </option>
                             ))}
                           </select>
@@ -1103,7 +1109,7 @@ export function Community() {
                             </Avatar>
                             <div className="min-w-0">
                               <p className="truncate font-medium">{authorName}</p>
-                              <p className="text-xs text-gray-500">@{author?.username || 'motocare'} · {relativeDate(post.created_at)}</p>
+                              <p className="text-xs text-gray-500">@{author?.username || 'motocare'} - {relativeDate(post.created_at)}</p>
                             </div>
                           </div>
                           <p className="whitespace-pre-wrap text-sm leading-6 text-gray-100">{post.content}</p>
@@ -1184,7 +1190,7 @@ export function Community() {
             <Card className="border-white/5 bg-moto-gray py-0">
               <CardContent className="p-8 text-center text-gray-400">
                 <Users className="mx-auto mb-3 h-12 w-12 text-gray-600" />
-                Cree o únase a un club para usar mensajes privados.
+                Cree o unase a un club para usar mensajes privados.
               </CardContent>
             </Card>
           )}

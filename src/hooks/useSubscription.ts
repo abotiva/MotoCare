@@ -37,11 +37,12 @@ function effectivePlanFor(subscription: UserSubscription): UserPlan {
 
 export function useSubscription() {
   const { user } = useAuth()
+  const userId = user?.id
   const [subscription, setSubscription] = useState<UserSubscription>(defaultSubscription)
   const [isLoadingSubscription, setIsLoadingSubscription] = useState(true)
 
   useEffect(() => {
-    if (!supabase || !user) {
+    if (!supabase || !userId) {
       setSubscription(defaultSubscription)
       setIsLoadingSubscription(false)
       return
@@ -53,11 +54,11 @@ export function useSubscription() {
       const { data, error } = await client.rpc('current_user_subscription')
 
       if (error) {
-        setSubscription({ ...defaultSubscription, user_id: user.id })
+        setSubscription({ ...defaultSubscription, user_id: userId })
       } else {
         const row = Array.isArray(data) ? data[0] : data
         setSubscription({
-          user_id: row?.user_id ?? user.id,
+          user_id: row?.user_id ?? userId,
           plan: (row?.plan as UserPlan | undefined) ?? 'free',
           status: (row?.status as UserPlanStatus | undefined) ?? 'active',
           expires_at: row?.expires_at ?? null,
@@ -69,7 +70,7 @@ export function useSubscription() {
     }
 
     void loadSubscription()
-  }, [user?.id])
+  }, [userId])
 
   const effectivePlan = useMemo(() => effectivePlanFor(subscription), [subscription])
 

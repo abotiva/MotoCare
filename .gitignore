@@ -28,3 +28,6 @@ Thumbs.db
 .vite-cache/
 .vite/
 .vercel
+
+# Generated exports
+exports/

@@ -7,6 +7,10 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
 }
 
+type NavigatorWithStandalone = Navigator & {
+  standalone?: boolean
+}
+
 export function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [showPrompt, setShowPrompt] = useState(false)
@@ -18,7 +22,7 @@ export function InstallPrompt() {
       return
     }
 
-    if ((window.navigator as any).standalone === true) {
+    if ((window.navigator as NavigatorWithStandalone).standalone === true) {
       setIsInstalled(true)
       return
     }

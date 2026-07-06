@@ -258,6 +258,8 @@ export function Home() {
 
   useEffect(() => {
     void loadDashboard()
+    // Dashboard load is intentionally keyed only by authenticated user id.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id])
 
   const markNotificationAsRead = async (notification: Notification) => {
@@ -385,7 +387,7 @@ export function Home() {
                   )}
                   <div className="min-w-0 flex-1">
                     <h3 className="text-xl font-bold">{primaryMotorcycle.brand} {primaryMotorcycle.model}</h3>
-                    <p className="text-sm text-gray-400">{primaryMotorcycle.plate || 'Sin placa'} · {primaryMotorcycle.year || 'Sin ano'}</p>
+                    <p className="text-sm text-gray-400">{primaryMotorcycle.plate || 'Sin placa'} - {primaryMotorcycle.year || 'Sin ano'}</p>
                     <p className="mt-3 text-2xl font-bold text-moto-orange">{primaryMotorcycle.mileage.toLocaleString()} km</p>
                   </div>
                 </div>
@@ -411,7 +413,7 @@ export function Home() {
                       <div className="min-w-0">
                         <p className="truncate font-medium">{reminder.title}</p>
                         <p className="text-sm text-gray-400">
-                          {reminder.due_mileage ? `${reminder.due_mileage.toLocaleString()} km` : 'Sin kilometraje'} · {reminder.due_date || 'Sin fecha'}
+                          {reminder.due_mileage ? `${reminder.due_mileage.toLocaleString()} km` : 'Sin kilometraje'} - {reminder.due_date || 'Sin fecha'}
                         </p>
                       </div>
                       <Badge className="bg-yellow-500/15 text-yellow-300">Pendiente</Badge>

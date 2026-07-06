@@ -88,6 +88,7 @@ export function MainLayout() {
   const [isAdmin, setIsAdmin] = useState(false)
   const { user, profile, signOut } = useAuth()
   const location = useLocation()
+  const userId = user?.id
 
   const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Motero MotoCare'
   const username = profile?.username || user?.email?.split('@')[0] || 'motocare'
@@ -107,14 +108,14 @@ export function MainLayout() {
   }
 
   useEffect(() => {
-    if (!supabase || !user) return
+    if (!supabase || !userId) return
     const client = supabase
 
     const loadUnreadNotifications = async () => {
       const { count } = await client
         .from('notifications')
         .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .is('read_at', null)
         .lte('scheduled_for', new Date().toISOString())
 
@@ -123,7 +124,7 @@ export function MainLayout() {
       const { data } = await client
         .from('notifications')
         .select('*, routes:route_id(title, start_date, end_date, status), club_invitations:club_invitation_id(*, clubs:club_id(id, name, image_url, city))')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .is('read_at', null)
         .lte('scheduled_for', new Date().toISOString())
         .order('scheduled_for', { ascending: true })
@@ -133,14 +134,14 @@ export function MainLayout() {
     }
 
     void loadUnreadNotifications()
-  }, [user?.id, location.pathname])
+  }, [userId, location.pathname])
 
   useEffect(() => {
     setIsNotificationsOpen(false)
   }, [location.pathname])
 
   useEffect(() => {
-    if (!supabase || !user) {
+    if (!supabase || !userId) {
       setIsAdmin(false)
       return
     }
@@ -152,17 +153,17 @@ export function MainLayout() {
     }
 
     void loadAdminAccess()
-  }, [user?.id])
+  }, [userId])
 
   useEffect(() => {
-    if (!supabase || !user) return
+    if (!supabase || !userId) return
     const client = supabase
 
     const touchPresence = async () => {
       await client
         .from('profiles')
         .update({ last_seen_at: new Date().toISOString() })
-        .eq('id', user.id)
+        .eq('id', userId)
     }
 
     void touchPresence()
@@ -171,7 +172,7 @@ export function MainLayout() {
     }, 60_000)
 
     return () => window.clearInterval(interval)
-  }, [user?.id])
+  }, [userId])
 
   return (
     <div className="flex min-h-dvh overflow-x-hidden bg-moto-dark text-white">

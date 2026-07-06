@@ -195,7 +195,7 @@ function RouteCard({
         <div className="min-w-0">
           <h3 className="truncate font-semibold">{route.title}</h3>
           <p className="mt-1 text-sm text-gray-400">
-            {route.origin || 'Origen sin definir'} → {route.destination || 'Destino sin definir'}
+            {route.origin || 'Origen sin definir'}{' -> '}{route.destination || 'Destino sin definir'}
           </p>
         </div>
         <div className="flex flex-wrap justify-end gap-2">
@@ -307,7 +307,9 @@ export function Map() {
 
   useEffect(() => {
     void loadRoutes()
-  }, [user])
+    // Route load is intentionally keyed only by authenticated user identity.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id])
 
   const openRouteDetail = (route: RoutePlan) => {
     setSelectedRoute(route)
@@ -763,7 +765,7 @@ export function Map() {
               <div className="rounded-xl border border-white/10 bg-moto-darker p-4">
                 <p className="text-sm text-gray-400">Trayecto</p>
                 <p className="mt-1 font-semibold">
-                  {selectedRoute.origin || 'Origen sin definir'} → {selectedRoute.destination || 'Destino sin definir'}
+                  {selectedRoute.origin || 'Origen sin definir'}{' -> '}{selectedRoute.destination || 'Destino sin definir'}
                 </p>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
