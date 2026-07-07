@@ -605,38 +605,41 @@ export function Community() {
         </div>
       </div>
 
-      <div className="mb-5 grid gap-3 sm:grid-cols-3 sm:gap-4">
-        <Card className="border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-moto-orange/20">
-              <Users className="h-6 w-6 text-moto-orange" />
+      <div className="mb-4 grid grid-cols-3 gap-2 sm:mb-5 sm:gap-4">
+        <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0">
+          <CardContent className="flex min-w-0 flex-col items-center gap-1.5 p-2 text-center sm:flex-row sm:gap-4 sm:p-4 sm:text-left">
+            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-moto-orange/20 sm:h-12 sm:w-12 sm:rounded-xl">
+              <Users className="h-4 w-4 text-moto-orange sm:h-6 sm:w-6" />
             </div>
-            <div>
-              <p className="text-sm text-gray-400">Publicaciones</p>
-              <p className="text-xl font-bold">{posts.length}</p>
+            <div className="min-w-0">
+              <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">Publicaciones</p>
+              <p className="text-base font-bold leading-tight sm:text-xl">{posts.length}</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-green-500/20">
-              <Send className="h-6 w-6 text-green-500" />
+        <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0">
+          <CardContent className="flex min-w-0 flex-col items-center gap-1.5 p-2 text-center sm:flex-row sm:gap-4 sm:p-4 sm:text-left">
+            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-green-500/20 sm:h-12 sm:w-12 sm:rounded-xl">
+              <Send className="h-4 w-4 text-green-500 sm:h-6 sm:w-6" />
             </div>
-            <div>
-              <p className="text-sm text-gray-400">Mias</p>
-              <p className="text-xl font-bold">{myPostsCount}</p>
+            <div className="min-w-0">
+              <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">Mias</p>
+              <p className="text-base font-bold leading-tight sm:text-xl">{myPostsCount}</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-sky-500/20">
-              <RouteIcon className="h-6 w-6 text-sky-300" />
+        <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0">
+          <CardContent className="flex min-w-0 flex-col items-center gap-1.5 p-2 text-center sm:flex-row sm:gap-4 sm:p-4 sm:text-left">
+            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sky-500/20 sm:h-12 sm:w-12 sm:rounded-xl">
+              <RouteIcon className="h-4 w-4 text-sky-300 sm:h-6 sm:w-6" />
             </div>
-            <div>
-              <p className="text-sm text-gray-400">Rutas publicadas</p>
-              <p className="text-xl font-bold">{routePostsCount}</p>
+            <div className="min-w-0">
+              <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">
+                <span className="sm:hidden">Rutas</span>
+                <span className="hidden sm:inline">Rutas publicadas</span>
+              </p>
+              <p className="text-base font-bold leading-tight sm:text-xl">{routePostsCount}</p>
             </div>
           </CardContent>
         </Card>
@@ -734,8 +737,8 @@ export function Community() {
           {posts.length > 0 ? (
             posts.map((post) => {
               const author = post.profiles
-              const authorName = author?.full_name || author?.username || 'Motero MotoCare'
-              const authorUsername = author?.username || 'motocare'
+              const authorName = author?.full_name || author?.username || 'Motero MotoHubX'
+              const authorUsername = author?.username || 'motohubx'
               const likeState = likesByPost[post.id] ?? { count: 0, likedByMe: false }
               const comments = commentsByPost[post.id] ?? []
               const commentsExpanded = expandedComments[post.id] ?? false
@@ -878,7 +881,7 @@ export function Community() {
                         {comments.length > 0 ? (
                           comments.map((comment) => {
                             const commentAuthor = comment.profiles
-                            const commentName = commentAuthor?.full_name || commentAuthor?.username || 'Motero MotoCare'
+                            const commentName = commentAuthor?.full_name || commentAuthor?.username || 'Motero MotoHubX'
                             return (
                               <div key={comment.id} className="flex gap-3 rounded-xl bg-moto-darker p-3">
                                 <Avatar className="h-9 w-9">
@@ -962,7 +965,7 @@ export function Community() {
                 {visibleProfiles.length > 0 ? (
                   visibleProfiles.map((publicProfile) => {
                     const online = isOnline(publicProfile.last_seen_at)
-                    const name = publicProfile.full_name || publicProfile.username || 'Motero MotoCare'
+                    const name = publicProfile.full_name || publicProfile.username || 'Motero MotoHubX'
                     return (
                       <div key={publicProfile.id} className="flex items-center gap-3 rounded-xl bg-moto-darker p-3">
                         <div className="relative">
@@ -975,7 +978,7 @@ export function Community() {
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">{name}</p>
                           <p className="truncate text-xs text-gray-500">
-                            @{publicProfile.username || 'motocare'}{publicProfile.city ? ` - ${publicProfile.city}` : ''}
+                            @{publicProfile.username || 'motohubx'}{publicProfile.city ? ` - ${publicProfile.city}` : ''}
                           </p>
                         </div>
                       </div>
@@ -1098,7 +1101,7 @@ export function Community() {
                 {clubPosts.length > 0 ? (
                   clubPosts.map((post) => {
                     const author = post.profiles
-                    const authorName = author?.full_name || author?.username || 'Motero MotoCare'
+                    const authorName = author?.full_name || author?.username || 'Motero MotoHubX'
                     return (
                       <Card key={post.id} className="border-white/5 bg-moto-gray py-0">
                         <CardContent className="p-4">
@@ -1109,7 +1112,7 @@ export function Community() {
                             </Avatar>
                             <div className="min-w-0">
                               <p className="truncate font-medium">{authorName}</p>
-                              <p className="text-xs text-gray-500">@{author?.username || 'motocare'} - {relativeDate(post.created_at)}</p>
+                              <p className="text-xs text-gray-500">@{author?.username || 'motohubx'} - {relativeDate(post.created_at)}</p>
                             </div>
                           </div>
                           <p className="whitespace-pre-wrap text-sm leading-6 text-gray-100">{post.content}</p>

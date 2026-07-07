@@ -1,10 +1,10 @@
-# Licencias y administracion - MotoCare
+# Licencias y administracion - MotoHubX
 
-Documento de trabajo para definir las licencias comerciales de MotoCare y el manejo interno de administradores.
+Documento de trabajo para definir las licencias comerciales de MotoHubX y el manejo interno de administradores.
 
 ## Objetivo de las licencias
 
-MotoCare debe tener tres niveles faciles de entender:
+MotoHubX debe tener tres niveles faciles de entender:
 
 - Gratis: entrada basica para que cualquier motero pruebe la app.
 - Premium: experiencia completa para el motero individual.
@@ -37,7 +37,7 @@ La diferencia principal no debe ser solo "mas funciones", sino el tipo de usuari
 
 ### Perfil
 
-Para usuarios que quieren probar MotoCare sin pagar.
+Para usuarios que quieren probar MotoHubX sin pagar.
 
 ### Beneficios
 
@@ -62,7 +62,7 @@ Para usuarios que quieren probar MotoCare sin pagar.
 
 ### Mensaje comercial
 
-"Empieza a cuidar tu moto y conoce la comunidad MotoCare."
+"Empieza a cuidar tu moto y conoce la comunidad MotoHubX."
 
 ## Licencia Premium
 
@@ -134,7 +134,7 @@ Para talleres, clubes, negocios, marcas, aliados o usuarios que administran moto
 
 ### Gratis
 
-Gratis debe permitir que el usuario sienta el valor de MotoCare sin reemplazar completamente a Premium.
+Gratis debe permitir que el usuario sienta el valor de MotoHubX sin reemplazar completamente a Premium.
 
 Buenas funciones para Gratis:
 
@@ -209,7 +209,7 @@ La tabla actual tiene estos campos:
 
 Roles actuales:
 
-- `owner`: propietario o administrador principal de MotoCare.
+- `owner`: propietario o administrador principal de MotoHubX.
 - `admin`: administrador interno.
 
 Nota: en la version actual ambos roles tienen acceso al mismo panel. La diferencia sirve para futuras reglas, por ejemplo permitir que solo `owner` pueda agregar o quitar administradores desde una pantalla interna.
@@ -220,7 +220,7 @@ Por ahora se agregan desde Supabase, usando SQL Editor.
 
 ### Paso 1: conseguir el ID del usuario
 
-El usuario debe existir en MotoCare. Su id se consulta en:
+El usuario debe existir en MotoHubX. Su id se consulta en:
 
 `public.profiles`
 

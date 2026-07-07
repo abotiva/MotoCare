@@ -143,7 +143,7 @@ export function RouteDetail() {
   const status = routeStatusMeta[route.status ?? 'planned']
   const StatusIcon = status.icon
   const owner = route.profiles
-  const ownerName = owner?.full_name || owner?.username || 'Motero MotoCare'
+  const ownerName = owner?.full_name || owner?.username || 'Motero MotoHubX'
   const mapEmbedUrl = googleMapsEmbedUrl(route)
 
   return (

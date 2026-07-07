@@ -1165,7 +1165,7 @@ export function MyBikes() {
               <div className="mx-auto grid h-20 w-20 place-items-center rounded-2xl bg-moto-orange/20">
                 <Bike className="h-10 w-10 text-moto-orange" />
               </div>
-              <h2 className="mt-6 text-2xl font-bold">Crea tu primer garaje MotoCare</h2>
+              <h2 className="mt-6 text-2xl font-bold">Crea tu primer garaje MotoHubX</h2>
               <p className="mx-auto mt-2 max-w-md text-gray-400">
                 Registra tu moto para empezar a controlar SOAT, tecnomecanica, kilometraje y mantenimientos.
               </p>

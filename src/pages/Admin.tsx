@@ -213,7 +213,7 @@ export function Admin() {
         </Badge>
       </div>
 
-      <div className="mb-5 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))' }}>
+      <div className="mb-4 grid grid-cols-4 gap-2 sm:mb-5 sm:gap-4 md:grid-cols-4 xl:grid-cols-8">
         <MetricCard icon={Users} label="Usuarios" value={overview.users} detail={`${overview.private_users} privados`} />
         <MetricCard icon={CreditCard} label="Free" value={overview.free_users} detail="Usuarios base" />
         <MetricCard icon={CreditCard} label="Premium" value={overview.premium_users + overview.pro_users} detail="Incluye Pro legado" />
@@ -290,15 +290,15 @@ function AppDataCard({ projectRef }: { projectRef: string }) {
 
 function MetricCard({ icon: Icon, label, value, detail }: { icon: LucideIcon; label: string; value: number; detail: string }) {
   return (
-    <Card className="border-white/5 bg-moto-gray py-0">
-      <CardContent className="flex items-center gap-4 p-4">
-        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-moto-orange/20">
-          <Icon className="h-5 w-5 text-moto-orange" />
+    <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0">
+      <CardContent className="flex min-w-0 flex-col items-center gap-1.5 p-2 text-center sm:flex-row sm:gap-4 sm:p-4 sm:text-left xl:flex-col xl:items-center xl:gap-2 xl:text-center">
+        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-moto-orange/20 sm:h-11 sm:w-11 sm:rounded-xl">
+          <Icon className="h-4 w-4 text-moto-orange sm:h-5 sm:w-5" />
         </div>
-        <div>
-          <p className="text-sm text-gray-400">{label}</p>
-          <p className="text-xl font-bold">{value.toLocaleString()}</p>
-          <p className="text-xs text-gray-500">{detail}</p>
+        <div className="min-w-0">
+          <p className="max-w-full truncate text-[10px] leading-tight text-gray-400 sm:text-sm">{label}</p>
+          <p className="truncate text-base font-bold leading-tight sm:text-xl">{value.toLocaleString()}</p>
+          <p className="hidden truncate text-xs text-gray-500 sm:block">{detail}</p>
         </div>
       </CardContent>
     </Card>
@@ -340,7 +340,7 @@ function UsersTable({
               <div className="grid gap-3 p-4 md:grid-cols-[minmax(0,1fr)_140px_120px_120px] md:items-center">
                 <div className="min-w-0">
                   <div className="mb-1 flex flex-wrap items-center gap-2">
-                    <p className="truncate font-medium">{user.display_name || 'Motero MotoCare'}</p>
+                    <p className="truncate font-medium">{user.display_name || 'Motero MotoHubX'}</p>
                     <Badge className={user.is_public ? 'bg-green-500/15 text-green-300' : 'bg-white/10 text-gray-300'}>
                       {user.is_public ? 'Publico' : 'Privado'}
                     </Badge>

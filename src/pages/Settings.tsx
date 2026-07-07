@@ -95,8 +95,8 @@ export function Settings() {
   const [preferences, setPreferences] = useState<Record<PreferenceKey, boolean>>(defaultPreferences)
   const [isSendingReset, setIsSendingReset] = useState(false)
 
-  const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Motero MotoCare'
-  const username = profile?.username || user?.email?.split('@')[0] || 'motocare'
+  const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Motero MotoHubX'
+  const username = profile?.username || user?.email?.split('@')[0] || 'motohubx'
 
   useEffect(() => {
     setPreferences(loadPreferences())
@@ -223,7 +223,7 @@ export function Settings() {
             />
             <ActionRow
               label="Cerrar sesion"
-              description="Salir de MotoCare en este navegador."
+              description="Salir de MotoHubX en este navegador."
               action={
                 <Button variant="outline" className="w-full border-red-500/30 text-red-300 hover:text-red-200 sm:w-auto" onClick={() => void signOut()}>
                   <LogOut className="mr-2 h-4 w-4" />

@@ -12,7 +12,7 @@ import {
   X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { MotoCareLogo } from '@/components/MotoCareLogo'
+import { MotoHubXLogo } from '@/components/MotoHubXLogo'
 
 const featureCards = [
   { icon: ShieldCheck, title: 'Hoja de vida', desc: 'La historia tecnica de tu moto en un solo lugar.', path: '/app/my-bikes' },
@@ -53,7 +53,7 @@ export function LandingPage() {
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between lg:h-20">
-            <MotoCareLogo />
+            <MotoHubXLogo />
 
             <div className="hidden items-center gap-8 lg:flex">
               <button onClick={() => scrollToSection('features')} className="text-sm text-gray-300 transition-colors hover:text-white">
@@ -114,7 +114,7 @@ export function LandingPage() {
           <div className="max-w-2xl space-y-8">
             <div className="inline-flex items-center gap-2 rounded-full border border-moto-orange/30 bg-moto-orange/15 px-4 py-2">
               <span className="h-2 w-2 rounded-full bg-moto-orange" />
-              <span className="text-sm font-medium text-moto-orange-light">Tu moto. Tu historia. Tu mantenimiento.</span>
+              <span className="text-sm font-medium text-moto-orange-light">Tu moto. Tu ruta. Tu hub.</span>
             </div>
 
             <div className="space-y-5">
@@ -122,7 +122,7 @@ export function LandingPage() {
                 La hoja de vida de tu <span className="text-gradient">moto</span>.
               </h1>
               <p className="max-w-xl text-lg leading-8 text-gray-300">
-                MotoCare te ayuda a registrar mantenimientos realizados, programar pendientes,
+                MotoHubX te ayuda a registrar mantenimientos realizados, programar pendientes,
                 guardar documentos y entender el estado real de tu moto.
               </p>
             </div>
@@ -153,7 +153,7 @@ export function LandingPage() {
 
           <div id="product" className="hidden items-center justify-center lg:flex">
             <div className="relative animate-float">
-              <img src="/app-mockup.jpg" alt="MotoCare App" className="max-h-[680px] rounded-[2rem] shadow-2xl shadow-moto-orange/20" />
+              <img src="/app-mockup.jpg" alt="MotoHubX App" className="max-h-[680px] rounded-[2rem] shadow-2xl shadow-moto-orange/20" />
               <div className="glass absolute -bottom-6 -left-6 rounded-2xl p-4">
                 <div className="flex items-center gap-3">
                   <div className="grid h-12 w-12 place-items-center rounded-full bg-moto-orange">
@@ -222,9 +222,9 @@ export function LandingPage() {
 
       <footer className="border-t border-white/5 bg-moto-darker py-16">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 sm:px-6 md:flex-row lg:px-8">
-          <MotoCareLogo />
-          <p className="text-sm text-gray-500">(c) 2026 MotoCare. Todos los derechos reservados.</p>
-          <p className="text-sm text-gray-500">Tu moto. Tu historia. Tu mantenimiento.</p>
+          <MotoHubXLogo />
+          <p className="text-sm text-gray-500">(c) 2026 MotoHubX. Todos los derechos reservados.</p>
+          <p className="text-sm text-gray-500">Tu moto. Tu ruta. Tu hub.</p>
         </div>
       </footer>
     </div>

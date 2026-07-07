@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080" role="img" aria-labelledby="title desc">
+  <title id="title">MotoHubX campaña de expectativa</title>
+  <desc id="desc">Teaser graphic for MotoHubX launch campaign.</desc>
+  <rect width="1080" height="1080" fill="#101820"/>
+  <path d="M0 820C220 700 360 930 585 800c185-108 285-260 495-180v460H0z" fill="#08111A"/>
+  <g transform="translate(390 190)">
+    <rect width="300" height="300" rx="72" fill="#08111A" stroke="rgba(255,255,255,0.14)" stroke-width="6"/>
+    <circle cx="150" cy="150" r="98" fill="none" stroke="#A6CE39" stroke-width="28"/>
+    <circle cx="150" cy="150" r="40" fill="none" stroke="#F8FAFC" stroke-width="18"/>
+    <path d="M98 86l104 128M202 86L98 214" fill="none" stroke="#A6CE39" stroke-width="30" stroke-linecap="round"/>
+    <path d="M58 150h50M192 150h50" fill="none" stroke="#F8FAFC" stroke-width="16" stroke-linecap="round"/>
+  </g>
+  <text x="540" y="595" text-anchor="middle" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="82" font-weight="850">Moto<tspan fill="#A6CE39">HubX</tspan></text>
+  <text x="540" y="665" text-anchor="middle" fill="#C8F24A" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="700">Tu moto. Tu ruta. Tu hub.</text>
+  <text x="540" y="782" text-anchor="middle" fill="#F8FAFC" font-family="Inter, Arial, sans-serif" font-size="54" font-weight="800">Algo grande viene rodando.</text>
+  <text x="540" y="846" text-anchor="middle" fill="#AAB4BD" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="500">Rutas, clubes, tienda y mantenimiento conectados.</text>
+  <text x="540" y="948" text-anchor="middle" fill="#A6CE39" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800">#MotoHubX #VieneRodando</text>
+</svg>

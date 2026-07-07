@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowRight, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { MotoCareLogo } from '@/components/MotoCareLogo'
+import { MotoHubXLogo } from '@/components/MotoHubXLogo'
 import { useAuth } from '@/contexts/AuthContext'
 
 export function Login() {
@@ -45,10 +45,10 @@ export function Login() {
   return (
     <div className="grid min-h-screen bg-moto-dark text-white lg:grid-cols-[1.05fr_0.95fr]">
       <section className="relative hidden overflow-hidden lg:block">
-        <img src="/hero-motorcycle.jpg" alt="Ruta MotoCare" className="h-full w-full object-cover" />
+        <img src="/hero-motorcycle.jpg" alt="Ruta MotoHubX" className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-r from-moto-darker via-moto-dark/80 to-transparent" />
         <div className="absolute bottom-12 left-12 max-w-xl">
-          <MotoCareLogo />
+          <MotoHubXLogo />
           <h1 className="mt-8 text-5xl font-bold leading-tight">
             Cuida tu moto. Vive tu <span className="text-gradient">ruta</span>.
           </h1>
@@ -61,14 +61,14 @@ export function Login() {
       <section className="flex items-center justify-center p-6">
         <div className="w-full max-w-md">
           <div className="mb-8 lg:hidden">
-            <MotoCareLogo />
+            <MotoHubXLogo />
           </div>
 
           <div className="rounded-2xl border border-white/5 bg-moto-gray p-6 shadow-xl">
             <p className="text-sm font-semibold uppercase tracking-wider text-moto-orange">
               {mode === 'login' ? 'Bienvenido de vuelta' : 'Crea tu cuenta'}
             </p>
-            <h2 className="mt-2 text-3xl font-bold">{mode === 'login' ? 'Entrar a MotoCare' : 'Empieza con tu moto'}</h2>
+            <h2 className="mt-2 text-3xl font-bold">{mode === 'login' ? 'Entrar a MotoHubX' : 'Empieza con tu moto'}</h2>
             <p className="mt-2 text-sm text-gray-400">
               {mode === 'login'
                 ? 'Accede para gestionar tu moto y tus recordatorios.'

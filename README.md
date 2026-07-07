@@ -1,6 +1,6 @@
-# MotoCare MVP Alpha
+# MotoHubX MVP Alpha
 
-MotoCare es una app MVP para moteros enfocada en la hoja de vida de la moto, mantenimientos realizados, mantenimientos programados, documentos y perfil del usuario.
+MotoHubX es una app MVP para moteros enfocada en la hoja de vida de la moto, mantenimientos realizados, mantenimientos programados, documentos y perfil del usuario.
 
 Estado actual: **MVP Alpha**. No es una version publica 1.0.
 
@@ -24,6 +24,12 @@ Estado actual: **MVP Alpha**. No es una version publica 1.0.
 - Business: licencia futura para tiendas y aliados; el alcance queda por definir y no se aplica en el MVP actual.
 
 El menu principal prioriza Inicio, Hoja de vida, Mantenimientos, Programados, Documentos y Reportes. Rutas, Comunidad, Clubes y Tienda quedan agrupados como funciones Premium.
+
+## Criterios de UI responsive
+
+- Las tarjetas de indicadores en Inicio, Rutas, Comunidad, Mi perfil y Administracion usan una version compacta en celular.
+- En movil, los indicadores deben agruparse en columnas fijas, con iconos reducidos, textos cortos o truncados y `min-w-0` para evitar desplazamientos laterales.
+- Las acciones secundarias dentro de indicadores pueden ocultarse en movil si ocupan ancho innecesario, siempre que la tarjeta o el flujo principal sigan siendo accesibles.
 
 ## Stack
 
@@ -74,7 +80,7 @@ La integracion actual usa Maps Embed API.
 Antes de publicar, restringir la API key en Google Cloud:
 
 - Permitir solo **Maps Embed API**.
-- Restringir al dominio real de MotoCare.
+- Restringir al dominio real de MotoHubX.
 - En desarrollo local puede permitirse `http://127.0.0.1:*` o `http://localhost:*`.
 
 ## Desarrollo

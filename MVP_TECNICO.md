@@ -1,4 +1,4 @@
-# MotoCare MVP tecnico
+# MotoHubX MVP tecnico
 
 ## Incluido
 
@@ -16,6 +16,7 @@
   - marcar recordatorios como completados
   - subir foto de la moto a Supabase Storage
   - subir documentos de SOAT, tecnomecanica y otros soportes
+- UI responsive con indicadores compactos en Inicio, Rutas, Comunidad, Mi perfil y Administracion para evitar desplazamientos laterales en celular.
 
 ## Configuracion
 

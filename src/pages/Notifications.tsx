@@ -37,7 +37,7 @@ function notificationText(notification: Notification) {
     return {
       title: 'Invitacion a club',
       message: `El club "${notification.club_invitations.clubs.name}" quiere agregarte como miembro.`,
-      detail: notification.club_invitations.clubs.city || 'Club MotoCare',
+      detail: notification.club_invitations.clubs.city || 'Club MotoHubX',
     }
   }
 
@@ -174,7 +174,7 @@ export function Notifications() {
         <div className="min-w-0">
           <h1 className="text-xl font-bold sm:text-2xl">Notificaciones</h1>
           <p className="mt-1 text-sm leading-6 text-gray-400 sm:text-base">
-            Gestiona alertas de rutas, clubes y avisos importantes de MotoCare.
+            Gestiona alertas de rutas, clubes y avisos importantes de MotoHubX.
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <Badge className="bg-white/10 text-gray-300">

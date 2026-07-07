@@ -23,7 +23,7 @@ import {
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { AppUpdatePrompt } from '@/components/AppUpdatePrompt'
-import { MotoCareLogo } from '@/components/MotoCareLogo'
+import { MotoHubXLogo } from '@/components/MotoHubXLogo'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
@@ -106,8 +106,8 @@ export function MainLayout() {
   const location = useLocation()
   const userId = user?.id
 
-  const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Motero MotoCare'
-  const username = profile?.username || user?.email?.split('@')[0] || 'motocare'
+  const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Motero MotoHubX'
+  const username = profile?.username || user?.email?.split('@')[0] || 'motohubx'
   const avatarFallback = initials(profile?.full_name, user?.email)
 
   const pageTitle =
@@ -202,7 +202,7 @@ export function MainLayout() {
       <aside className="fixed hidden h-full w-64 flex-col border-r border-white/5 bg-moto-darker lg:flex">
         <div className="border-b border-white/5 p-6">
           <NavLink to="/app/home">
-            <MotoCareLogo />
+            <MotoHubXLogo />
           </NavLink>
         </div>
 
@@ -342,7 +342,7 @@ export function MainLayout() {
                 {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
               <NavLink to="/app/home">
-                <MotoCareLogo compact />
+                <MotoHubXLogo compact />
               </NavLink>
               <h1 className="min-w-0 truncate text-sm font-semibold sm:text-base">{pageTitle}</h1>
             </div>

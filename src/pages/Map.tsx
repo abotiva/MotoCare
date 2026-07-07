@@ -589,48 +589,57 @@ export function Map() {
         </Button>
       </div>
 
-      <div className="mb-5 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-        <Card className="border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="grid h-12 w-12 place-items-center rounded-xl bg-moto-orange/20">
-              <Route className="h-6 w-6 text-moto-orange" />
+      <div className="mb-4 grid grid-cols-4 gap-2 sm:mb-5 sm:gap-4">
+        <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0">
+          <CardContent className="flex min-w-0 flex-col items-center gap-1.5 p-2 text-center sm:flex-row sm:gap-4 sm:p-4 sm:text-left">
+            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-moto-orange/20 sm:h-12 sm:w-12 sm:rounded-xl">
+              <Route className="h-4 w-4 text-moto-orange sm:h-6 sm:w-6" />
             </div>
-            <div>
-              <p className="text-sm text-gray-400">Mis rutas</p>
-              <p className="text-xl font-bold">{myRoutes.length}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="grid h-12 w-12 place-items-center rounded-xl bg-green-500/20">
-              <Navigation className="h-6 w-6 text-green-500" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">Km planeados</p>
-              <p className="text-xl font-bold">{totalKm.toLocaleString()} km</p>
+            <div className="min-w-0">
+              <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">
+                <span className="sm:hidden">Rutas</span>
+                <span className="hidden sm:inline">Mis rutas</span>
+              </p>
+              <p className="text-base font-bold leading-tight sm:text-xl">{myRoutes.length}</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="grid h-12 w-12 place-items-center rounded-xl bg-yellow-500/20">
-              <Eye className="h-6 w-6 text-yellow-400" />
+        <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0">
+          <CardContent className="flex min-w-0 flex-col items-center gap-1.5 p-2 text-center sm:flex-row sm:gap-4 sm:p-4 sm:text-left">
+            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-green-500/20 sm:h-12 sm:w-12 sm:rounded-xl">
+              <Navigation className="h-4 w-4 text-green-500 sm:h-6 sm:w-6" />
             </div>
-            <div>
-              <p className="text-sm text-gray-400">Mis compartidas</p>
-              <p className="text-xl font-bold">{sharedCount}</p>
+            <div className="min-w-0">
+              <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">
+                <span className="sm:hidden">Km</span>
+                <span className="hidden sm:inline">Km planeados</span>
+              </p>
+              <p className="truncate text-base font-bold leading-tight sm:text-xl">{totalKm.toLocaleString()} km</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="grid h-12 w-12 place-items-center rounded-xl bg-green-500/20">
-              <CheckCircle2 className="h-6 w-6 text-green-400" />
+        <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0">
+          <CardContent className="flex min-w-0 flex-col items-center gap-1.5 p-2 text-center sm:flex-row sm:gap-4 sm:p-4 sm:text-left">
+            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-yellow-500/20 sm:h-12 sm:w-12 sm:rounded-xl">
+              <Eye className="h-4 w-4 text-yellow-400 sm:h-6 sm:w-6" />
             </div>
-            <div>
-              <p className="text-sm text-gray-400">Realizadas</p>
-              <p className="text-xl font-bold">{completedCount}</p>
+            <div className="min-w-0">
+              <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">
+                <span className="sm:hidden">Compart.</span>
+                <span className="hidden sm:inline">Mis compartidas</span>
+              </p>
+              <p className="text-base font-bold leading-tight sm:text-xl">{sharedCount}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0">
+          <CardContent className="flex min-w-0 flex-col items-center gap-1.5 p-2 text-center sm:flex-row sm:gap-4 sm:p-4 sm:text-left">
+            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-green-500/20 sm:h-12 sm:w-12 sm:rounded-xl">
+              <CheckCircle2 className="h-4 w-4 text-green-400 sm:h-6 sm:w-6" />
+            </div>
+            <div className="min-w-0">
+              <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">Realizadas</p>
+              <p className="text-base font-bold leading-tight sm:text-xl">{completedCount}</p>
             </div>
           </CardContent>
         </Card>

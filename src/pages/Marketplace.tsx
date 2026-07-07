@@ -157,7 +157,7 @@ export function Marketplace() {
         <CardContent className="grid gap-4 p-4 md:grid-cols-3">
           <div className="rounded-lg border border-white/10 bg-moto-darker/60 p-4">
             <p className="text-sm font-semibold text-white">Explorar y comprar</p>
-            <p className="mt-1 text-sm leading-6 text-gray-400">Disponible para toda la comunidad MotoCare.</p>
+            <p className="mt-1 text-sm leading-6 text-gray-400">Disponible para toda la comunidad MotoHubX.</p>
           </div>
           <div className="rounded-lg border border-white/10 bg-moto-darker/60 p-4">
             <p className="text-sm font-semibold text-white">Publicar como motero</p>

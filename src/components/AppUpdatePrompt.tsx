@@ -57,7 +57,7 @@ export function AppUpdatePrompt() {
               </button>
             </div>
             <p className="mt-1 text-xs text-gray-400">
-              Actualiza MotoCare para cargar los ultimos cambios y limpiar la cache local.
+              Actualiza MotoHubX para cargar los ultimos cambios y limpiar la cache local.
             </p>
             <p className="mt-2 text-[11px] text-gray-500">
               Version actual: {appVersion} · Build: {new Date(buildTime).toLocaleString('es-CO')}

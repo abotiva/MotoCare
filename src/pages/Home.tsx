@@ -82,7 +82,7 @@ function notificationDisplay(notification: Notification) {
     return {
       title: 'Invitacion a club',
       message: `El club "${notification.club_invitations.clubs.name}" quiere agregarte como miembro.`,
-      dateLabel: notification.club_invitations.clubs.city || 'Club MotoCare',
+      dateLabel: notification.club_invitations.clubs.city || 'Club MotoHubX',
     }
   }
 
@@ -300,7 +300,7 @@ export function Home() {
           </Avatar>
           <div>
             <h1 className="text-2xl font-bold">Hola, {profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'motero'}</h1>
-            <p className="text-gray-400">Este es el estado actual de tu MotoCare.</p>
+            <p className="text-gray-400">Este es el estado actual de tu MotoHubX.</p>
           </div>
         </div>
         <div className="grid w-full grid-cols-2 gap-2 sm:w-auto sm:flex sm:flex-wrap">

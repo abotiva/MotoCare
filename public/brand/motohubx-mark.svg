@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">MotoHubX mark</title>
+  <desc id="desc">Wheel hub with an X route symbol in MotoHubX colors.</desc>
+  <rect width="512" height="512" rx="112" fill="#08111A"/>
+  <circle cx="256" cy="256" r="170" fill="none" stroke="#A6CE39" stroke-width="44"/>
+  <circle cx="256" cy="256" r="64" fill="none" stroke="#F8FAFC" stroke-width="34"/>
+  <path d="M164 144l184 224M348 144L164 368" fill="none" stroke="#A6CE39" stroke-width="48" stroke-linecap="round"/>
+  <path d="M94 256h82M336 256h82" fill="none" stroke="#F8FAFC" stroke-width="28" stroke-linecap="round"/>
+  <circle cx="256" cy="256" r="18" fill="#A6CE39"/>
+</svg>
