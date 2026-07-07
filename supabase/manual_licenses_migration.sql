@@ -2,7 +2,7 @@
 
 create table if not exists public.user_subscriptions (
   user_id uuid primary key references public.profiles(id) on delete cascade,
-  plan text not null default 'free' check (plan in ('free', 'pro', 'premium')),
+  plan text not null default 'free' check (plan in ('free', 'pro', 'premium', 'business')),
   status text not null default 'active' check (status in ('active', 'trialing', 'past_due', 'canceled')),
   started_at timestamptz not null default now(),
   expires_at timestamptz,

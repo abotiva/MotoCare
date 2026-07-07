@@ -205,7 +205,7 @@ function ReportLine({ label, value }: { label: string; value: string }) {
 
 export function MyBikes() {
   const { user, profile } = useAuth()
-  const { hasPlan, isLoadingSubscription } = useSubscription()
+  const { hasPlan, effectivePlan, isLoadingSubscription } = useSubscription()
   const location = useLocation()
   const [activeTab, setActiveTab] = useState<BikeTab>(() => tabFromHash(location.hash))
   const [motorcycles, setMotorcycles] = useState<Motorcycle[]>([])
@@ -244,6 +244,7 @@ export function MyBikes() {
 
   const isNegativeNumber = (value: string) => value.trim() !== '' && Number(value) < 0
   const canViewMaintenanceReports = hasPlan('premium')
+  const isBusinessAccount = effectivePlan === 'business'
 
   useEffect(() => {
     setActiveTab(tabFromHash(location.hash))
@@ -404,6 +405,10 @@ export function MyBikes() {
   const handleCreateBike = async (event: FormEvent) => {
     event.preventDefault()
     if (!supabase || !user) return
+    if (isBusinessAccount) {
+      notifyError('Garaje no disponible', 'La licencia Business es para negocios y no permite registrar motos.')
+      return
+    }
     if (isNegativeNumber(bikeForm.mileage)) {
       notifyError('Kilometraje invalido', 'El kilometraje inicial no puede ser negativo.')
       return
@@ -462,6 +467,10 @@ export function MyBikes() {
   }
 
   const openCreateBike = () => {
+    if (isBusinessAccount) {
+      notifyError('Garaje no disponible', 'La licencia Business es para negocios y no permite registrar motos.')
+      return
+    }
     setEditingBike(null)
     setBikeForm(emptyBikeForm)
     setShowAddBike(true)
@@ -1109,11 +1118,13 @@ export function MyBikes() {
           <p className="text-gray-400">Hoja de vida, mantenimientos y vencimientos en un solo lugar.</p>
         </div>
         <div className="grid w-full grid-cols-3 gap-2 sm:w-auto sm:flex sm:flex-wrap sm:gap-3">
-          <Button className="min-w-0 bg-moto-orange px-2 text-xs text-moto-darker hover:bg-moto-orange-dark sm:px-4 sm:text-sm" onClick={openCreateBike}>
-            <Plus className="mr-1 h-4 w-4 sm:mr-2 sm:h-5 sm:w-5" />
-            <span className="sm:hidden">Moto</span>
-            <span className="hidden sm:inline">Agregar moto</span>
-          </Button>
+          {!isBusinessAccount && (
+            <Button className="min-w-0 bg-moto-orange px-2 text-xs text-moto-darker hover:bg-moto-orange-dark sm:px-4 sm:text-sm" onClick={openCreateBike}>
+              <Plus className="mr-1 h-4 w-4 sm:mr-2 sm:h-5 sm:w-5" />
+              <span className="sm:hidden">Moto</span>
+              <span className="hidden sm:inline">Agregar moto</span>
+            </Button>
+          )}
           {selectedBike && (
             <Button variant="outline" className="min-w-0 border-white/10 px-2 text-xs sm:px-4 sm:text-sm" onClick={openCreateService}>
               <Wrench className="mr-1 h-4 w-4 sm:mr-2 sm:h-5 sm:w-5" />
@@ -1133,7 +1144,21 @@ export function MyBikes() {
 
       {error && <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">{error}</div>}
 
-      {motorcycles.length === 0 ? (
+      {isBusinessAccount ? (
+        <Card className="border-white/5 bg-moto-gray">
+          <CardContent className="grid min-h-[360px] place-items-center p-8 text-center">
+            <div>
+              <div className="mx-auto grid h-20 w-20 place-items-center rounded-2xl bg-sky-500/15">
+                <Wrench className="h-10 w-10 text-sky-300" />
+              </div>
+              <h2 className="mt-6 text-2xl font-bold">Cuenta Business</h2>
+              <p className="mx-auto mt-2 max-w-md text-gray-400">
+                Esta licencia es para negocios. No permite registrar motos ni operar como motero.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : motorcycles.length === 0 ? (
         <Card className="border-white/5 bg-moto-gray">
           <CardContent className="grid min-h-[420px] place-items-center p-8 text-center">
             <div>

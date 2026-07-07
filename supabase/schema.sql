@@ -168,6 +168,9 @@ create table if not exists public.clubs (
   updated_at timestamptz not null default now()
 );
 
+alter table public.profiles
+add column if not exists primary_club_id uuid references public.clubs(id) on delete set null;
+
 create table if not exists public.club_members (
   id uuid primary key default gen_random_uuid(),
   club_id uuid not null references public.clubs(id) on delete cascade,
@@ -196,7 +199,7 @@ create table if not exists public.app_admins (
 
 create table if not exists public.user_subscriptions (
   user_id uuid primary key references public.profiles(id) on delete cascade,
-  plan text not null default 'free' check (plan in ('free', 'pro', 'premium')),
+  plan text not null default 'free' check (plan in ('free', 'pro', 'premium', 'business')),
   status text not null default 'active' check (status in ('active', 'trialing', 'past_due', 'canceled')),
   started_at timestamptz not null default now(),
   expires_at timestamptz,
@@ -345,7 +348,25 @@ create policy "profiles_update_own" on public.profiles
 for update using (auth.uid() = id) with check (auth.uid() = id);
 
 create policy "motorcycles_own_all" on public.motorcycles
-for all using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
+for all using (
+  auth.uid() = owner_id
+  and coalesce((
+    select s.plan
+    from public.user_subscriptions s
+    where s.user_id = auth.uid()
+      and s.status in ('active', 'trialing')
+      and (s.expires_at is null or s.expires_at >= now())
+  ), 'free') <> 'business'
+) with check (
+  auth.uid() = owner_id
+  and coalesce((
+    select s.plan
+    from public.user_subscriptions s
+    where s.user_id = auth.uid()
+      and s.status in ('active', 'trialing')
+      and (s.expires_at is null or s.expires_at >= now())
+  ), 'free') <> 'business'
+);
 
 create policy "maintenance_own_all" on public.maintenance_records
 for all using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
@@ -433,7 +454,17 @@ create policy "clubs_read_all" on public.clubs
 for select using (true);
 
 create policy "clubs_owner_insert" on public.clubs
-for insert with check (auth.uid() = owner_id);
+for insert with check (
+  auth.uid() = owner_id
+  and coalesce((
+    select s.plan
+    from public.user_subscriptions s
+    where s.user_id = auth.uid()
+      and s.status in ('active', 'trialing')
+      and (s.expires_at is null or s.expires_at >= now())
+  ), 'free') = 'premium'
+  and (select count(*) from public.clubs existing where existing.owner_id = auth.uid()) < 3
+);
 
 create policy "clubs_admin_update" on public.clubs
 for update using (
@@ -468,6 +499,31 @@ for insert with check (
       and cm.user_id = auth.uid()
       and cm.role in ('owner', 'admin')
   )
+  and coalesce((
+    select s.plan
+    from public.user_subscriptions s
+    where s.user_id = club_members.user_id
+      and s.status in ('active', 'trialing')
+      and (s.expires_at is null or s.expires_at >= now())
+  ), 'free') <> 'business'
+  and (
+    coalesce((
+      select s.plan
+      from public.user_subscriptions s
+      where s.user_id = club_members.user_id
+        and s.status in ('active', 'trialing')
+        and (s.expires_at is null or s.expires_at >= now())
+    ), 'free') <> 'free'
+    or (
+      (select count(*) from public.club_members existing where existing.user_id = club_members.user_id) = 0
+      and exists (
+        select 1 from public.club_invitations ci
+        where ci.club_id = club_members.club_id
+          and ci.invited_user_id = club_members.user_id
+          and ci.status = 'accepted'
+      )
+    )
+  )
 );
 
 create policy "club_members_club_owner_insert" on public.club_members
@@ -477,11 +533,53 @@ for insert with check (
     where c.id = club_members.club_id
       and c.owner_id = auth.uid()
   )
+  and coalesce((
+    select s.plan
+    from public.user_subscriptions s
+    where s.user_id = club_members.user_id
+      and s.status in ('active', 'trialing')
+      and (s.expires_at is null or s.expires_at >= now())
+  ), 'free') <> 'business'
+  and (
+    coalesce((
+      select s.plan
+      from public.user_subscriptions s
+      where s.user_id = club_members.user_id
+        and s.status in ('active', 'trialing')
+        and (s.expires_at is null or s.expires_at >= now())
+    ), 'free') <> 'free'
+    or (
+      (select count(*) from public.club_members existing where existing.user_id = club_members.user_id) = 0
+      and exists (
+        select 1 from public.club_invitations ci
+        where ci.club_id = club_members.club_id
+          and ci.invited_user_id = club_members.user_id
+          and ci.status = 'accepted'
+      )
+    )
+  )
 );
 
 create policy "club_members_invitee_accept_insert" on public.club_members
 for insert with check (
   auth.uid() = user_id
+  and coalesce((
+    select s.plan
+    from public.user_subscriptions s
+    where s.user_id = auth.uid()
+      and s.status in ('active', 'trialing')
+      and (s.expires_at is null or s.expires_at >= now())
+  ), 'free') <> 'business'
+  and (
+    coalesce((
+      select s.plan
+      from public.user_subscriptions s
+      where s.user_id = auth.uid()
+        and s.status in ('active', 'trialing')
+        and (s.expires_at is null or s.expires_at >= now())
+    ), 'free') <> 'free'
+    or (select count(*) from public.club_members existing where existing.user_id = auth.uid()) = 0
+  )
   and exists (
     select 1 from public.club_invitations ci
     where ci.club_id = club_members.club_id

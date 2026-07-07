@@ -8,6 +8,7 @@ export type Profile = {
   social_url: string | null
   avatar_url: string | null
   primary_motorcycle_id: string | null
+  primary_club_id: string | null
   is_public: boolean
   last_seen_at: string | null
   created_at: string

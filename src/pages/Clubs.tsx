@@ -59,13 +59,14 @@ function roleLabel(role: ClubMemberWithProfile['role']) {
 }
 
 export function Clubs() {
-  const { user } = useAuth()
+  const { user, profile, refreshProfile } = useAuth()
   const userId = user?.id
-  const { hasPlan, isLoadingSubscription } = useSubscription()
+  const { effectivePlan, isLoadingSubscription } = useSubscription()
   const [clubs, setClubs] = useState<Club[]>([])
   const [members, setMembers] = useState<ClubMemberWithProfile[]>([])
   const [pendingInvitations, setPendingInvitations] = useState<ClubInvitationWithProfile[]>([])
   const [selectedClubId, setSelectedClubId] = useState('')
+  const [hasManualSelection, setHasManualSelection] = useState(false)
   const [createForm, setCreateForm] = useState<ClubForm>(emptyClubForm)
   const [clubForm, setClubForm] = useState<ClubForm>(emptyClubForm)
   const [inviteUsername, setInviteUsername] = useState('')
@@ -77,8 +78,12 @@ export function Clubs() {
   const [viewerImage, setViewerImage] = useState<{ src: string; alt: string } | null>(null)
 
   const selectedClub = useMemo(
-    () => clubs.find((club) => club.id === selectedClubId) ?? clubs[0] ?? null,
-    [clubs, selectedClubId]
+    () =>
+      clubs.find((club) => club.id === selectedClubId) ??
+      clubs.find((club) => club.id === profile?.primary_club_id) ??
+      clubs[0] ??
+      null,
+    [clubs, profile?.primary_club_id, selectedClubId]
   )
 
   const selectedMembership = useMemo(
@@ -87,11 +92,20 @@ export function Clubs() {
   )
 
   const canManageSelectedClub = selectedClub?.owner_id === user?.id || selectedMembership?.role === 'owner' || selectedMembership?.role === 'admin'
-  const canCreateClub = hasPlan('premium')
+  const ownedClubsCount = useMemo(() => clubs.filter((club) => club.owner_id === user?.id).length, [clubs, user?.id])
+  const canCreateClub = effectivePlan === 'premium' && ownedClubsCount < 3
 
   const showUpgradeForClubCreation = () => {
+    if (effectivePlan === 'business') {
+      toast.info('Clubes para moteros', { description: 'La licencia Business es para negocios y no permite crear clubes.' })
+      return
+    }
+    if (effectivePlan === 'premium' && ownedClubsCount >= 3) {
+      toast.info('Limite de clubes alcanzado', { description: 'La licencia Premium permite crear hasta 3 clubes.' })
+      return
+    }
     toast.info('Actualice su cuenta para poder crear un club', {
-      description: 'La creacion de clubes esta disponible para licencias Premium.',
+      description: 'Free solo puede unirse por invitacion y pertenecer a un club.',
     })
   }
 
@@ -147,22 +161,33 @@ export function Clubs() {
     const nextClubs = ((data ?? []) as unknown as MembershipRow[]).map((row) => row.clubs).filter(Boolean) as Club[]
     setClubs(nextClubs)
     const nextSelected = selectedClubId && nextClubs.some((club) => club.id === selectedClubId) ? selectedClubId : nextClubs[0]?.id ?? ''
-    setSelectedClubId(nextSelected)
+    const primaryClub = nextClubs.find((club) => club.id === profile?.primary_club_id)
+    const currentClub = nextClubs.find((club) => club.id === selectedClubId)
+    const preferredSelected = (hasManualSelection ? currentClub?.id : primaryClub?.id) ?? nextSelected
+    setSelectedClubId(preferredSelected)
 
-    if (nextSelected) {
-      await loadMembers(nextSelected)
-      await loadPendingInvitations(nextSelected)
+    if (preferredSelected) {
+      await loadMembers(preferredSelected)
+      await loadPendingInvitations(preferredSelected)
     } else {
       setMembers([])
       setPendingInvitations([])
     }
 
     setIsLoading(false)
-  }, [loadMembers, loadPendingInvitations, selectedClubId, userId])
+  }, [hasManualSelection, loadMembers, loadPendingInvitations, profile?.primary_club_id, selectedClubId, userId])
 
   useEffect(() => {
     void loadClubs()
   }, [loadClubs])
+
+  useEffect(() => {
+    if (hasManualSelection || clubs.length === 0) return
+    const primaryClub = clubs.find((club) => club.id === profile?.primary_club_id)
+    if (primaryClub && selectedClubId !== primaryClub.id) {
+      setSelectedClubId(primaryClub.id)
+    }
+  }, [clubs, hasManualSelection, profile?.primary_club_id, selectedClubId])
 
   useEffect(() => {
     if (!selectedClub) {
@@ -227,6 +252,16 @@ export function Clubs() {
       return
     }
 
+    if (effectivePlan !== 'premium') {
+      showUpgradeForClubCreation()
+      return
+    }
+
+    if (ownedClubsCount >= 3) {
+      showUpgradeForClubCreation()
+      return
+    }
+
     if (!createForm.name.trim()) {
       toast.error('Nombre requerido', { description: 'El club necesita un nombre.' })
       return
@@ -262,7 +297,11 @@ export function Clubs() {
       toast.error('El club se creo, pero no pudimos agregarte como miembro', { description: memberError.message })
     } else {
       setClubs((current) => [createdClub, ...current])
+      setHasManualSelection(true)
       setSelectedClubId(createdClub.id)
+      if (!profile?.primary_club_id) {
+        await setPrimaryClub(createdClub)
+      }
       setCreateForm(emptyClubForm)
       toast.success('Club creado', { description: 'Ya puedes invitar miembros.' })
     }
@@ -439,6 +478,55 @@ export function Clubs() {
     setIsSaving(false)
   }
 
+  const setPrimaryClub = async (club: Club) => {
+    if (!supabase || !user) return
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ primary_club_id: club.id })
+      .eq('id', user.id)
+
+    if (error) {
+      toast.error('No pudimos definir el club predeterminado', { description: error.message })
+    } else {
+      await refreshProfile()
+      setSelectedClubId(club.id)
+      toast.success('Club predeterminado actualizado')
+    }
+  }
+
+  const deleteClub = async (club: Club) => {
+    if (!supabase || !user || club.owner_id !== user.id) return
+
+    const confirmed = window.confirm(`Eliminar el club "${club.name}"? Esta accion no se puede deshacer.`)
+    if (!confirmed) return
+
+    const { error } = await supabase
+      .from('clubs')
+      .delete()
+      .eq('id', club.id)
+      .eq('owner_id', user.id)
+
+    if (error) {
+      toast.error('No pudimos eliminar el club', { description: error.message })
+      return
+    }
+
+    const remainingClubs = clubs.filter((item) => item.id !== club.id)
+    setClubs(remainingClubs)
+    const nextSelected = remainingClubs.find((item) => item.id === profile?.primary_club_id)?.id ?? remainingClubs[0]?.id ?? ''
+    setSelectedClubId(nextSelected)
+    setMembers([])
+    setPendingInvitations([])
+
+    if (profile?.primary_club_id === club.id) {
+      await supabase.from('profiles').update({ primary_club_id: null }).eq('id', user.id)
+      await refreshProfile()
+    }
+
+    toast.success('Club eliminado')
+  }
+
   const removeMember = async (member: ClubMemberWithProfile) => {
     if (!supabase || !selectedClub || !canManageSelectedClub || member.role === 'owner') return
 
@@ -488,14 +576,22 @@ export function Clubs() {
                       key={club.id}
                       type="button"
                       className={`flex w-full items-center gap-3 rounded-xl p-3 text-left transition-colors ${selectedClub?.id === club.id ? 'bg-moto-orange text-moto-darker' : 'bg-moto-darker hover:bg-white/5'}`}
-                      onClick={() => setSelectedClubId(club.id)}
+                      onClick={() => {
+                        setHasManualSelection(true)
+                        setSelectedClubId(club.id)
+                      }}
                     >
                       <Avatar className="h-10 w-10 bg-moto-gray">
                         <AvatarImage src={club.image_url ?? undefined} />
                         <AvatarFallback>{initials(club.name)}</AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
-                        <p className="truncate font-medium">{club.name}</p>
+                        <div className="flex min-w-0 items-center gap-2">
+                          <p className="truncate font-medium">{club.name}</p>
+                          {club.id === profile?.primary_club_id && (
+                            <Badge className="shrink-0 bg-white/20 text-[10px] text-inherit">Predeterminado</Badge>
+                          )}
+                        </div>
                         <p className={`truncate text-xs ${selectedClub?.id === club.id ? 'text-moto-darker/70' : 'text-gray-500'}`}>{club.city || 'Ciudad sin definir'}</p>
                       </div>
                     </button>
@@ -512,12 +608,14 @@ export function Clubs() {
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                 <h2 className="font-semibold">Crear club</h2>
                 <Badge className={canCreateClub ? 'bg-moto-orange text-moto-darker' : 'bg-white/10 text-gray-300'}>
-                  {canCreateClub ? 'Premium' : 'Requiere Premium'}
+                  {effectivePlan === 'business' ? 'No aplica' : `${ownedClubsCount}/3`}
                 </Badge>
               </div>
               {!canCreateClub && (
                 <div className="mb-3 rounded-xl border border-moto-orange/20 bg-moto-orange/10 p-3 text-sm text-gray-200">
-                  Actualice su cuenta para poder crear un club.
+                  {effectivePlan === 'business'
+                    ? 'La licencia Business es para negocios. No permite crear clubes ni operar como motero.'
+                    : 'Free solo puede unirse por invitacion y pertenecer a un club. Crear clubes requiere Premium.'}
                 </div>
               )}
               <form className="space-y-3" onSubmit={createClub}>
@@ -576,9 +674,26 @@ export function Clubs() {
                     <div className="mb-2 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
                       <h2 className="break-words text-2xl font-bold">{selectedClub.name}</h2>
                       {selectedClub.owner_id === user?.id && <Badge className="bg-moto-orange text-moto-darker">Fundador</Badge>}
+                      {selectedClub.id === profile?.primary_club_id && <Badge className="bg-green-500/15 text-green-300">Predeterminado</Badge>}
                     </div>
                     <p className="text-gray-400">{selectedClub.city || 'Ciudad sin definir'}</p>
                     <p className="mt-3 text-sm leading-6 text-gray-300">{selectedClub.description || 'Club sin descripcion todavia.'}</p>
+                    {canManageSelectedClub && (
+                      <div className="mt-4 flex flex-wrap justify-center gap-2 sm:justify-start">
+                        {selectedClub.id !== profile?.primary_club_id && (
+                          <Button size="sm" variant="outline" className="border-white/10" onClick={() => void setPrimaryClub(selectedClub)}>
+                            <Crown className="mr-2 h-4 w-4" />
+                            Usar por defecto
+                          </Button>
+                        )}
+                        {selectedClub.owner_id === user?.id && (
+                          <Button size="sm" variant="outline" className="border-red-500/30 text-red-300 hover:text-red-200" onClick={() => void deleteClub(selectedClub)}>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Eliminar club
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>

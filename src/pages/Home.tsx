@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ImageViewer } from '@/components/ImageViewer'
 import { useAuth } from '@/contexts/AuthContext'
+import { useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
 import type { MaintenanceRecord, Motorcycle, Notification, Reminder } from '@/types/database'
 
@@ -94,6 +95,7 @@ function notificationDisplay(notification: Notification) {
 
 export function Home() {
   const { user, profile } = useAuth()
+  const { effectivePlan } = useSubscription()
   const [stats, setStats] = useState<HomeStats>(emptyStats)
   const [motorcycles, setMotorcycles] = useState<Motorcycle[]>([])
   const [reminders, setReminders] = useState<Reminder[]>([])
@@ -216,6 +218,32 @@ export function Home() {
   const respondToClubInvite = async (notification: Notification, accepted: boolean) => {
     if (!supabase || !user || !notification.club_invitation_id || !notification.club_invitations) return
 
+    if (accepted && effectivePlan === 'business') {
+      toast.error('Clubes para moteros', {
+        description: 'La licencia Business es para negocios y no permite operar como motero.',
+      })
+      return
+    }
+
+    if (accepted && effectivePlan === 'free') {
+      const { count, error: membershipError } = await supabase
+        .from('club_members')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+
+      if (membershipError) {
+        toast.error('No pudimos validar tus clubes', { description: membershipError.message })
+        return
+      }
+
+      if ((count ?? 0) >= 1) {
+        toast.error('Tu licencia Free permite un solo club', {
+          description: 'Solo puedes unirte por invitacion y pertenecer a un club a la vez.',
+        })
+        return
+      }
+    }
+
     const status = accepted ? 'accepted' : 'declined'
     const respondedAt = new Date().toISOString()
     const { error: invitationError } = await supabase
@@ -237,6 +265,12 @@ export function Home() {
       })
 
       if (memberError) {
+        await supabase
+          .from('club_invitations')
+          .update({ status: 'pending', responded_at: null })
+          .eq('id', notification.club_invitation_id)
+          .eq('invited_user_id', user.id)
+
         toast.error('La invitacion fue aprobada, pero no pudimos agregarte al club', { description: memberError.message })
         return
       }
