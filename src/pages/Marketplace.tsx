@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { 
   Search, Filter, Grid3X3, List, MapPin, Heart, MessageCircle, 
-  Share2, Star, TrendingUp, Bike, Wrench, Shirt, Clock3, Lock
+  Star, TrendingUp, Bike, Wrench, Shirt, Clock3, Lock, Store
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -119,7 +119,7 @@ export function Marketplace() {
       <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold mb-2">Marketplace</h1>
-          <p className="text-gray-400">Compra y vende motos, repuestos y equipamiento</p>
+          <p className="text-gray-400">Compra motos, repuestos y equipamiento. Publicar exige una licencia activa.</p>
         </div>
         <Badge className="w-fit bg-moto-orange text-moto-darker">
           <Clock3 className="mr-2 h-4 w-4" />
@@ -132,21 +132,40 @@ export function Marketplace() {
           <div className="absolute inset-0 bg-[url('/feature-marketplace.jpg')] bg-cover bg-center opacity-20" />
           <div className="relative grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center">
             <div>
-              <Badge className="mb-3 bg-white/10 text-gray-200">Modulo en preparacion</Badge>
-              <h2 className="text-2xl font-bold">Tienda MotoCare llegara pronto</h2>
+              <Badge className="mb-3 bg-white/10 text-gray-200">Tienda para todos</Badge>
+              <h2 className="text-2xl font-bold">Comprar es abierto para toda la comunidad</h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-300">
-                Estamos dejando listo el espacio para aliados, repuestos, equipamiento y motos usadas. Por ahora conservamos el diseno para validar la experiencia sin habilitar compras ni publicaciones reales.
+                Cualquier usuario podra explorar publicaciones y contactar vendedores. Para publicar como persona natural se requiere licencia Premium; si la cuenta representa un negocio, taller, marca o aliado, debe tener licencia Business.
               </p>
             </div>
             <div className="rounded-xl border border-white/10 bg-moto-darker/90 p-4">
               <div className="mb-3 flex items-center gap-2 text-moto-orange">
-                <Lock className="h-5 w-5" />
-                <span className="font-semibold">Acciones desactivadas</span>
+                <Store className="h-5 w-5" />
+                <span className="font-semibold">Regla para vender</span>
               </div>
-              <p className="text-sm leading-6 text-gray-400">
-                Buscar, vender, contactar y filtros quedan visibles como maqueta funcional, pero no guardan informacion ni inician transacciones.
-              </p>
+              <div className="space-y-2 text-sm leading-6 text-gray-400">
+                <p>Ver y comprar: disponible para todos los usuarios.</p>
+                <p>Vender como usuario: requiere Premium.</p>
+                <p>Vender como negocio: requiere Business.</p>
+              </div>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6 border-white/5 bg-moto-gray/70">
+        <CardContent className="grid gap-4 p-4 md:grid-cols-3">
+          <div className="rounded-lg border border-white/10 bg-moto-darker/60 p-4">
+            <p className="text-sm font-semibold text-white">Explorar y comprar</p>
+            <p className="mt-1 text-sm leading-6 text-gray-400">Disponible para toda la comunidad MotoCare.</p>
+          </div>
+          <div className="rounded-lg border border-white/10 bg-moto-darker/60 p-4">
+            <p className="text-sm font-semibold text-white">Publicar como motero</p>
+            <p className="mt-1 text-sm leading-6 text-gray-400">Requiere licencia Premium activa.</p>
+          </div>
+          <div className="rounded-lg border border-white/10 bg-moto-darker/60 p-4">
+            <p className="text-sm font-semibold text-white">Publicar como negocio</p>
+            <p className="mt-1 text-sm leading-6 text-gray-400">Requiere licencia Business activa.</p>
           </div>
         </CardContent>
       </Card>
@@ -340,8 +359,8 @@ export function Marketplace() {
           disabled
           className="bg-moto-orange hover:bg-moto-orange-dark shadow-lg shadow-moto-orange/30 rounded-full px-6"
         >
-          <Share2 className="w-5 h-5 mr-2" />
-          Vender
+          <Lock className="w-5 h-5 mr-2" />
+          Vender con Premium
         </Button>
       </div>
     </div>
