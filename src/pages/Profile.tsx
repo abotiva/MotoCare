@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { Calendar, Camera, Edit3, ExternalLink, Loader2, Mail, MapPin, Route, Save, Shield, UserRound, Users } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -87,6 +88,57 @@ function formatRouteDates(route: RoutePlan) {
   if (route.start_date && route.end_date) return `${formatDate(route.start_date)} - ${formatDate(route.end_date)}`
   if (route.start_date) return `Inicia ${formatDate(route.start_date)}`
   return `Finaliza ${formatDate(route.end_date!)}`
+}
+
+function CompactMetricCard({
+  icon: Icon,
+  label,
+  mobileLabel,
+  value,
+  tone,
+  onClick,
+}: {
+  icon: LucideIcon
+  label: string
+  mobileLabel?: string
+  value: string | number
+  tone: 'orange' | 'yellow' | 'green'
+  onClick?: () => void
+}) {
+  const tones = {
+    orange: 'bg-moto-orange/20 text-moto-orange',
+    yellow: 'bg-yellow-500/20 text-yellow-300',
+    green: 'bg-green-500/20 text-green-300',
+  }
+
+  const content = (
+    <>
+      <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg sm:h-12 sm:w-12 sm:rounded-xl ${tones[tone]}`}>
+        <Icon className="h-4 w-4 sm:h-6 sm:w-6" />
+      </div>
+      <div className="min-w-0">
+        <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">
+          <span className="sm:hidden">{mobileLabel ?? label}</span>
+          <span className="hidden sm:inline">{label}</span>
+        </p>
+        <p className="truncate text-base font-bold leading-tight sm:text-xl">{value}</p>
+      </div>
+    </>
+  )
+
+  return (
+    <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0">
+      <CardContent className="p-0">
+        {onClick ? (
+          <button type="button" className="flex w-full min-w-0 flex-col items-center gap-1.5 p-2 text-center sm:flex-row sm:gap-4 sm:p-4 sm:text-left" onClick={onClick}>
+            {content}
+          </button>
+        ) : (
+          <div className="flex min-w-0 flex-col items-center gap-1.5 p-2 text-center sm:flex-row sm:gap-4 sm:p-4 sm:text-left">{content}</div>
+        )}
+      </CardContent>
+    </Card>
+  )
 }
 
 export function Profile() {
@@ -264,22 +316,22 @@ export function Profile() {
 
   return (
     <div className="mx-auto max-w-6xl p-4 pb-24 lg:p-6">
-      <Card className="mb-5 border-white/5 bg-moto-gray py-0">
-        <CardContent className="p-4 sm:p-5">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-            <div className="relative mx-auto h-28 w-28 shrink-0 sm:mx-0">
+      <Card className="mb-4 border-white/5 bg-moto-gray py-0 sm:mb-5">
+        <CardContent className="p-3 sm:p-5">
+          <div className="flex items-center gap-3 sm:gap-5">
+            <div className="relative h-20 w-20 shrink-0 sm:h-28 sm:w-28">
               <button
                 type="button"
                 className="block rounded-full"
                 onClick={() => setShowAvatarPreview(true)}
                 aria-label="Ver foto de perfil"
               >
-                <Avatar className="border-4 border-moto-darker bg-moto-darker" style={{ width: 112, height: 112 }}>
+                <Avatar className="h-20 w-20 border-4 border-moto-darker bg-moto-darker sm:h-28 sm:w-28">
                   <AvatarImage src={profile?.avatar_url ?? undefined} />
-                  <AvatarFallback className="text-3xl">{avatarFallback}</AvatarFallback>
+                  <AvatarFallback className="text-2xl sm:text-3xl">{avatarFallback}</AvatarFallback>
                 </Avatar>
               </button>
-                <label className="absolute bottom-1 right-1 z-20 grid h-10 w-10 cursor-pointer place-items-center rounded-full border border-white/20 bg-moto-orange text-moto-darker shadow-lg">
+                <label className="absolute bottom-0 right-0 z-20 grid h-9 w-9 cursor-pointer place-items-center rounded-full border border-white/20 bg-moto-orange text-moto-darker shadow-lg sm:bottom-1 sm:right-1 sm:h-10 sm:w-10">
                   {isUploadingAvatar ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
                   <input
                     type="file"
@@ -295,17 +347,17 @@ export function Profile() {
                 </label>
             </div>
 
-            <div className="min-w-0 flex-1 text-center sm:text-left">
-              <div className="mb-2 flex flex-wrap items-center gap-3">
-                <h1 className="w-full text-2xl font-bold leading-tight sm:w-auto sm:text-3xl">{visibleName}</h1>
+            <div className="min-w-0 flex-1 text-left">
+              <div className="mb-1 flex flex-wrap items-center gap-2 sm:mb-2 sm:gap-3">
+                <h1 className="w-full truncate text-xl font-bold leading-tight sm:w-auto sm:text-3xl">{visibleName}</h1>
                 <Badge className="bg-moto-orange text-moto-darker">{profile?.rider_type || 'Motero'}</Badge>
                 <Badge className={profile?.is_public === false ? 'bg-white/10 text-gray-300' : 'bg-green-500/15 text-green-300'}>
                   {profile?.is_public === false ? 'Privado' : 'Público'}
                 </Badge>
               </div>
-              <p className="mb-3 text-gray-400">@{username}</p>
-              {profile?.bio && <p className="mb-3 max-w-2xl text-sm text-gray-300">{profile.bio}</p>}
-              <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm text-gray-400 sm:justify-start">
+              <p className="mb-2 truncate text-sm text-gray-400 sm:mb-3 sm:text-base">@{username}</p>
+              {profile?.bio && <p className="mb-2 line-clamp-2 max-w-2xl text-sm text-gray-300 sm:mb-3">{profile.bio}</p>}
+              <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-gray-400 sm:gap-x-4 sm:gap-y-2 sm:text-sm">
                 <span className="flex min-w-0 items-center gap-1">
                   <MapPin className="h-4 w-4" />
                   {profile?.city || 'Ciudad sin definir'}
@@ -327,7 +379,7 @@ export function Profile() {
               </div>
             </div>
 
-            <div className="flex w-full flex-col gap-2 sm:w-44 sm:shrink-0">
+            <div className="hidden w-full flex-col gap-2 sm:flex sm:w-44 sm:shrink-0">
               <Button
                 className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark"
                 onClick={() => setShowEditProfile(true)}
@@ -335,21 +387,6 @@ export function Profile() {
                 <Edit3 className="mr-2 h-4 w-4" />
                 Editar perfil
               </Button>
-              <label className="inline-flex w-full cursor-pointer items-center justify-center rounded-md border border-white/10 px-4 py-2 text-sm font-medium text-gray-300 transition-colors hover:bg-white/5 hover:text-white">
-                {isUploadingAvatar ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}
-                Cambiar foto
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  disabled={isUploadingAvatar}
-                  onChange={(event) => {
-                    const file = event.target.files?.[0]
-                    if (file) void uploadAvatar(file)
-                    event.target.value = ''
-                  }}
-                />
-              </label>
             </div>
           </div>
         </CardContent>
@@ -389,59 +426,11 @@ export function Profile() {
         </CardContent>
       </Card>
 
-      <div className="mb-5 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-        <Card className="border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-moto-orange/20">
-              <UserRound className="h-6 w-6 text-moto-orange" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">Tipo de motero</p>
-              <p className="text-xl font-bold">{profile?.rider_type || 'Sin definir'}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex items-center justify-between gap-4 p-4">
-            <button type="button" className="flex min-w-0 flex-1 items-center gap-4 text-left" onClick={() => setShowRoutesPreview(true)}>
-              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-green-500/20">
-                <Route className="h-6 w-6 text-green-500" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-400">Rutas creadas</p>
-                <p className="text-xl font-bold">{stats.routes}</p>
-              </div>
-            </button>
-            <Button size="sm" variant="outline" className="border-white/10" onClick={() => setShowRoutesPreview(true)}>
-              Ver
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-green-500/20">
-              <Route className="h-6 w-6 text-green-500" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">Km en rutas</p>
-              <p className="text-xl font-bold">{routes.reduce((total, route) => total + (route.distance_km ?? 0), 0).toLocaleString()} km</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-yellow-500/20">
-              <UserRound className="h-6 w-6 text-yellow-400" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">Publicaciones</p>
-              <p className="text-xl font-bold">{stats.posts}</p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="mb-4 grid grid-cols-4 gap-2 sm:mb-5 sm:gap-4">
+        <CompactMetricCard icon={UserRound} label="Tipo de motero" mobileLabel="Tipo" value={profile?.rider_type || 'Sin definir'} tone="orange" />
+        <CompactMetricCard icon={Route} label="Rutas creadas" mobileLabel="Rutas" value={stats.routes} tone="green" onClick={() => setShowRoutesPreview(true)} />
+        <CompactMetricCard icon={Route} label="Km en rutas" mobileLabel="Km" value={`${routes.reduce((total, route) => total + (route.distance_km ?? 0), 0).toLocaleString()} km`} tone="green" />
+        <CompactMetricCard icon={UserRound} label="Publicaciones" mobileLabel="Posts" value={stats.posts} tone="yellow" />
       </div>
 
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">

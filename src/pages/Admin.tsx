@@ -213,7 +213,7 @@ export function Admin() {
         </Badge>
       </div>
 
-      <div className="mb-5 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))' }}>
+      <div className="mb-4 grid grid-cols-4 gap-2 sm:mb-5 sm:gap-4 xl:grid-cols-8">
         <MetricCard icon={Users} label="Usuarios" value={overview.users} detail={`${overview.private_users} privados`} />
         <MetricCard icon={CreditCard} label="Free" value={overview.free_users} detail="Usuarios base" />
         <MetricCard icon={CreditCard} label="Premium" value={overview.premium_users + overview.pro_users} detail="Incluye Pro legado" />
@@ -254,18 +254,18 @@ export function Admin() {
 
 function AppDataCard({ projectRef }: { projectRef: string }) {
   return (
-    <Card className="mb-5 border-white/5 bg-moto-gray py-0">
-      <CardContent className="p-5">
-        <div className="mb-4 flex items-center gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-moto-orange/20">
-            <Database className="h-5 w-5 text-moto-orange" />
+    <Card className="mb-4 border-white/5 bg-moto-gray py-0 sm:mb-5">
+      <CardContent className="p-4 sm:p-5">
+        <div className="mb-3 flex items-center gap-3 sm:mb-4">
+          <div className="grid h-9 w-9 place-items-center rounded-lg bg-moto-orange/20 sm:h-10 sm:w-10 sm:rounded-xl">
+            <Database className="h-4 w-4 text-moto-orange sm:h-5 sm:w-5" />
           </div>
           <div>
             <h3 className="font-semibold">Datos de la app</h3>
             <p className="text-sm text-gray-400">Estado técnico del MVP</p>
           </div>
         </div>
-        <div className="grid gap-3 text-sm md:grid-cols-4">
+        <div className="grid gap-2 text-xs sm:text-sm md:grid-cols-4">
           <div className="min-w-0">
             <p className="text-gray-400">Proyecto Supabase</p>
             <p className="break-all font-medium">{projectRef}</p>
@@ -290,15 +290,15 @@ function AppDataCard({ projectRef }: { projectRef: string }) {
 
 function MetricCard({ icon: Icon, label, value, detail }: { icon: LucideIcon; label: string; value: number; detail: string }) {
   return (
-    <Card className="border-white/5 bg-moto-gray py-0">
-      <CardContent className="flex items-center gap-4 p-4">
-        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-moto-orange/20">
-          <Icon className="h-5 w-5 text-moto-orange" />
+    <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0">
+      <CardContent className="flex min-w-0 flex-col items-center gap-1.5 p-2 text-center sm:flex-row sm:gap-4 sm:p-4 sm:text-left">
+        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-moto-orange/20 text-moto-orange sm:h-11 sm:w-11 sm:rounded-xl">
+          <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
         </div>
-        <div>
-          <p className="text-sm text-gray-400">{label}</p>
-          <p className="text-xl font-bold">{value.toLocaleString()}</p>
-          <p className="text-xs text-gray-500">{detail}</p>
+        <div className="min-w-0">
+          <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">{label}</p>
+          <p className="truncate text-base font-bold leading-tight sm:text-xl">{value.toLocaleString()}</p>
+          <p className="hidden truncate text-xs text-gray-500 sm:block">{detail}</p>
         </div>
       </CardContent>
     </Card>

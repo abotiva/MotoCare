@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { Bike, Calendar, CheckCircle2, Clock, Edit3, Eye, EyeOff, Flag, Loader2, MapPin, Navigation, PlayCircle, Plus, Route, Save, Trash2 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -271,6 +272,43 @@ function RouteCard({
         )}
       </div>
     </div>
+  )
+}
+
+function CompactMetricCard({
+  icon: Icon,
+  label,
+  mobileLabel,
+  value,
+  tone,
+}: {
+  icon: LucideIcon
+  label: string
+  mobileLabel?: string
+  value: string | number
+  tone: 'orange' | 'yellow' | 'green'
+}) {
+  const tones = {
+    orange: 'bg-moto-orange/20 text-moto-orange',
+    yellow: 'bg-yellow-500/20 text-yellow-300',
+    green: 'bg-green-500/20 text-green-300',
+  }
+
+  return (
+    <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0">
+      <CardContent className="flex min-w-0 flex-col items-center gap-1.5 p-2 text-center sm:flex-row sm:gap-4 sm:p-4 sm:text-left">
+        <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg sm:h-12 sm:w-12 sm:rounded-xl ${tones[tone]}`}>
+          <Icon className="h-4 w-4 sm:h-6 sm:w-6" />
+        </div>
+        <div className="min-w-0">
+          <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">
+            <span className="sm:hidden">{mobileLabel ?? label}</span>
+            <span className="hidden sm:inline">{label}</span>
+          </p>
+          <p className="truncate text-base font-bold leading-tight sm:text-xl">{value}</p>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -589,51 +627,11 @@ export function Map() {
         </Button>
       </div>
 
-      <div className="mb-5 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-        <Card className="border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="grid h-12 w-12 place-items-center rounded-xl bg-moto-orange/20">
-              <Route className="h-6 w-6 text-moto-orange" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">Mis rutas</p>
-              <p className="text-xl font-bold">{myRoutes.length}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="grid h-12 w-12 place-items-center rounded-xl bg-green-500/20">
-              <Navigation className="h-6 w-6 text-green-500" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">Km planeados</p>
-              <p className="text-xl font-bold">{totalKm.toLocaleString()} km</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="grid h-12 w-12 place-items-center rounded-xl bg-yellow-500/20">
-              <Eye className="h-6 w-6 text-yellow-400" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">Mis compartidas</p>
-              <p className="text-xl font-bold">{sharedCount}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="grid h-12 w-12 place-items-center rounded-xl bg-green-500/20">
-              <CheckCircle2 className="h-6 w-6 text-green-400" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">Realizadas</p>
-              <p className="text-xl font-bold">{completedCount}</p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="mb-4 grid grid-cols-4 gap-2 sm:mb-5 sm:gap-4">
+        <CompactMetricCard icon={Route} label="Mis rutas" mobileLabel="Rutas" value={myRoutes.length} tone="orange" />
+        <CompactMetricCard icon={Navigation} label="Km planeados" mobileLabel="Km" value={`${totalKm.toLocaleString()} km`} tone="green" />
+        <CompactMetricCard icon={Eye} label="Mis compartidas" mobileLabel="Compart." value={sharedCount} tone="yellow" />
+        <CompactMetricCard icon={CheckCircle2} label="Realizadas" mobileLabel="Hechas" value={completedCount} tone="green" />
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">

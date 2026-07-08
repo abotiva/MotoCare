@@ -62,6 +62,14 @@ const mobileNavItems = [
   { path: '/app/messages', icon: MessageCircle, label: 'Comunidad' },
 ]
 
+const mobileMoreItems = [
+  { path: '/app/clubs', icon: Users, label: 'Clubes' },
+  { path: '/app/marketplace', icon: ShoppingBag, label: 'Marketplace' },
+  { path: '/app/notifications', icon: Bell, label: 'Notificaciones' },
+  { path: '/app/profile', icon: User, label: 'Mi perfil' },
+  { path: '/app/settings', icon: Settings, label: 'Ajustes' },
+]
+
 function initials(name: string | null | undefined, email: string | undefined) {
   const source = name || email || 'MC'
   return source
@@ -469,83 +477,8 @@ export function MainLayout() {
               </button>
             </div>
             <nav className="space-y-1 p-4">
-              {navItems.map((item) => (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={() =>
-                    `flex items-center gap-4 rounded-xl px-4 py-4 ${
-                      isItemActive(item.path) ? 'bg-moto-orange text-moto-darker' : 'text-gray-400 hover:bg-white/5'
-                    }`
-                  }
-                >
-                  <item.icon className="h-6 w-6" />
-                  <span className="text-lg">{item.label}</span>
-                </NavLink>
-              ))}
-              <div className="rounded-xl bg-white/[0.03] p-2">
-                <div className={`flex items-center gap-4 px-2 py-3 ${isMaintenanceActive ? 'text-white' : 'text-gray-400'}`}>
-                  <Wrench className="h-6 w-6" />
-                  <span className="text-lg font-semibold">Mantenimientos</span>
-                </div>
-                <div className="space-y-1 pl-6">
-                  {maintenanceItems.map((item) => (
-                    <NavLink
-                      key={item.path}
-                      to={item.path}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className={() =>
-                        `flex items-center gap-3 rounded-xl px-4 py-3 ${
-                          isItemActive(item.path) ? 'bg-moto-orange text-moto-darker' : 'text-gray-400 hover:bg-white/5'
-                        }`
-                      }
-                    >
-                      <item.icon className="h-5 w-5" />
-                      <span>{item.label}</span>
-                    </NavLink>
-                  ))}
-                </div>
-              </div>
-              {documentItems.map((item) => (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={() =>
-                    `flex items-center gap-4 rounded-xl px-4 py-4 ${
-                      isItemActive(item.path) ? 'bg-moto-orange text-moto-darker' : 'text-gray-400 hover:bg-white/5'
-                    }`
-                  }
-                >
-                  <item.icon className="h-6 w-6" />
-                  <span className="text-lg">{item.label}</span>
-                </NavLink>
-              ))}
-              <div className="mt-5 flex items-center justify-between gap-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
-                <span>Premium</span>
-                <Crown className="h-4 w-4 text-moto-orange" />
-              </div>
-              {premiumItems.map((item) => (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={() =>
-                    `flex items-center gap-4 rounded-xl px-4 py-4 ${
-                      isItemActive(item.path) ? 'bg-moto-orange text-moto-darker' : 'text-gray-400 hover:bg-white/5'
-                    }`
-                  }
-                >
-                  <item.icon className="h-6 w-6" />
-                  <span className="min-w-0 flex-1 text-lg">{item.label}</span>
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${isItemActive(item.path) ? 'bg-moto-darker/15 text-moto-darker' : 'bg-white/10 text-gray-300'}`}>
-                    Premium
-                  </span>
-                </NavLink>
-              ))}
-              <div className="mt-5 px-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Personal</div>
-              {[...sidebarItems, ...(isAdmin ? [{ path: '/app/admin', icon: ShieldCheck, label: 'Administración' }] : [])].map((item) => (
+              <div className="mb-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Más opciones</div>
+              {[...mobileMoreItems, ...(isAdmin ? [{ path: '/app/admin', icon: ShieldCheck, label: 'Administración' }] : [])].map((item) => (
                 <NavLink
                   key={item.path}
                   to={item.path}

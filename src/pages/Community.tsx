@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { Calendar, Edit3, Heart, Image as ImageIcon, Loader2, MapPin, MessageCircle, Plus, Route as RouteIcon, Send, Trash2, Users, X } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -77,6 +78,43 @@ function formatRouteDates(route: RoutePlan) {
   if (route.start_date && route.end_date) return `${formatDate(route.start_date)} - ${formatDate(route.end_date)}`
   if (route.start_date) return `Inicia ${formatDate(route.start_date)}`
   return `Finaliza ${formatDate(route.end_date!)}`
+}
+
+function CompactMetricCard({
+  icon: Icon,
+  label,
+  mobileLabel,
+  value,
+  tone,
+}: {
+  icon: LucideIcon
+  label: string
+  mobileLabel?: string
+  value: string | number
+  tone: 'orange' | 'green' | 'sky'
+}) {
+  const tones = {
+    orange: 'bg-moto-orange/20 text-moto-orange',
+    green: 'bg-green-500/20 text-green-300',
+    sky: 'bg-sky-500/20 text-sky-300',
+  }
+
+  return (
+    <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0">
+      <CardContent className="flex min-w-0 flex-col items-center gap-1.5 p-2 text-center sm:flex-row sm:gap-4 sm:p-4 sm:text-left">
+        <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg sm:h-12 sm:w-12 sm:rounded-xl ${tones[tone]}`}>
+          <Icon className="h-4 w-4 sm:h-6 sm:w-6" />
+        </div>
+        <div className="min-w-0">
+          <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">
+            <span className="sm:hidden">{mobileLabel ?? label}</span>
+            <span className="hidden sm:inline">{label}</span>
+          </p>
+          <p className="truncate text-base font-bold leading-tight sm:text-xl">{value}</p>
+        </div>
+      </CardContent>
+    </Card>
+  )
 }
 
 export function Community() {
@@ -605,41 +643,10 @@ export function Community() {
         </div>
       </div>
 
-      <div className="mb-5 grid gap-3 sm:grid-cols-3 sm:gap-4">
-        <Card className="border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-moto-orange/20">
-              <Users className="h-6 w-6 text-moto-orange" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">Publicaciones</p>
-              <p className="text-xl font-bold">{posts.length}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-green-500/20">
-              <Send className="h-6 w-6 text-green-500" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">Mías</p>
-              <p className="text-xl font-bold">{myPostsCount}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-sky-500/20">
-              <RouteIcon className="h-6 w-6 text-sky-300" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">Rutas publicadas</p>
-              <p className="text-xl font-bold">{routePostsCount}</p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="mb-4 grid grid-cols-3 gap-2 sm:mb-5 sm:gap-4">
+        <CompactMetricCard icon={Users} label="Publicaciones" mobileLabel="Posts" value={posts.length} tone="orange" />
+        <CompactMetricCard icon={Send} label="Mías" mobileLabel="Mías" value={myPostsCount} tone="green" />
+        <CompactMetricCard icon={RouteIcon} label="Rutas publicadas" mobileLabel="Rutas" value={routePostsCount} tone="sky" />
       </div>
 
       <Tabs defaultValue="public" className="w-full min-w-0">
