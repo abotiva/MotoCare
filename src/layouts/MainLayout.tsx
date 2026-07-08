@@ -11,7 +11,6 @@ import {
   Map as MapIcon,
   Menu,
   MessageCircle,
-  Search,
   Settings,
   ShoppingBag,
   LogOut,
@@ -21,7 +20,6 @@ import {
   Wrench,
   X,
 } from 'lucide-react'
-import { Input } from '@/components/ui/input'
 import { AppUpdatePrompt } from '@/components/AppUpdatePrompt'
 import { MotoCareLogo } from '@/components/MotoCareLogo'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -31,7 +29,7 @@ import type { Notification } from '@/types/database'
 
 const navItems = [
   { path: '/app/home', icon: Home, label: 'Inicio' },
-  { path: '/app/my-bikes', icon: Bike, label: 'Hoja de vida' },
+  { path: '/app/my-bikes', icon: Bike, label: 'Mi moto' },
 ]
 
 const maintenanceItems = [
@@ -59,9 +57,9 @@ const sidebarItems = [
 
 const mobileNavItems = [
   { path: '/app/home', icon: Home, label: 'Inicio' },
-  { path: '/app/my-bikes', icon: Bike, label: 'Hoja de vida' },
-  { path: '/app/my-bikes#history', icon: Wrench, label: 'Realizados' },
-  { path: '/app/my-bikes#reminders', icon: CalendarClock, label: 'Programados' },
+  { path: '/app/my-bikes', icon: Bike, label: 'Mi moto' },
+  { path: '/app/map', icon: MapIcon, label: 'Rutas' },
+  { path: '/app/messages', icon: MessageCircle, label: 'Comunidad' },
 ]
 
 function initials(name: string | null | undefined, email: string | undefined) {
@@ -97,7 +95,6 @@ function notificationPreview(notification: Notification) {
 
 export function MainLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [showSearch, setShowSearch] = useState(false)
   const [unreadNotifications, setUnreadNotifications] = useState(0)
   const [notificationItems, setNotificationItems] = useState<Notification[]>([])
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
@@ -358,19 +355,6 @@ export function MainLayout() {
             </div>
 
             <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-              {showSearch ? (
-                <div className="hidden items-center gap-2 sm:flex">
-                  <Input placeholder="Buscar..." className="w-64 border-white/10 bg-moto-darker" autoFocus />
-                  <button onClick={() => setShowSearch(false)} className="rounded-lg p-2 hover:bg-white/5">
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
-              ) : (
-                <button onClick={() => setShowSearch(true)} className="hidden rounded-lg p-2 hover:bg-white/5 sm:flex">
-                  <Search className="h-5 w-5 text-gray-400" />
-                </button>
-              )}
-
               <div className="relative">
                 <button
                   type="button"
@@ -448,7 +432,7 @@ export function MainLayout() {
         </div>
 
         <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-white/5 bg-moto-darker lg:hidden">
-          <div className="grid h-16 grid-cols-4">
+          <div className="grid h-16 grid-cols-5">
             {mobileNavItems.map((item) => (
               <NavLink
                 key={item.path}
@@ -463,13 +447,23 @@ export function MainLayout() {
                 <span className="max-w-full truncate px-1 text-[10px] font-medium">{item.label}</span>
               </NavLink>
             ))}
+            <button
+              type="button"
+              aria-label="Abrir más secciones"
+              aria-expanded={isMobileMenuOpen}
+              onClick={() => setIsMobileMenuOpen(true)}
+              className={`flex h-full min-w-0 flex-col items-center justify-center gap-1 ${isMobileMenuOpen ? 'text-moto-orange' : 'text-gray-400'}`}
+            >
+              <Menu className="h-5 w-5" />
+              <span className="max-w-full truncate px-1 text-[10px] font-medium">Más</span>
+            </button>
           </div>
         </nav>
 
         {isMobileMenuOpen && (
           <div className="fixed inset-0 z-50 overflow-y-auto bg-moto-dark pb-8 lg:hidden">
             <div className="flex items-center justify-between border-b border-white/5 p-4">
-              <span className="text-lg font-bold">Menu</span>
+              <span className="text-lg font-bold">Más secciones</span>
               <button onClick={() => setIsMobileMenuOpen(false)} className="p-2">
                 <X className="h-6 w-6" />
               </button>

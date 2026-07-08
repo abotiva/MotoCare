@@ -123,7 +123,7 @@ export function Marketplace() {
         </div>
         <Badge className="w-fit bg-moto-orange text-moto-darker">
           <Clock3 className="mr-2 h-4 w-4" />
-          Próximamente
+          Vista previa
         </Badge>
       </div>
 

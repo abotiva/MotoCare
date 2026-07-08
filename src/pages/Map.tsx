@@ -150,7 +150,7 @@ function routePlannedNotificationRows(route: RoutePlan) {
       user_id: route.owner_id,
       type: 'route_planned',
       title: 'Ruta planeada cercana',
-      message: `La ruta "${route.title}" esta programada para el ${startDate.toLocaleDateString('es-CO')}.`,
+      message: `La ruta "${route.title}" está programada para el ${startDate.toLocaleDateString('es-CO')}.`,
       route_id: route.id,
       scheduled_for: scheduled.toISOString(),
     },
@@ -169,7 +169,7 @@ function routeOverdueNotificationRow(route: RoutePlan) {
     user_id: route.owner_id,
     type: 'route_overdue',
     title: 'Ruta en curso vencida',
-    message: `La ruta "${route.title}" sigue en curso y ya paso su fecha final.`,
+    message: `La ruta "${route.title}" sigue en curso y ya pasó su fecha final.`,
     route_id: route.id,
     scheduled_for: endDate.toISOString(),
   }
@@ -237,30 +237,30 @@ function RouteCard({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <Button size="sm" variant="outline" className="border-white/10" onClick={() => onOpen(route)}>
+        <Button size="sm" variant="outline" className="w-full border-white/10 sm:w-auto" onClick={() => onOpen(route)}>
           Ver detalle
         </Button>
         {isOwner && onToggleVisibility && (
-          <Button size="sm" variant="outline" className="border-white/10" onClick={() => onToggleVisibility(route)}>
+          <Button size="sm" variant="outline" className="hidden border-white/10 sm:inline-flex" onClick={() => onToggleVisibility(route)}>
             {route.visibility === 'community' ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
             {route.visibility === 'community' ? 'Hacer privada' : 'Compartir'}
           </Button>
         )}
         {isOwner && onEdit && (
-          <Button size="sm" variant="outline" className="border-white/10" onClick={() => onEdit(route)}>
+          <Button size="sm" variant="outline" className="hidden border-white/10 sm:inline-flex" onClick={() => onEdit(route)}>
             <Edit3 className="mr-2 h-4 w-4" />
             Editar
           </Button>
         )}
         {isOwner && onDelete && (
-          <Button size="sm" variant="outline" className="border-red-500/30 text-red-300 hover:text-red-200" onClick={() => onDelete(route)}>
+          <Button size="sm" variant="outline" className="hidden border-red-500/30 text-red-300 hover:text-red-200 sm:inline-flex" onClick={() => onDelete(route)}>
             <Trash2 className="mr-2 h-4 w-4" />
             Eliminar
           </Button>
         )}
         {isOwner && onUpdateStatus && (
           <select
-            className="h-9 rounded-md border border-white/10 bg-moto-gray px-3 text-sm text-white"
+            className="hidden min-h-10 rounded-md border border-white/10 bg-moto-gray px-3 text-sm text-white sm:block"
             value={route.status ?? 'planned'}
             onChange={(event) => onUpdateStatus(route, event.target.value as RoutePlan['status'])}
           >
@@ -378,7 +378,7 @@ export function Map() {
     }
 
     if (Number(routeForm.distance_km || 0) < 0 || Number(routeForm.duration_minutes || 0) < 0) {
-      toast.error('Datos invalidos', { description: 'La distancia y duracion no pueden ser negativas.' })
+      toast.error('Datos inválidos', { description: 'La distancia y duración no pueden ser negativas.' })
       return
     }
 
@@ -422,7 +422,7 @@ export function Map() {
       setEditingRoute(null)
       setShowCreateRoute(false)
       toast.success(editingRoute ? 'Ruta actualizada' : 'Ruta creada', {
-        description: route.visibility === 'community' ? 'La ruta quedo visible para la comunidad.' : 'La ruta quedo guardada como privada.',
+        description: route.visibility === 'community' ? 'La ruta quedó visible para la comunidad.' : 'La ruta quedó guardada como privada.',
       })
     }
 
@@ -492,7 +492,7 @@ export function Map() {
 
   const deleteRoute = async (route: RoutePlan) => {
     if (!supabase || !user) return
-    const confirmed = window.confirm(`Eliminar la ruta "${route.title}"? Esta accion no se puede deshacer.`)
+    const confirmed = window.confirm(`Eliminar la ruta "${route.title}"? Esta acción no se puede deshacer.`)
     if (!confirmed) return
 
     setIsSaving(true)
@@ -562,7 +562,7 @@ export function Map() {
       await syncRouteNotifications(updatedRoute)
       setMyRoutes((current) => current.map((item) => (item.id === updatedRoute.id ? updatedRoute : item)))
       if (selectedRoute?.id === updatedRoute.id) setSelectedRoute(updatedRoute)
-      toast.success('Estado actualizado', { description: `La ruta quedo como ${getRouteStatus(updatedRoute).label.toLowerCase()}.` })
+      toast.success('Estado actualizado', { description: `La ruta quedó como ${getRouteStatus(updatedRoute).label.toLowerCase()}.` })
     }
 
     setIsSaving(false)

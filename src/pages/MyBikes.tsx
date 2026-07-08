@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -1120,7 +1120,7 @@ export function MyBikes() {
       <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
         <div>
           <h1 className="mb-1 text-2xl font-bold">Mi moto</h1>
-          <p className="text-gray-400">Hoja de vida, mantenimientos y vencimientos en un solo lugar.</p>
+          <p className="text-gray-400">Tu moto, mantenimientos y vencimientos en un solo lugar.</p>
         </div>
         <div className="grid w-full grid-cols-3 gap-2 sm:w-auto sm:flex sm:flex-wrap sm:gap-3">
           {!isBusinessAccount && (
@@ -1209,7 +1209,7 @@ export function MyBikes() {
                     )}
                   </div>
                   <p className="truncate text-sm text-gray-400">
-                    {motorcycle.year ?? 'Sin ano'} - {motorcycle.plate ?? 'Sin placa'}
+                    {motorcycle.year ?? 'Sin año'} - {motorcycle.plate ?? 'Sin placa'}
                   </p>
                 </div>
               </button>
@@ -1219,7 +1219,7 @@ export function MyBikes() {
           {selectedBike && (
             <div className="grid gap-6 lg:grid-cols-3">
               <Card className="overflow-hidden border-white/5 bg-moto-gray lg:col-span-2">
-                <div className="relative min-h-[25rem] overflow-hidden sm:min-h-80">
+                <div className="relative min-h-[18rem] overflow-hidden sm:min-h-80">
                   <button
                     type="button"
                     className="absolute inset-0 h-full w-full text-left"
@@ -1240,7 +1240,7 @@ export function MyBikes() {
                           {selectedBike.brand} {selectedBike.model}
                         </h2>
                         <p className="mt-1 text-sm text-gray-300 sm:text-base">
-                          {selectedBike.year ?? 'Sin ano'} - {selectedBike.color ?? 'Sin color'} - {selectedBike.plate ?? 'Sin placa'}
+                          {selectedBike.year ?? 'Sin año'} - {selectedBike.color ?? 'Sin color'} - {selectedBike.plate ?? 'Sin placa'}
                         </p>
                       </div>
                       <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">

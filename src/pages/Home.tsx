@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AlertTriangle, Bell, Bike, Calendar, CheckCircle2, FileText, Loader2, Plus, Settings, UserPlus, Wrench, X } from 'lucide-react'
 import { toast } from 'sonner'
@@ -132,6 +132,36 @@ export function Home() {
     ]
     return Math.round((checks.filter(Boolean).length / checks.length) * 100)
   }, [primaryMotorcycle, profile])
+
+  const nextStep = useMemo(() => {
+    if (stats.pendingReminders > 0) {
+      return {
+        icon: Calendar,
+        title: 'Revisa tus pendientes',
+        description: 'Cierra el próximo mantenimiento o ajusta la agenda antes de que se venza.',
+        actionLabel: 'Ver pendientes',
+        to: '/app/my-bikes#reminders',
+      }
+    }
+
+    if (stats.maintenanceRecords === 0) {
+      return {
+        icon: Wrench,
+        title: 'Registra el primer servicio',
+        description: 'Empieza la hoja de vida verificable de tu moto con el último mantenimiento realizado.',
+        actionLabel: 'Registrar servicio',
+        to: '/app/my-bikes#history',
+      }
+    }
+
+    return {
+      icon: FileText,
+      title: 'Completa tus documentos',
+      description: 'Sube SOAT, revisión técnica u otros soportes para cerrar el expediente de la moto.',
+      actionLabel: 'Ver documentos',
+      to: '/app/my-bikes#documents',
+    }
+  }, [stats.maintenanceRecords, stats.pendingReminders])
 
   const loadDashboard = async () => {
     if (!supabase || !user) return
@@ -328,6 +358,25 @@ export function Home() {
         <MetricCard icon={FileText} label="Documentos" value={stats.documents} tone="green" to="/app/my-bikes#documents" />
       </div>
 
+      <Card className="mb-5 border-moto-orange/20 bg-moto-orange/10 py-0">
+        <CardContent className="p-4 sm:p-5">
+          <Link to={nextStep.to} className="flex min-w-0 flex-col gap-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-moto-orange sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-moto-orange text-moto-darker">
+                <nextStep.icon className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-semibold text-white">{nextStep.title}</p>
+                <p className="mt-1 text-sm leading-5 text-gray-300">{nextStep.description}</p>
+              </div>
+            </div>
+            <span className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-md bg-moto-orange px-4 text-sm font-semibold text-moto-darker">
+              {nextStep.actionLabel}
+            </span>
+          </Link>
+        </CardContent>
+      </Card>
+
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-5">
           <Card className="border-white/5 bg-moto-gray py-0">
@@ -356,12 +405,12 @@ export function Home() {
                   )}
                   <div className="min-w-0 flex-1">
                     <h3 className="text-xl font-bold">{primaryMotorcycle.brand} {primaryMotorcycle.model}</h3>
-                    <p className="text-sm text-gray-400">{primaryMotorcycle.plate || 'Sin placa'} - {primaryMotorcycle.year || 'Sin ano'}</p>
+                    <p className="text-sm text-gray-400">{primaryMotorcycle.plate || 'Sin placa'} - {primaryMotorcycle.year || 'Sin año'}</p>
                     <p className="mt-3 text-2xl font-bold text-moto-orange">{primaryMotorcycle.mileage.toLocaleString()} km</p>
                   </div>
                 </div>
               ) : (
-                <EmptyState icon={Bike} text="Aun no tienes una moto registrada." actionLabel="Agregar moto" to="/app/my-bikes" />
+                <EmptyState icon={Bike} text="Aún no tienes una moto registrada." actionLabel="Agregar moto" to="/app/my-bikes" />
               )}
             </CardContent>
           </Card>
@@ -503,18 +552,6 @@ export function Home() {
             </CardContent>
           </Card>
 
-          <Card className="border-white/5 bg-moto-gray py-0">
-            <CardContent className="p-5">
-              <h2 className="mb-3 font-semibold">Siguiente paso recomendado</h2>
-              {stats.pendingReminders > 0 ? (
-                <p className="text-sm text-gray-400">Revisa tus pendientes y cierra el próximo mantenimiento para mantener la hoja de vida al día.</p>
-              ) : stats.maintenanceRecords === 0 ? (
-                <p className="text-sm text-gray-400">Registra el primer servicio realizado para empezar el historial verificable de tu moto.</p>
-              ) : (
-                <p className="text-sm text-gray-400">Sube documentos clave como SOAT o revisión técnica para completar el expediente.</p>
-              )}
-            </CardContent>
-          </Card>
         </div>
       </div>
       <ImageViewer
