@@ -12,7 +12,7 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
       <div className="grid min-h-screen place-items-center bg-moto-dark p-6 text-white">
         <div className="max-w-xl rounded-2xl border border-moto-orange/30 bg-moto-gray p-6 shadow-xl shadow-moto-orange/10">
           <p className="text-sm font-semibold uppercase tracking-wider text-moto-orange">Configuracion pendiente</p>
-          <h1 className="mt-3 text-2xl font-bold">Conecta MotoHubX con Supabase</h1>
+          <h1 className="mt-3 text-2xl font-bold">Conecta MotoCare Co con Supabase</h1>
           <p className="mt-3 text-gray-300">
             Crea un archivo <code className="rounded bg-moto-darker px-1.5 py-0.5">.env</code> a partir de
             <code className="ml-1 rounded bg-moto-darker px-1.5 py-0.5">.env.example</code> y agrega tus llaves de Supabase.

@@ -83,7 +83,7 @@ const listings = [
   },
   {
     id: 6,
-    title: 'Escape Akrapovič Slip-on',
+    title: 'Escape AkrapoviÄ Slip-on',
     price: 2500000,
     condition: 'Nuevo',
     location: 'Pereira, Risaralda',
@@ -123,7 +123,7 @@ export function Marketplace() {
         </div>
         <Badge className="w-fit bg-moto-orange text-moto-darker">
           <Clock3 className="mr-2 h-4 w-4" />
-          Proximamente
+          Próximamente
         </Badge>
       </div>
 
@@ -135,7 +135,7 @@ export function Marketplace() {
               <Badge className="mb-3 bg-white/10 text-gray-200">Tienda para todos</Badge>
               <h2 className="text-2xl font-bold">Comprar es abierto para toda la comunidad</h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-300">
-                Cualquier usuario podra explorar publicaciones y contactar vendedores. Para publicar como persona natural se requiere licencia Premium; si la cuenta representa un negocio, taller, marca o aliado, debe tener licencia Business.
+                Cualquier usuario podrá explorar publicaciones y contactar vendedores. Para publicar como persona natural se requiere licencia Premium; si la cuenta representa un negocio, taller, marca o aliado, debe tener licencia Business.
               </p>
             </div>
             <div className="rounded-xl border border-white/10 bg-moto-darker/90 p-4">
@@ -157,7 +157,7 @@ export function Marketplace() {
         <CardContent className="grid gap-4 p-4 md:grid-cols-3">
           <div className="rounded-lg border border-white/10 bg-moto-darker/60 p-4">
             <p className="text-sm font-semibold text-white">Explorar y comprar</p>
-            <p className="mt-1 text-sm leading-6 text-gray-400">Disponible para toda la comunidad MotoHubX.</p>
+            <p className="mt-1 text-sm leading-6 text-gray-400">Disponible para toda la comunidad MotoCare Co.</p>
           </div>
           <div className="rounded-lg border border-white/10 bg-moto-darker/60 p-4">
             <p className="text-sm font-semibold text-white">Publicar como motero</p>

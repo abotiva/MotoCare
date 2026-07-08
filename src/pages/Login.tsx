@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowRight, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { MotoHubXLogo } from '@/components/MotoHubXLogo'
+import { MotoCareLogo } from '@/components/MotoCareLogo'
 import { useAuth } from '@/contexts/AuthContext'
 
 export function Login() {
@@ -45,15 +45,15 @@ export function Login() {
   return (
     <div className="grid min-h-screen bg-moto-dark text-white lg:grid-cols-[1.05fr_0.95fr]">
       <section className="relative hidden overflow-hidden lg:block">
-        <img src="/hero-motorcycle.jpg" alt="Ruta MotoHubX" className="h-full w-full object-cover" />
+        <img src="/hero-motorcycle.jpg" alt="Ruta MotoCare Co" className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-r from-moto-darker via-moto-dark/80 to-transparent" />
         <div className="absolute bottom-12 left-12 max-w-xl">
-          <MotoHubXLogo />
+          <MotoCareLogo />
           <h1 className="mt-8 text-5xl font-bold leading-tight">
             Cuida tu moto. Vive tu <span className="text-gradient">ruta</span>.
           </h1>
           <p className="mt-4 text-lg text-gray-300">
-            Registra tu moto, controla vencimientos y manten el historial listo para cada kilometro.
+            Registra tu moto, controla vencimientos y mantén el historial listo para cada kilómetro.
           </p>
         </div>
       </section>
@@ -61,14 +61,14 @@ export function Login() {
       <section className="flex items-center justify-center p-6">
         <div className="w-full max-w-md">
           <div className="mb-8 lg:hidden">
-            <MotoHubXLogo />
+            <MotoCareLogo />
           </div>
 
           <div className="rounded-2xl border border-white/5 bg-moto-gray p-6 shadow-xl">
             <p className="text-sm font-semibold uppercase tracking-wider text-moto-orange">
               {mode === 'login' ? 'Bienvenido de vuelta' : 'Crea tu cuenta'}
             </p>
-            <h2 className="mt-2 text-3xl font-bold">{mode === 'login' ? 'Entrar a MotoHubX' : 'Empieza con tu moto'}</h2>
+            <h2 className="mt-2 text-3xl font-bold">{mode === 'login' ? 'Entrar a la app' : 'Empieza con tu moto'}</h2>
             <p className="mt-2 text-sm text-gray-400">
               {mode === 'login'
                 ? 'Accede para gestionar tu moto y tus recordatorios.'
@@ -89,7 +89,7 @@ export function Login() {
                     value={fullName}
                     onChange={(event) => setFullName(event.target.value)}
                     className="w-full rounded-lg border border-white/10 bg-moto-darker p-3 text-white outline-none focus:border-moto-orange"
-                    placeholder="Juan Perez"
+                    placeholder="Juan Pérez"
                     required
                   />
                 </label>
@@ -108,13 +108,13 @@ export function Login() {
               </label>
 
               <label className="block">
-                <span className="mb-1 block text-sm text-gray-400">Contrasena</span>
+                <span className="mb-1 block text-sm text-gray-400">Contraseña</span>
                 <input
                   type="password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   className="w-full rounded-lg border border-white/10 bg-moto-darker p-3 text-white outline-none focus:border-moto-orange"
-                  placeholder="Minimo 6 caracteres"
+                  placeholder="Mínimo 6 caracteres"
                   minLength={6}
                   required
                 />
@@ -133,7 +133,7 @@ export function Login() {
             </form>
 
             <button
-              className="mt-5 w-full text-center text-sm text-gray-400 hover:text-moto-orange"
+              className="mt-5 w-full rounded-lg px-3 py-2 text-center text-sm text-gray-400 transition-colors hover:bg-white/5 hover:text-moto-orange"
               onClick={() => {
                 setError(null)
                 setMode(mode === 'login' ? 'signup' : 'login')

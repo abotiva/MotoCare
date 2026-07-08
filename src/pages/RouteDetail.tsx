@@ -39,7 +39,7 @@ function initials(name: string | null | undefined, username?: string | null) {
 }
 
 function formatDuration(minutes: number | null) {
-  if (!minutes) return 'Sin duracion'
+  if (!minutes) return 'Sin duración'
   if (minutes < 60) return `${minutes} min`
   const hours = Math.floor(minutes / 60)
   const rest = minutes % 60
@@ -143,7 +143,7 @@ export function RouteDetail() {
   const status = routeStatusMeta[route.status ?? 'planned']
   const StatusIcon = status.icon
   const owner = route.profiles
-  const ownerName = owner?.full_name || owner?.username || 'Motero MotoHubX'
+  const ownerName = owner?.full_name || owner?.username || 'Motero MotoCare Co'
   const mapEmbedUrl = googleMapsEmbedUrl(route)
 
   return (

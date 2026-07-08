@@ -10,7 +10,7 @@ import { appVersion, buildTime } from '@/lib/appVersion'
 import { supabase, supabaseUrl } from '@/lib/supabase'
 import type { AdminClubRow, AdminMaintenanceSuggestionRow, AdminOverview, AdminUserRow } from '@/types/database'
 
-type AdminTab = 'usuarios' | 'clubes' | 'catalogos'
+type AdminTab = 'usuarios' | 'clubes' | 'catálogos'
 type UserPlan = AdminUserRow['plan']
 type UserPlanStatus = AdminUserRow['plan_status']
 
@@ -140,7 +140,7 @@ export function Admin() {
       }
 
       if (suggestionsResult.error) {
-        toast.error('No pudimos cargar catalogos', { description: suggestionsResult.error.message })
+        toast.error('No pudimos cargar catálogos', { description: suggestionsResult.error.message })
       } else {
         setSuggestions((suggestionsResult.data ?? []) as AdminMaintenanceSuggestionRow[])
       }
@@ -204,7 +204,7 @@ export function Admin() {
     <div className="mx-auto max-w-7xl p-4 pb-24 lg:p-6">
       <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
         <div>
-          <h1 className="text-2xl font-bold">Administracion</h1>
+          <h1 className="text-2xl font-bold">Administración</h1>
           <p className="text-gray-400">Panel operativo con privacidad aplicada a usuarios y clubes.</p>
         </div>
         <Badge className="w-fit bg-moto-orange text-moto-darker">
@@ -213,15 +213,15 @@ export function Admin() {
         </Badge>
       </div>
 
-      <div className="mb-4 grid grid-cols-4 gap-2 sm:mb-5 sm:gap-4 md:grid-cols-4 xl:grid-cols-8">
+      <div className="mb-5 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))' }}>
         <MetricCard icon={Users} label="Usuarios" value={overview.users} detail={`${overview.private_users} privados`} />
         <MetricCard icon={CreditCard} label="Free" value={overview.free_users} detail="Usuarios base" />
         <MetricCard icon={CreditCard} label="Premium" value={overview.premium_users + overview.pro_users} detail="Incluye Pro legado" />
         <MetricCard icon={Bike} label="Motos" value={overview.motorcycles} detail="Registradas" />
         <MetricCard icon={Route} label="Rutas" value={overview.routes} detail={`${overview.community_routes} comunidad`} />
-        <MetricCard icon={Users} label="Clubes" value={overview.clubs} detail={`${overview.club_memberships} membresias`} />
+        <MetricCard icon={Users} label="Clubes" value={overview.clubs} detail={`${overview.club_memberships} membresías`} />
         <MetricCard icon={AlertTriangle} label="Invitaciones" value={overview.pending_club_invitations} detail="Pendientes" />
-        <MetricCard icon={SlidersHorizontal} label="Catalogo" value={overview.active_maintenance_suggestions} detail={`${overview.maintenance_suggestions} totales`} />
+        <MetricCard icon={SlidersHorizontal} label="Catálogo" value={overview.active_maintenance_suggestions} detail={`${overview.maintenance_suggestions} totales`} />
       </div>
 
       <AppDataCard projectRef={projectRef} />
@@ -231,7 +231,7 @@ export function Admin() {
           <div className="flex flex-wrap gap-2">
             <TabButton label="Usuarios" active={activeTab === 'usuarios'} onClick={() => setActiveTab('usuarios')} />
             <TabButton label="Clubes" active={activeTab === 'clubes'} onClick={() => setActiveTab('clubes')} />
-            <TabButton label="Catalogos" active={activeTab === 'catalogos'} onClick={() => setActiveTab('catalogos')} />
+            <TabButton label="Catálogos" active={activeTab === 'catálogos'} onClick={() => setActiveTab('catálogos')} />
           </div>
           <label className="flex min-w-0 items-center gap-2 rounded-xl border border-white/10 bg-moto-darker px-3 py-2 lg:w-80">
             <Search className="h-4 w-4 text-gray-500" />
@@ -247,7 +247,7 @@ export function Admin() {
 
       {activeTab === 'usuarios' && <UsersTable users={filteredUsers} savingLicenseUserId={savingLicenseUserId} onUpdateLicense={updateUserLicense} />}
       {activeTab === 'clubes' && <ClubsTable clubs={filteredClubs} />}
-      {activeTab === 'catalogos' && <SuggestionsTable suggestions={filteredSuggestions} />}
+      {activeTab === 'catálogos' && <SuggestionsTable suggestions={filteredSuggestions} />}
     </div>
   )
 }
@@ -262,7 +262,7 @@ function AppDataCard({ projectRef }: { projectRef: string }) {
           </div>
           <div>
             <h3 className="font-semibold">Datos de la app</h3>
-            <p className="text-sm text-gray-400">Estado tecnico del MVP</p>
+            <p className="text-sm text-gray-400">Estado técnico del MVP</p>
           </div>
         </div>
         <div className="grid gap-3 text-sm md:grid-cols-4">
@@ -271,7 +271,7 @@ function AppDataCard({ projectRef }: { projectRef: string }) {
             <p className="break-all font-medium">{projectRef}</p>
           </div>
           <div>
-            <p className="text-gray-400">Version</p>
+            <p className="text-gray-400">Versión</p>
             <p className="font-medium">{appVersion}</p>
           </div>
           <div>
@@ -290,15 +290,15 @@ function AppDataCard({ projectRef }: { projectRef: string }) {
 
 function MetricCard({ icon: Icon, label, value, detail }: { icon: LucideIcon; label: string; value: number; detail: string }) {
   return (
-    <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0">
-      <CardContent className="flex min-w-0 flex-col items-center gap-1.5 p-2 text-center sm:flex-row sm:gap-4 sm:p-4 sm:text-left xl:flex-col xl:items-center xl:gap-2 xl:text-center">
-        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-moto-orange/20 sm:h-11 sm:w-11 sm:rounded-xl">
-          <Icon className="h-4 w-4 text-moto-orange sm:h-5 sm:w-5" />
+    <Card className="border-white/5 bg-moto-gray py-0">
+      <CardContent className="flex items-center gap-4 p-4">
+        <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-moto-orange/20">
+          <Icon className="h-5 w-5 text-moto-orange" />
         </div>
-        <div className="min-w-0">
-          <p className="max-w-full truncate text-[10px] leading-tight text-gray-400 sm:text-sm">{label}</p>
-          <p className="truncate text-base font-bold leading-tight sm:text-xl">{value.toLocaleString()}</p>
-          <p className="hidden truncate text-xs text-gray-500 sm:block">{detail}</p>
+        <div>
+          <p className="text-sm text-gray-400">{label}</p>
+          <p className="text-xl font-bold">{value.toLocaleString()}</p>
+          <p className="text-xs text-gray-500">{detail}</p>
         </div>
       </CardContent>
     </Card>
@@ -330,7 +330,7 @@ function UsersTable({
   const [openUserId, setOpenUserId] = useState<string | null>(null)
 
   return (
-    <AdminTable title="Usuarios" description="Listado basico para revisar rapido. Abra el detalle para licencia, metricas y datos operativos.">
+    <AdminTable title="Usuarios" description="Listado básico para revisar rápido. Abra el detalle para licencia, métricas y datos operativos.">
       {users.length > 0 ? (
         users.map((user) => {
           const isOpen = openUserId === user.id
@@ -340,9 +340,9 @@ function UsersTable({
               <div className="grid gap-3 p-4 md:grid-cols-[minmax(0,1fr)_140px_120px_120px] md:items-center">
                 <div className="min-w-0">
                   <div className="mb-1 flex flex-wrap items-center gap-2">
-                    <p className="truncate font-medium">{user.display_name || 'Motero MotoHubX'}</p>
+                    <p className="truncate font-medium">{user.display_name || 'Motero MotoCare Co'}</p>
                     <Badge className={user.is_public ? 'bg-green-500/15 text-green-300' : 'bg-white/10 text-gray-300'}>
-                      {user.is_public ? 'Publico' : 'Privado'}
+                      {user.is_public ? 'Público' : 'Privado'}
                     </Badge>
                   </div>
                   <p className="truncate text-sm text-gray-400">@{user.username || `usuario-${shortId(user.id)}`}</p>
@@ -453,7 +453,7 @@ function LicenseEditor({
 
 function ClubsTable({ clubs }: { clubs: AdminClubRow[] }) {
   return (
-    <AdminTable title="Clubes" description="Se muestran datos del club y metricas; el fundador se enmascara si su perfil es privado.">
+    <AdminTable title="Clubes" description="Se muestran datos del club y métricas; el fundador se enmascara si su perfil es privado.">
       {clubs.map((club) => (
         <div key={club.id} className="grid gap-3 border-t border-white/5 p-4 md:grid-cols-[minmax(0,1.5fr)_140px_120px_120px_120px] md:items-center">
           <div className="min-w-0">
@@ -473,7 +473,7 @@ function ClubsTable({ clubs }: { clubs: AdminClubRow[] }) {
 
 function SuggestionsTable({ suggestions }: { suggestions: AdminMaintenanceSuggestionRow[] }) {
   return (
-    <AdminTable title="Catalogo de mantenimientos" description="Vista operativa del catalogo que alimenta recordatorios y servicios.">
+    <AdminTable title="Catálogo de mantenimientos" description="Vista operativa del catálogo que alimenta recordatorios y servicios.">
       {suggestions.map((item) => (
         <div key={item.id} className="grid gap-3 border-t border-white/5 p-4 md:grid-cols-[minmax(0,1.5fr)_130px_120px_120px_120px] md:items-center">
           <div className="min-w-0">

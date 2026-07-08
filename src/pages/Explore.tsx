@@ -23,7 +23,7 @@ function initials(name: string | null | undefined, username: string | null | und
 }
 
 function formatDuration(minutes: number | null) {
-  if (!minutes) return 'Sin duracion'
+  if (!minutes) return 'Sin duración'
   if (minutes < 60) return `${minutes} min`
   const hours = Math.floor(minutes / 60)
   const rest = minutes % 60
@@ -172,7 +172,7 @@ export function Explore() {
     <div className="mx-auto max-w-7xl p-4 pb-24 lg:p-6">
       <div className="mb-6">
         <h1 className="mb-2 text-2xl font-bold">Explorar</h1>
-        <p className="text-gray-400">Descubre rutas y actividad compartida por la comunidad MotoHubX.</p>
+        <p className="text-gray-400">Descubre rutas y actividad compartida por la comunidad MotoCare Co.</p>
       </div>
 
       <div className="mb-5 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
@@ -244,7 +244,7 @@ export function Explore() {
             <div className="grid gap-4 md:grid-cols-2">
               {filteredRoutes.map((route) => {
                 const owner = route.profiles
-                const ownerName = owner?.full_name || owner?.username || 'Motero MotoHubX'
+                const ownerName = owner?.full_name || owner?.username || 'Motero MotoCare Co'
 
                 return (
                   <Card key={route.id} className="overflow-hidden border-white/5 bg-moto-gray py-0">
@@ -316,7 +316,7 @@ export function Explore() {
             <div className="grid gap-4 md:grid-cols-2">
               {savedRoutes.map((route) => {
                 const owner = route.profiles
-                const ownerName = owner?.full_name || owner?.username || 'Motero MotoHubX'
+                const ownerName = owner?.full_name || owner?.username || 'Motero MotoCare Co'
 
                 return (
                   <Card key={route.id} className="overflow-hidden border-white/5 bg-moto-gray py-0">
@@ -388,7 +388,7 @@ export function Explore() {
           {filteredPosts.length > 0 ? (
             filteredPosts.map((post) => {
               const author = post.profiles
-              const authorName = author?.full_name || author?.username || 'Motero MotoHubX'
+              const authorName = author?.full_name || author?.username || 'Motero MotoCare Co'
 
               return (
                 <Card key={post.id} className="border-white/5 bg-moto-gray py-0">
@@ -400,7 +400,7 @@ export function Explore() {
                       </Avatar>
                       <div className="min-w-0">
                         <p className="truncate font-medium">{authorName}</p>
-                        <p className="text-xs text-gray-500">@{author?.username || 'motohubx'} - {relativeDate(post.created_at)}</p>
+                        <p className="text-xs text-gray-500">@{author?.username || 'motocare'} - {relativeDate(post.created_at)}</p>
                       </div>
                     </div>
                     <p className="whitespace-pre-wrap text-sm leading-6 text-gray-100">{post.content}</p>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
   BarChart3,
@@ -23,7 +23,7 @@ import {
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { AppUpdatePrompt } from '@/components/AppUpdatePrompt'
-import { MotoHubXLogo } from '@/components/MotoHubXLogo'
+import { MotoCareLogo } from '@/components/MotoCareLogo'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
@@ -77,7 +77,7 @@ function initials(name: string | null | undefined, email: string | undefined) {
 function notificationPreview(notification: Notification) {
   if (notification.type === 'club_invite' && notification.club_invitations?.clubs) {
     return {
-      title: 'Invitacion a club',
+      title: 'Invitación a club',
       message: `El club "${notification.club_invitations.clubs.name}" quiere agregarte como miembro.`,
     }
   }
@@ -106,8 +106,8 @@ export function MainLayout() {
   const location = useLocation()
   const userId = user?.id
 
-  const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Motero MotoHubX'
-  const username = profile?.username || user?.email?.split('@')[0] || 'motohubx'
+  const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Motero MotoCare Co'
+  const username = profile?.username || user?.email?.split('@')[0] || 'motocare'
   const avatarFallback = initials(profile?.full_name, user?.email)
 
   const pageTitle =
@@ -116,7 +116,7 @@ export function MainLayout() {
     navItems.find((item) => item.path === location.pathname)?.label ||
     premiumItems.find((item) => item.path === location.pathname)?.label ||
     sidebarItems.find((item) => item.path === location.pathname)?.label ||
-    (location.pathname === '/app/admin' ? 'Administracion' : null) ||
+    (location.pathname === '/app/admin' ? 'Administración' : null) ||
     'Inicio'
 
   const isItemActive = (path: string) => {
@@ -202,7 +202,7 @@ export function MainLayout() {
       <aside className="fixed hidden h-full w-64 flex-col border-r border-white/5 bg-moto-darker lg:flex">
         <div className="border-b border-white/5 p-6">
           <NavLink to="/app/home">
-            <MotoHubXLogo />
+            <MotoCareLogo />
           </NavLink>
         </div>
 
@@ -308,7 +308,7 @@ export function MainLayout() {
               }
             >
               <ShieldCheck className="h-5 w-5" />
-              <span>Administracion</span>
+              <span>Administración</span>
             </NavLink>
           )}
         </nav>
@@ -338,11 +338,17 @@ export function MainLayout() {
         <header className="sticky top-0 z-40 border-b border-white/5 bg-moto-dark/95 backdrop-blur-xl">
           <div className="flex min-h-16 items-center justify-between gap-2 px-3 py-2 lg:px-6">
             <div className="flex min-w-0 items-center gap-3 lg:hidden">
-              <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="shrink-0 rounded-lg p-2 hover:bg-white/5">
+              <button
+                type="button"
+                aria-label={isMobileMenuOpen ? 'Cerrar menu' : 'Abrir menu'}
+                aria-expanded={isMobileMenuOpen}
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="shrink-0 rounded-lg p-2 hover:bg-white/5"
+              >
                 {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </button>
               <NavLink to="/app/home">
-                <MotoHubXLogo compact />
+                <MotoCareLogo compact />
               </NavLink>
               <h1 className="min-w-0 truncate text-sm font-semibold sm:text-base">{pageTitle}</h1>
             </div>
@@ -545,7 +551,7 @@ export function MainLayout() {
                 </NavLink>
               ))}
               <div className="mt-5 px-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Personal</div>
-              {[...sidebarItems, ...(isAdmin ? [{ path: '/app/admin', icon: ShieldCheck, label: 'Administracion' }] : [])].map((item) => (
+              {[...sidebarItems, ...(isAdmin ? [{ path: '/app/admin', icon: ShieldCheck, label: 'Administración' }] : [])].map((item) => (
                 <NavLink
                   key={item.path}
                   to={item.path}

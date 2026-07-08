@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AlertTriangle, Bell, Bike, Calendar, CheckCircle2, FileText, Loader2, Plus, Settings, UserPlus, Wrench, X } from 'lucide-react'
 import { toast } from 'sonner'
@@ -64,11 +64,11 @@ function notificationDisplay(notification: Notification) {
       days === 0
         ? 'hoy'
         : days === 1
-          ? 'manana'
+          ? 'mañana'
           : days > 1
-            ? `en ${days} dias`
-            : `hace ${Math.abs(days)} dias`
-    const message = `Tu ruta "${notification.routes.title}" esta programada para ${when}.`
+            ? `en ${days} días`
+            : `hace ${Math.abs(days)} días`
+    const message = `Tu ruta "${notification.routes.title}" está programada para ${when}.`
     const dateLabel = `Fecha de ruta: ${formatDate(notification.routes.start_date)}`
     return { title, message, dateLabel }
   }
@@ -80,9 +80,9 @@ function notificationDisplay(notification: Notification) {
 
   if (notification.type === 'club_invite' && notification.club_invitations?.clubs) {
     return {
-      title: 'Invitacion a club',
+      title: 'Invitación a club',
       message: `El club "${notification.club_invitations.clubs.name}" quiere agregarte como miembro.`,
-      dateLabel: notification.club_invitations.clubs.city || 'Club MotoHubX',
+      dateLabel: notification.club_invitations.clubs.city || 'Club MotoCare Co',
     }
   }
 
@@ -208,10 +208,10 @@ export function Home() {
       .eq('user_id', user.id)
 
     if (error) {
-      toast.error('No pudimos marcar la notificacion', { description: error.message })
+      toast.error('No pudimos marcar la notificación', { description: error.message })
     } else {
       setNotifications((current) => current.filter((item) => item.id !== notification.id))
-      toast.success('Notificacion marcada como leida')
+      toast.success('Notificación marcada como leída')
     }
   }
 
@@ -300,7 +300,7 @@ export function Home() {
           </Avatar>
           <div>
             <h1 className="text-2xl font-bold">Hola, {profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'motero'}</h1>
-            <p className="text-gray-400">Este es el estado actual de tu MotoHubX.</p>
+            <p className="text-gray-400">Este es el estado actual de tu MotoCare Co.</p>
           </div>
         </div>
         <div className="grid w-full grid-cols-2 gap-2 sm:w-auto sm:flex sm:flex-wrap">
@@ -483,7 +483,7 @@ export function Home() {
 
           <Card className="border-white/5 bg-moto-gray py-0">
             <CardContent className="p-5">
-              <h2 className="mb-4 font-semibold">Ultimos mantenimientos</h2>
+              <h2 className="mb-4 font-semibold">Últimos mantenimientos</h2>
               {recentMaintenanceRecords.length > 0 ? (
                 <div className="space-y-3">
                   {recentMaintenanceRecords.map((record) => (
@@ -498,7 +498,7 @@ export function Home() {
                   ))}
                 </div>
               ) : (
-                <EmptyState icon={Wrench} text="Aun no tienes mantenimientos registrados." actionLabel="Registrar servicio" to="/app/my-bikes#history" />
+                <EmptyState icon={Wrench} text="Aún no tienes mantenimientos registrados." actionLabel="Registrar servicio" to="/app/my-bikes#history" />
               )}
             </CardContent>
           </Card>
@@ -507,11 +507,11 @@ export function Home() {
             <CardContent className="p-5">
               <h2 className="mb-3 font-semibold">Siguiente paso recomendado</h2>
               {stats.pendingReminders > 0 ? (
-                <p className="text-sm text-gray-400">Revise sus pendientes y cierre el proximo mantenimiento para mantener la hoja de vida al dia.</p>
+                <p className="text-sm text-gray-400">Revisa tus pendientes y cierra el próximo mantenimiento para mantener la hoja de vida al día.</p>
               ) : stats.maintenanceRecords === 0 ? (
-                <p className="text-sm text-gray-400">Registre el primer servicio realizado para empezar el historial verificable de su moto.</p>
+                <p className="text-sm text-gray-400">Registra el primer servicio realizado para empezar el historial verificable de tu moto.</p>
               ) : (
-                <p className="text-sm text-gray-400">Suba documentos clave como SOAT o revision tecnica para completar el expediente.</p>
+                <p className="text-sm text-gray-400">Sube documentos clave como SOAT o revisión técnica para completar el expediente.</p>
               )}
             </CardContent>
           </Card>

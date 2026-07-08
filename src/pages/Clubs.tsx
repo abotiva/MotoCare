@@ -433,7 +433,7 @@ export function Clubs() {
       .maybeSingle()
 
     if (pendingInvitation) {
-      toast.info('Invitacion pendiente', { description: `${profile.full_name || `@${profile.username}` || 'Este usuario'} ya debe aprobar esta invitacion.` })
+      toast.info('Invitación pendiente', { description: `${profile.full_name || `@${profile.username}` || 'Este usuario'} ya debe aprobar esta invitacion.` })
       setInviteUsername('')
       setInviteSuggestions([])
       setIsSaving(false)
@@ -460,7 +460,7 @@ export function Clubs() {
     const { error: notificationError } = await supabase.from('notifications').insert({
       user_id: profile.id,
       type: 'club_invite',
-      title: 'Invitacion a club',
+      title: 'Invitación a club',
       message: `El club "${selectedClub.name}" quiere agregarte como miembro.`,
       club_invitation_id: invitation.id,
       scheduled_for: new Date().toISOString(),
@@ -472,7 +472,7 @@ export function Clubs() {
       setInviteUsername('')
       setInviteSuggestions([])
       await loadPendingInvitations(selectedClub.id)
-      toast.success('Invitacion enviada', { description: `${profile.full_name || `@${profile.username}` || 'El usuario'} debe aprobarla.` })
+      toast.success('Invitación enviada', { description: `${profile.full_name || `@${profile.username}` || 'El usuario'} debe aprobarla.` })
     }
 
     setIsSaving(false)
@@ -704,7 +704,7 @@ export function Clubs() {
                 <CardContent className="p-4 sm:p-5">
                   <h2 className="mb-4 flex items-center gap-2 font-semibold">
                     <Edit3 className="h-4 w-4 text-moto-orange" />
-                    Editar informacion
+                    Editar información
                   </h2>
                   <form className="grid gap-3 md:grid-cols-2" onSubmit={updateClub}>
                     <input className="min-w-0 rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={clubForm.name} onChange={(event) => setClubForm({ ...clubForm, name: event.target.value })} placeholder="Nombre" />
@@ -744,7 +744,7 @@ export function Clubs() {
                               </div>
                             ) : (
                               inviteSuggestions.map((suggestion) => {
-                                const suggestionName = suggestion.full_name || suggestion.username || 'Motero MotoHubX'
+                                const suggestionName = suggestion.full_name || suggestion.username || 'Motero MotoCare Co'
                                 return (
                                   <button
                                     key={suggestion.id}
@@ -762,7 +762,7 @@ export function Clubs() {
                                     <div className="min-w-0">
                                       <p className="truncate text-sm font-medium">{suggestionName}</p>
                                       <p className="truncate text-xs text-gray-500">
-                                        @{suggestion.username || 'motohubx'}{suggestion.city ? ` - ${suggestion.city}` : ''}
+                                        @{suggestion.username || 'motocare'}{suggestion.city ? ` - ${suggestion.city}` : ''}
                                       </p>
                                     </div>
                                   </button>
@@ -781,7 +781,7 @@ export function Clubs() {
                 </div>
                 <div className="grid gap-3 md:grid-cols-2">
                   {members.map((member) => {
-                    const memberName = member.profiles?.full_name || member.profiles?.username || 'Motero MotoHubX'
+                    const memberName = member.profiles?.full_name || member.profiles?.username || 'Motero MotoCare Co'
                     return (
                       <div key={member.id} className="flex flex-col gap-3 rounded-xl bg-moto-darker p-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex min-w-0 items-center gap-3">
@@ -791,7 +791,7 @@ export function Clubs() {
                           </Avatar>
                           <div className="min-w-0">
                             <p className="truncate font-medium">{memberName}</p>
-                            <p className="truncate text-xs text-gray-500">@{member.profiles?.username || 'motohubx'} - {roleLabel(member.role)}</p>
+                            <p className="truncate text-xs text-gray-500">@{member.profiles?.username || 'motocare'} - {roleLabel(member.role)}</p>
                           </div>
                         </div>
                         <div className="flex items-center justify-end gap-2">
@@ -815,7 +815,7 @@ export function Clubs() {
                     </div>
                     <div className="grid gap-3 md:grid-cols-2">
                       {pendingInvitations.map((invitation) => {
-                        const invitedName = invitation.profiles?.full_name || invitation.profiles?.username || 'Motero MotoHubX'
+                        const invitedName = invitation.profiles?.full_name || invitation.profiles?.username || 'Motero MotoCare Co'
                         return (
                           <div key={invitation.id} className="flex flex-col gap-3 rounded-xl bg-moto-darker p-3 sm:flex-row sm:items-center sm:justify-between">
                             <div className="flex min-w-0 items-center gap-3">
@@ -825,7 +825,7 @@ export function Clubs() {
                               </Avatar>
                               <div className="min-w-0">
                                 <p className="truncate font-medium">{invitedName}</p>
-                                <p className="truncate text-xs text-gray-500">@{invitation.profiles?.username || 'motohubx'} - pendiente de aprobacion</p>
+                                <p className="truncate text-xs text-gray-500">@{invitation.profiles?.username || 'motocare'} - pendiente de aprobacion</p>
                               </div>
                             </div>
                             <Badge className="w-fit shrink-0 bg-yellow-500/15 text-yellow-300">Pendiente</Badge>

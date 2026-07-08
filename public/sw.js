@@ -1,4 +1,4 @@
-// Service Worker para MotoHubX PWA
+// Service Worker para MotoCare Co PWA
 const CACHE_VERSION = '0.1.0'
 const CACHE_NAME = `motocare-cache-${CACHE_VERSION}`
 const STATIC_ASSETS = [
@@ -94,7 +94,7 @@ self.addEventListener('fetch', (event) => {
 
 self.addEventListener('push', (event) => {
   const options = {
-    body: event.data?.text() || 'Nueva notificacion de MotoHubX',
+    body: event.data?.text() || 'Nueva notificacion de MotoCare Co',
     icon: '/icon-192x192.png',
     badge: '/icon-72x72.png',
     vibrate: [100, 50, 100],
@@ -113,7 +113,7 @@ self.addEventListener('push', (event) => {
     ],
   }
 
-  event.waitUntil(self.registration.showNotification('MotoHubX', options))
+  event.waitUntil(self.registration.showNotification('MotoCare Co', options))
 })
 
 self.addEventListener('notificationclick', (event) => {

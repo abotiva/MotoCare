@@ -64,7 +64,7 @@ function isOnline(lastSeenAt: string | null | undefined) {
 }
 
 function formatDuration(minutes: number | null) {
-  if (!minutes) return 'Sin duracion'
+  if (!minutes) return 'Sin duración'
   if (minutes < 60) return `${minutes} min`
   const hours = Math.floor(minutes / 60)
   const rest = minutes % 60
@@ -314,7 +314,7 @@ export function Community() {
     const selectedRoute = myRoutes.find((route) => route.id === selectedRouteId)
     const content = newPost.trim() || (selectedRoute ? `Compartiendo mi ruta: ${selectedRoute.title}` : '')
     if (!content && !selectedRoute && postImages.length === 0) {
-      toast.error('Publicacion vacia', { description: 'Escriba algo o adjunte una imagen para compartir con la comunidad.' })
+      toast.error('Publicación vacia', { description: 'Escriba algo o adjunte una imagen para compartir con la comunidad.' })
       return
     }
 
@@ -356,7 +356,7 @@ export function Community() {
       .from('posts')
       .insert({
         author_id: user.id,
-        content: content || 'Compartio imagenes',
+        content: content || 'Compartio imágenes',
         image_url: imageUrls[0] ?? null,
         route_id: selectedRoute?.id ?? null,
       })
@@ -377,7 +377,7 @@ export function Community() {
         )
 
         if (imagesError) {
-          toast.error('La publicacion se creo, pero no pudimos asociar todas las imagenes', { description: imagesError.message })
+          toast.error('La publicación se creó, pero no pudimos asociar todas las imágenes', { description: imagesError.message })
         }
       }
 
@@ -388,7 +388,7 @@ export function Community() {
         .single()
 
       if (fetchError || !fullPost) {
-        toast.error('Publicacion creada, pero no pudimos refrescarla', { description: fetchError?.message })
+        toast.error('Publicación creada, pero no pudimos refrescarla', { description: fetchError?.message })
         await loadFeed()
         setIsSaving(false)
         return
@@ -424,7 +424,7 @@ export function Community() {
 
     const content = editContent.trim()
     if (!content) {
-      toast.error('Publicacion vacia', { description: 'La publicacion debe tener texto.' })
+      toast.error('Publicación vacia', { description: 'La publicación debe tener texto.' })
       return
     }
 
@@ -442,12 +442,12 @@ export function Community() {
       .single()
 
     if (error) {
-      toast.error('No pudimos editar la publicacion', { description: error.message })
+      toast.error('No pudimos editar la publicación', { description: error.message })
     } else if (data) {
       const updatedPost = data as PostWithAuthor
       setPosts((current) => current.map((item) => (item.id === updatedPost.id ? updatedPost : item)))
       cancelEditingPost()
-      toast.success('Publicacion actualizada')
+      toast.success('Publicación actualizada')
     }
 
     setIsSaving(false)
@@ -455,7 +455,7 @@ export function Community() {
 
   const deletePost = async (post: PostWithAuthor) => {
     if (!supabase || !user) return
-    const confirmed = window.confirm('Eliminar esta publicacion? Esta accion no se puede deshacer.')
+    const confirmed = window.confirm('Eliminar esta publicación? Esta acción no se puede deshacer.')
     if (!confirmed) return
 
     setDeletingPostId(post.id)
@@ -467,7 +467,7 @@ export function Community() {
       .eq('author_id', user.id)
 
     if (error) {
-      toast.error('No pudimos eliminar la publicacion', { description: error.message })
+      toast.error('No pudimos eliminar la publicación', { description: error.message })
     } else {
       setPosts((current) => current.filter((item) => item.id !== post.id))
       setLikesByPost((current) => {
@@ -480,7 +480,7 @@ export function Community() {
         delete next[post.id]
         return next
       })
-      toast.success('Publicacion eliminada')
+      toast.success('Publicación eliminada')
     }
 
     setDeletingPostId(null)
@@ -520,7 +520,7 @@ export function Community() {
 
     const content = (commentDrafts[post.id] ?? '').trim()
     if (!content) {
-      toast.error('Comentario vacio', { description: 'Escriba un comentario antes de enviarlo.' })
+      toast.error('Comentario vacío', { description: 'Escribe un comentario antes de enviarlo.' })
       return
     }
 
@@ -559,7 +559,7 @@ export function Community() {
     const selectedClubRoute = myRoutes.find((route) => route.id === selectedClubRouteId)
     const content = clubPostContent.trim()
     if (!content && !selectedClubRoute) {
-      toast.error('Mensaje vacio', { description: 'Escriba un mensaje o adjunte una ruta para el club.' })
+      toast.error('Mensaje vacío', { description: 'Escribe un mensaje o adjunta una ruta para el club.' })
       return
     }
 
@@ -605,41 +605,38 @@ export function Community() {
         </div>
       </div>
 
-      <div className="mb-4 grid grid-cols-3 gap-2 sm:mb-5 sm:gap-4">
-        <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex min-w-0 flex-col items-center gap-1.5 p-2 text-center sm:flex-row sm:gap-4 sm:p-4 sm:text-left">
-            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-moto-orange/20 sm:h-12 sm:w-12 sm:rounded-xl">
-              <Users className="h-4 w-4 text-moto-orange sm:h-6 sm:w-6" />
+      <div className="mb-5 grid gap-3 sm:grid-cols-3 sm:gap-4">
+        <Card className="border-white/5 bg-moto-gray py-0">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-moto-orange/20">
+              <Users className="h-6 w-6 text-moto-orange" />
             </div>
-            <div className="min-w-0">
-              <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">Publicaciones</p>
-              <p className="text-base font-bold leading-tight sm:text-xl">{posts.length}</p>
+            <div>
+              <p className="text-sm text-gray-400">Publicaciones</p>
+              <p className="text-xl font-bold">{posts.length}</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex min-w-0 flex-col items-center gap-1.5 p-2 text-center sm:flex-row sm:gap-4 sm:p-4 sm:text-left">
-            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-green-500/20 sm:h-12 sm:w-12 sm:rounded-xl">
-              <Send className="h-4 w-4 text-green-500 sm:h-6 sm:w-6" />
+        <Card className="border-white/5 bg-moto-gray py-0">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-green-500/20">
+              <Send className="h-6 w-6 text-green-500" />
             </div>
-            <div className="min-w-0">
-              <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">Mias</p>
-              <p className="text-base font-bold leading-tight sm:text-xl">{myPostsCount}</p>
+            <div>
+              <p className="text-sm text-gray-400">Mías</p>
+              <p className="text-xl font-bold">{myPostsCount}</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex min-w-0 flex-col items-center gap-1.5 p-2 text-center sm:flex-row sm:gap-4 sm:p-4 sm:text-left">
-            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sky-500/20 sm:h-12 sm:w-12 sm:rounded-xl">
-              <RouteIcon className="h-4 w-4 text-sky-300 sm:h-6 sm:w-6" />
+        <Card className="border-white/5 bg-moto-gray py-0">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-sky-500/20">
+              <RouteIcon className="h-6 w-6 text-sky-300" />
             </div>
-            <div className="min-w-0">
-              <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">
-                <span className="sm:hidden">Rutas</span>
-                <span className="hidden sm:inline">Rutas publicadas</span>
-              </p>
-              <p className="text-base font-bold leading-tight sm:text-xl">{routePostsCount}</p>
+            <div>
+              <p className="text-sm text-gray-400">Rutas publicadas</p>
+              <p className="text-xl font-bold">{routePostsCount}</p>
             </div>
           </CardContent>
         </Card>
@@ -648,7 +645,7 @@ export function Community() {
       <Tabs defaultValue="public" className="w-full min-w-0">
         <TabsList className="mb-5 grid h-auto w-full grid-cols-2 gap-1 border-white/5 bg-moto-gray p-1">
           <TabsTrigger value="public" className="min-w-0 whitespace-normal px-2 py-2 text-xs leading-tight data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker sm:text-sm">
-            Comunidad publica
+            Comunidad pública
           </TabsTrigger>
           <TabsTrigger value="clubs" className="min-w-0 whitespace-normal px-2 py-2 text-xs leading-tight data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker sm:text-sm">
             Club privado
@@ -687,7 +684,7 @@ export function Community() {
                   </select>
                   {selectedRouteId && (
                     <p className="mt-2 text-xs text-gray-500">
-                      Al publicar una ruta privada, quedara visible para la comunidad.
+                      Al publicar una ruta privada, quedará visible para la comunidad.
                     </p>
                   )}
                   {postImagePreviews.length > 0 && (
@@ -711,7 +708,7 @@ export function Community() {
                       <span className="text-xs text-gray-500">{newPost.length}/500</span>
                       <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-gray-300 transition-colors hover:bg-white/5 hover:text-white">
                         <ImageIcon className="h-4 w-4" />
-                        Imagenes
+                        Imágenes
                         <input
                           type="file"
                           accept="image/*"
@@ -737,8 +734,8 @@ export function Community() {
           {posts.length > 0 ? (
             posts.map((post) => {
               const author = post.profiles
-              const authorName = author?.full_name || author?.username || 'Motero MotoHubX'
-              const authorUsername = author?.username || 'motohubx'
+              const authorName = author?.full_name || author?.username || 'Motero MotoCare Co'
+              const authorUsername = author?.username || 'motocare'
               const likeState = likesByPost[post.id] ?? { count: 0, likedByMe: false }
               const comments = commentsByPost[post.id] ?? []
               const commentsExpanded = expandedComments[post.id] ?? false
@@ -824,9 +821,9 @@ export function Community() {
                             key={`${post.id}-${imageUrl}`}
                             type="button"
                             className="overflow-hidden rounded-xl text-left"
-                            onClick={() => setViewerImage({ src: imageUrl, alt: `Publicacion ${index + 1}` })}
+                            onClick={() => setViewerImage({ src: imageUrl, alt: `Publicación ${index + 1}` })}
                           >
-                            <img src={imageUrl} alt={`Publicacion ${index + 1}`} className="max-h-96 w-full object-cover transition hover:scale-[1.01]" />
+                            <img src={imageUrl} alt={`Publicación ${index + 1}`} className="max-h-96 w-full object-cover transition hover:scale-[1.01]" />
                           </button>
                         ))}
                       </div>
@@ -861,7 +858,7 @@ export function Community() {
                       <button
                         type="button"
                         disabled={likingPostId === post.id}
-                        className={`flex items-center gap-2 hover:text-red-400 disabled:opacity-60 ${likeState.likedByMe ? 'text-red-400' : ''}`}
+                        className="inline-flex min-h-10 items-center gap-2 rounded-lg px-3 transition-colors hover:bg-white/5 hover:text-red-400 disabled:opacity-60"
                         onClick={() => void toggleLike(post)}
                       >
                         <Heart className={`h-5 w-5 ${likeState.likedByMe ? 'fill-current' : ''}`} />
@@ -869,7 +866,7 @@ export function Community() {
                       </button>
                       <button
                         type="button"
-                        className="flex items-center gap-2 hover:text-moto-orange"
+                        className="inline-flex min-h-10 items-center gap-2 rounded-lg px-3 transition-colors hover:bg-white/5 hover:text-moto-orange"
                         onClick={() => setExpandedComments((current) => ({ ...current, [post.id]: !commentsExpanded }))}
                       >
                         <MessageCircle className="h-5 w-5" />
@@ -881,7 +878,7 @@ export function Community() {
                         {comments.length > 0 ? (
                           comments.map((comment) => {
                             const commentAuthor = comment.profiles
-                            const commentName = commentAuthor?.full_name || commentAuthor?.username || 'Motero MotoHubX'
+                            const commentName = commentAuthor?.full_name || commentAuthor?.username || 'Motero MotoCare Co'
                             return (
                               <div key={comment.id} className="flex gap-3 rounded-xl bg-moto-darker p-3">
                                 <Avatar className="h-9 w-9">
@@ -929,7 +926,7 @@ export function Community() {
             <Card className="border-white/5 bg-moto-gray py-0">
               <CardContent className="p-8 text-center text-gray-400">
                 <Users className="mx-auto mb-3 h-12 w-12 text-gray-600" />
-                Aun no hay publicaciones. Sea el primero en compartir algo.
+                Aun no hay publicaciónes. Sea el primero en compartir algo.
               </CardContent>
             </Card>
           )}
@@ -965,7 +962,7 @@ export function Community() {
                 {visibleProfiles.length > 0 ? (
                   visibleProfiles.map((publicProfile) => {
                     const online = isOnline(publicProfile.last_seen_at)
-                    const name = publicProfile.full_name || publicProfile.username || 'Motero MotoHubX'
+                    const name = publicProfile.full_name || publicProfile.username || 'Motero MotoCare Co'
                     return (
                       <div key={publicProfile.id} className="flex items-center gap-3 rounded-xl bg-moto-darker p-3">
                         <div className="relative">
@@ -978,7 +975,7 @@ export function Community() {
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">{name}</p>
                           <p className="truncate text-xs text-gray-500">
-                            @{publicProfile.username || 'motohubx'}{publicProfile.city ? ` - ${publicProfile.city}` : ''}
+                            @{publicProfile.username || 'motocare'}{publicProfile.city ? ` - ${publicProfile.city}` : ''}
                           </p>
                         </div>
                       </div>
@@ -1101,7 +1098,7 @@ export function Community() {
                 {clubPosts.length > 0 ? (
                   clubPosts.map((post) => {
                     const author = post.profiles
-                    const authorName = author?.full_name || author?.username || 'Motero MotoHubX'
+                    const authorName = author?.full_name || author?.username || 'Motero MotoCare Co'
                     return (
                       <Card key={post.id} className="border-white/5 bg-moto-gray py-0">
                         <CardContent className="p-4">
@@ -1112,7 +1109,7 @@ export function Community() {
                             </Avatar>
                             <div className="min-w-0">
                               <p className="truncate font-medium">{authorName}</p>
-                              <p className="text-xs text-gray-500">@{author?.username || 'motohubx'} - {relativeDate(post.created_at)}</p>
+                              <p className="text-xs text-gray-500">@{author?.username || 'motocare'} - {relativeDate(post.created_at)}</p>
                             </div>
                           </div>
                           <p className="whitespace-pre-wrap text-sm leading-6 text-gray-100">{post.content}</p>

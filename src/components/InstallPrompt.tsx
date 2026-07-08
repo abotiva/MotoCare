@@ -68,7 +68,7 @@ export function InstallPrompt() {
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Instalar MotoHubX</h3>
+              <h3 className="text-sm font-semibold">Instalar MotoCare Co</h3>
               <button onClick={() => setShowPrompt(false)} className="rounded-lg p-1 transition-colors hover:bg-white/5">
                 <X className="h-4 w-4 text-gray-400" />
               </button>

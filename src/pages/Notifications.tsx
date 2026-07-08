@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Bell, Calendar, Check, CheckCheck, Crown, Loader2, Route, Shield, Users, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -35,9 +35,9 @@ function typeIcon(type: Notification['type']) {
 function notificationText(notification: Notification) {
   if (notification.type === 'club_invite' && notification.club_invitations?.clubs) {
     return {
-      title: 'Invitacion a club',
+      title: 'Invitación a club',
       message: `El club "${notification.club_invitations.clubs.name}" quiere agregarte como miembro.`,
-      detail: notification.club_invitations.clubs.city || 'Club MotoHubX',
+      detail: notification.club_invitations.clubs.city || 'Club MotoCare Co',
     }
   }
 
@@ -164,7 +164,7 @@ export function Notifications() {
     }
 
     await markAsRead(notification)
-    toast.success(accepted ? 'Invitacion aceptada' : 'Invitacion rechazada')
+    toast.success(accepted ? 'Invitación aceptada' : 'Invitación rechazada')
     setBusyId(null)
   }
 
@@ -174,14 +174,14 @@ export function Notifications() {
         <div className="min-w-0">
           <h1 className="text-xl font-bold sm:text-2xl">Notificaciones</h1>
           <p className="mt-1 text-sm leading-6 text-gray-400 sm:text-base">
-            Gestiona alertas de rutas, clubes y avisos importantes de MotoHubX.
+            Gestiona alertas de rutas, clubes y avisos importantes de MotoCare Co.
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <Badge className="bg-white/10 text-gray-300">
               Licencia {isLoadingSubscription ? '...' : planLabels[effectivePlan]}
             </Badge>
             <Badge className={canUseAdvancedNotifications ? 'bg-moto-orange text-moto-darker' : 'bg-white/10 text-gray-300'}>
-              {canUseAdvancedNotifications ? 'Alertas avanzadas activas' : 'Centro basico activo'}
+              {canUseAdvancedNotifications ? 'Alertas avanzadas activas' : 'Centro básico activo'}
             </Badge>
           </div>
         </div>
@@ -204,7 +204,7 @@ export function Notifications() {
               <Crown className="h-5 w-5 text-moto-orange" />
             </div>
             <div className="min-w-0">
-              <p className="font-semibold">Alcance segun licencia</p>
+              <p className="font-semibold">Alcance según licencia</p>
               <p className="text-sm leading-6 text-gray-400">
                 Free recibe alertas internas de mantenimiento. Premium habilita informes, clubes y alertas avanzadas; Business queda reservado para tiendas.
               </p>

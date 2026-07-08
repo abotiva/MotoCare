@@ -58,7 +58,7 @@ const notificationPreferences: Preference[] = [
   {
     id: 'email_summary',
     label: 'Resumen por email',
-    description: 'Recibir un resumen periodico cuando se habilite esta funcion.',
+    description: 'Recibir un resumen periódico cuando se habilite esta función.',
   },
 ]
 
@@ -95,8 +95,8 @@ export function Settings() {
   const [preferences, setPreferences] = useState<Record<PreferenceKey, boolean>>(defaultPreferences)
   const [isSendingReset, setIsSendingReset] = useState(false)
 
-  const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Motero MotoHubX'
-  const username = profile?.username || user?.email?.split('@')[0] || 'motohubx'
+  const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Motero MotoCare Co'
+  const username = profile?.username || user?.email?.split('@')[0] || 'motocare'
 
   useEffect(() => {
     setPreferences(loadPreferences())
@@ -132,7 +132,7 @@ export function Settings() {
 
     await refreshProfile()
     toast.success('Privacidad actualizada', {
-      description: nextValue ? 'Su perfil puede aparecer en busquedas.' : 'Su perfil queda privado para busquedas.',
+      description: nextValue ? 'Su perfil puede aparecer en búsquedas.' : 'Su perfil queda privado para búsquedas.',
     })
   }
 
@@ -208,13 +208,13 @@ export function Settings() {
                 onToggle={() => togglePreference(item.id)}
               />
             ))}
-            <InfoRow label="Rutas privadas" description="Las rutas privadas solo las ve usted. Las funciones comunitarias quedaran reservadas para licencias Premium." />
+            <InfoRow label="Rutas privadas" description="Las rutas privadas solo las ve usted. Las funciones comunitarias quedarán reservadas para licencias Premium." />
           </SettingsGroup>
 
           <SettingsGroup icon={KeyRound} title="Seguridad">
             <ActionRow
-              label="Cambiar contrasena"
-              description="Enviaremos un correo de recuperacion a su email registrado."
+              label="Cambiar contraseña"
+              description="Enviaremos un correo de recuperación a su email registrado."
               action={
                 <Button variant="outline" className="w-full border-white/10 sm:w-auto" disabled={isSendingReset} onClick={() => void sendPasswordReset()}>
                   Enviar correo
@@ -222,8 +222,8 @@ export function Settings() {
               }
             />
             <ActionRow
-              label="Cerrar sesion"
-              description="Salir de MotoHubX en este navegador."
+              label="Cerrar sesión"
+              description="Salir de MotoCare Co en este navegador."
               action={
                 <Button variant="outline" className="w-full border-red-500/30 text-red-300 hover:text-red-200 sm:w-auto" onClick={() => void signOut()}>
                   <LogOut className="mr-2 h-4 w-4" />
@@ -237,7 +237,7 @@ export function Settings() {
         <div className="min-w-0 space-y-5">
           <Card className="border-white/5 bg-moto-gray py-0">
             <CardHeader className="p-4 pb-2">
-              <h3 className="font-semibold">Accesos rapidos</h3>
+              <h3 className="font-semibold">Accesos rápidos</h3>
             </CardHeader>
             <CardContent className="p-0">
               <QuickLink icon={Bike} label="Mi moto" description="Motos, documentos y mantenimientos" to="/app/my-bikes" />

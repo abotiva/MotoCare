@@ -43,7 +43,7 @@ const emptyStats: ProfileStats = {
 const sanitizeFileName = (name: string) => name.toLowerCase().replace(/[^a-z0-9.]+/g, '-')
 
 function initials(name: string | null | undefined, email: string | undefined) {
-  const source = name || email || 'MotoHubX'
+  const source = name || email || 'MotoCare Co'
   return source
     .split(/[\s@._-]+/)
     .filter(Boolean)
@@ -113,8 +113,8 @@ export function Profile() {
   const [isSaving, setIsSaving] = useState(false)
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
 
-  const visibleName = profile?.full_name || user?.email?.split('@')[0] || 'Motero MotoHubX'
-  const username = profile?.username || user?.email?.split('@')[0] || 'motohubx'
+  const visibleName = profile?.full_name || user?.email?.split('@')[0] || 'Motero MotoCare Co'
+  const username = profile?.username || user?.email?.split('@')[0] || 'motocare'
   const avatarFallback = initials(profile?.full_name, user?.email)
   const socialUrl = normalizeUrl(profile?.social_url)
 
@@ -209,7 +209,7 @@ export function Profile() {
     } else {
       await refreshProfile()
       setShowEditProfile(false)
-      toast.success('Perfil actualizado', { description: 'Su informacion quedo guardada.' })
+      toast.success('Perfil actualizado', { description: 'Su información quedo guardada.' })
     }
 
     setIsSaving(false)
@@ -300,7 +300,7 @@ export function Profile() {
                 <h1 className="w-full text-2xl font-bold leading-tight sm:w-auto sm:text-3xl">{visibleName}</h1>
                 <Badge className="bg-moto-orange text-moto-darker">{profile?.rider_type || 'Motero'}</Badge>
                 <Badge className={profile?.is_public === false ? 'bg-white/10 text-gray-300' : 'bg-green-500/15 text-green-300'}>
-                  {profile?.is_public === false ? 'Privado' : 'Publico'}
+                  {profile?.is_public === false ? 'Privado' : 'Público'}
                 </Badge>
               </div>
               <p className="mb-3 text-gray-400">@{username}</p>
@@ -316,7 +316,7 @@ export function Profile() {
                 </span>
                 <span className="flex min-w-0 items-center gap-1">
                   <Calendar className="h-4 w-4" />
-                  Se unio en {formatJoinDate(profile?.created_at)}
+                  Se unió en {formatJoinDate(profile?.created_at)}
                 </span>
                 {socialUrl && (
                   <a href={socialUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-moto-orange hover:text-moto-orange-light">
@@ -389,65 +389,56 @@ export function Profile() {
         </CardContent>
       </Card>
 
-      <div className="mb-4 grid grid-cols-4 gap-2 sm:mb-5 sm:gap-4">
-        <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex min-w-0 flex-col items-center gap-1.5 p-2 text-center sm:flex-row sm:gap-4 sm:p-4 sm:text-left">
-            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-moto-orange/20 sm:h-12 sm:w-12 sm:rounded-xl">
-              <UserRound className="h-4 w-4 text-moto-orange sm:h-6 sm:w-6" />
+      <div className="mb-5 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+        <Card className="border-white/5 bg-moto-gray py-0">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-moto-orange/20">
+              <UserRound className="h-6 w-6 text-moto-orange" />
             </div>
-            <div className="min-w-0">
-              <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">
-                <span className="sm:hidden">Tipo</span>
-                <span className="hidden sm:inline">Tipo de motero</span>
-              </p>
-              <p className="truncate text-base font-bold leading-tight sm:text-xl">{profile?.rider_type || 'Sin definir'}</p>
+            <div>
+              <p className="text-sm text-gray-400">Tipo de motero</p>
+              <p className="text-xl font-bold">{profile?.rider_type || 'Sin definir'}</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex min-w-0 items-stretch justify-between gap-2 p-0 sm:gap-4 sm:p-4">
-            <button type="button" className="flex min-w-0 flex-1 flex-col items-center gap-1.5 p-2 text-center sm:flex-row sm:gap-4 sm:p-0 sm:text-left" onClick={() => setShowRoutesPreview(true)}>
-              <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-green-500/20 sm:h-12 sm:w-12 sm:rounded-xl">
-                <Route className="h-4 w-4 text-green-500 sm:h-6 sm:w-6" />
+        <Card className="border-white/5 bg-moto-gray py-0">
+          <CardContent className="flex items-center justify-between gap-4 p-4">
+            <button type="button" className="flex min-w-0 flex-1 items-center gap-4 text-left" onClick={() => setShowRoutesPreview(true)}>
+              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-green-500/20">
+                <Route className="h-6 w-6 text-green-500" />
               </div>
-              <div className="min-w-0">
-                <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">
-                  <span className="sm:hidden">Rutas</span>
-                  <span className="hidden sm:inline">Rutas creadas</span>
-                </p>
-                <p className="text-base font-bold leading-tight sm:text-xl">{stats.routes}</p>
+              <div>
+                <p className="text-sm text-gray-400">Rutas creadas</p>
+                <p className="text-xl font-bold">{stats.routes}</p>
               </div>
             </button>
-            <Button size="sm" variant="outline" className="hidden border-white/10 sm:inline-flex" onClick={() => setShowRoutesPreview(true)}>
+            <Button size="sm" variant="outline" className="border-white/10" onClick={() => setShowRoutesPreview(true)}>
               Ver
             </Button>
           </CardContent>
         </Card>
 
-        <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex min-w-0 flex-col items-center gap-1.5 p-2 text-center sm:flex-row sm:gap-4 sm:p-4 sm:text-left">
-            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-green-500/20 sm:h-12 sm:w-12 sm:rounded-xl">
-              <Route className="h-4 w-4 text-green-500 sm:h-6 sm:w-6" />
+        <Card className="border-white/5 bg-moto-gray py-0">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-green-500/20">
+              <Route className="h-6 w-6 text-green-500" />
             </div>
-            <div className="min-w-0">
-              <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">
-                <span className="sm:hidden">Km</span>
-                <span className="hidden sm:inline">Km en rutas</span>
-              </p>
-              <p className="truncate text-base font-bold leading-tight sm:text-xl">{routes.reduce((total, route) => total + (route.distance_km ?? 0), 0).toLocaleString()} km</p>
+            <div>
+              <p className="text-sm text-gray-400">Km en rutas</p>
+              <p className="text-xl font-bold">{routes.reduce((total, route) => total + (route.distance_km ?? 0), 0).toLocaleString()} km</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex min-w-0 flex-col items-center gap-1.5 p-2 text-center sm:flex-row sm:gap-4 sm:p-4 sm:text-left">
-            <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-yellow-500/20 sm:h-12 sm:w-12 sm:rounded-xl">
-              <UserRound className="h-4 w-4 text-yellow-400 sm:h-6 sm:w-6" />
+        <Card className="border-white/5 bg-moto-gray py-0">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-yellow-500/20">
+              <UserRound className="h-6 w-6 text-yellow-400" />
             </div>
-            <div className="min-w-0">
-              <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">Publicaciones</p>
-              <p className="text-base font-bold leading-tight sm:text-xl">{stats.posts}</p>
+            <div>
+              <p className="text-sm text-gray-400">Publicaciones</p>
+              <p className="text-xl font-bold">{stats.posts}</p>
             </div>
           </CardContent>
         </Card>
@@ -490,7 +481,7 @@ export function Profile() {
               </div>
               <div className="flex justify-between gap-4">
                 <span className="text-gray-400">Privacidad</span>
-                <span className="text-right">{profile?.is_public === false ? 'Perfil privado' : 'Perfil publico'}</span>
+                <span className="text-right">{profile?.is_public === false ? 'Perfil privado' : 'Perfil público'}</span>
               </div>
             </div>
           </CardContent>
@@ -545,7 +536,7 @@ export function Profile() {
                       <div className="min-w-0">
                         <p className="truncate font-medium">{route.title}</p>
                         <p className="text-sm text-gray-400">
-                          {route.origin || 'Origen'} → {route.destination || 'Destino'}
+                          {route.origin || 'Origen'} â†’ {route.destination || 'Destino'}
                         </p>
                         <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
                           <Calendar className="h-3.5 w-3.5" />
@@ -575,7 +566,7 @@ export function Profile() {
         <DialogContent className="max-w-md border-white/10 bg-moto-gray text-white">
           <DialogHeader>
             <DialogTitle>Editar perfil</DialogTitle>
-            <DialogDescription className="text-gray-400">Actualiza tu informacion visible en MotoHubX.</DialogDescription>
+            <DialogDescription className="text-gray-400">Actualiza tu información visible en MotoCare Co.</DialogDescription>
           </DialogHeader>
           <form className="mt-4 space-y-4" onSubmit={handleSaveProfile}>
             <label>
@@ -661,10 +652,10 @@ export function Profile() {
               <span>
                 <span className="flex items-center gap-2 text-sm font-medium">
                   <Shield className="h-4 w-4 text-moto-orange" />
-                  Perfil publico
+                  Perfil público
                 </span>
                 <span className="mt-1 block text-xs text-gray-400">
-                  Si lo apaga, no aparece en busquedas y las invitaciones a clubes quedan pendientes de aprobacion.
+                  Si lo apaga, no aparece en búsquedas y las invitaciones a clubes quedan pendientes de aprobacion.
                 </span>
               </span>
               <input
@@ -712,7 +703,7 @@ export function Profile() {
                     <div className="min-w-0">
                       <p className="truncate font-medium">{route.title}</p>
                       <p className="text-sm text-gray-400">
-                        {route.origin || 'Origen'} → {route.destination || 'Destino'}
+                        {route.origin || 'Origen'} â†’ {route.destination || 'Destino'}
                       </p>
                       <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
                         <Calendar className="h-3.5 w-3.5" />
@@ -728,7 +719,7 @@ export function Profile() {
                   </div>
                   <p className="text-xs text-gray-500">
                     {route.distance_km ? `${route.distance_km.toLocaleString()} km` : 'Sin distancia'} ·{' '}
-                    {route.duration_minutes ? `${route.duration_minutes} min` : 'Sin duracion'} · {formatRouteDates(route)}
+                    {route.duration_minutes ? `${route.duration_minutes} min` : 'Sin duración'} · {formatRouteDates(route)}
                   </p>
                 </Link>
               ))

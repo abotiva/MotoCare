@@ -1,7 +1,7 @@
 {
-  "name": "MotoHubX - Tu moto. Tu ruta. Tu hub.",
-  "short_name": "MotoHubX",
-  "description": "MotoHubX conecta motos, rutas, clubes, tienda y mantenimiento en un solo hub para moteros.",
+  "name": "MotoCare Co - Tu moto. Tu historia. Tu ruta.",
+  "short_name": "MotoCare Co",
+  "description": "MotoCare Co te ayuda a cuidar tu moto, registrar cada momento, descubrir rutas y disfrutar cada kilometro con tranquilidad.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#101820",

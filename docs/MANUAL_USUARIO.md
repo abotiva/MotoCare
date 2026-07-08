@@ -1,4 +1,4 @@
-# Manual de Usuario - MotoHubX
+# Manual de Usuario - MotoCare
 
 Documento vivo para registrar el uso de las funciones principales del MVP.
 
@@ -19,8 +19,6 @@ Funciones disponibles:
 - acceder rapidamente a registrar servicio, programar pendiente, Hoja de vida y Mi perfil
 
 Las secciones **Rutas**, **Comunidad**, **Clubes** y **Tienda** quedan separadas como funciones Premium.
-
-En celular, los indicadores principales se muestran compactos para reducir desplazamiento vertical y evitar desplazamiento lateral. El mismo criterio aplica a **Rutas**, **Comunidad** y **Mi perfil**: iconos pequenos, textos abreviados o truncados y tarjetas agrupadas en una sola fila cuando el espacio lo permite.
 
 ## Hoja de vida
 

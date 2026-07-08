@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -142,8 +142,8 @@ function daysUntil(date: string | null) {
 function statusForDate(date: string | null) {
   const days = daysUntil(date)
   if (days === null) return { label: 'Sin fecha', tone: 'text-gray-400' }
-  if (days < 0) return { label: `Vencido hace ${Math.abs(days)} dias`, tone: 'text-red-400' }
-  if (days <= 30) return { label: `Vence en ${days} dias`, tone: 'text-yellow-400' }
+  if (days < 0) return { label: `Vencido hace ${Math.abs(days)} días`, tone: 'text-red-400' }
+  if (days <= 30) return { label: `Vence en ${days} días`, tone: 'text-yellow-400' }
   return { label: `Vigente hasta ${date}`, tone: 'text-green-500' }
 }
 
@@ -248,6 +248,11 @@ export function MyBikes() {
 
   useEffect(() => {
     setActiveTab(tabFromHash(location.hash))
+    if (location.hash) {
+      window.requestAnimationFrame(() => {
+        document.getElementById('bike-sections')?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+      })
+    }
   }, [location.hash])
 
   const orderedMotorcycles = useMemo(() => {
@@ -410,7 +415,7 @@ export function MyBikes() {
       return
     }
     if (isNegativeNumber(bikeForm.mileage)) {
-      notifyError('Kilometraje invalido', 'El kilometraje inicial no puede ser negativo.')
+      notifyError('Kilometraje inválido', 'El kilometraje inicial no puede ser negativo.')
       return
     }
     setIsSaving(true)
@@ -459,7 +464,7 @@ export function MyBikes() {
         setReminders((current) => [...((reminderData as Reminder[] | null) ?? []), ...current])
       }
       toast.success('Moto agregada', {
-        description: starterReminders.length > 0 ? 'Tambien se crearon recordatorios de documentos.' : 'La hoja de vida quedo lista.',
+        description: starterReminders.length > 0 ? 'También se crearon recordatorios de documentos.' : 'La hoja de vida quedó lista.',
       })
     }
 
@@ -521,7 +526,7 @@ export function MyBikes() {
     event.preventDefault()
     if (!supabase || !user || !editingBike) return
     if (isNegativeNumber(bikeForm.mileage)) {
-      notifyError('Kilometraje invalido', 'El kilometraje de la moto no puede ser negativo.')
+      notifyError('Kilometraje inválido', 'El kilometraje de la moto no puede ser negativo.')
       return
     }
     setIsSaving(true)
@@ -605,13 +610,13 @@ export function MyBikes() {
     event.preventDefault()
     if (!supabase || !user || !selectedBike) return
     if (isNegativeNumber(serviceForm.mileage) || isNegativeNumber(serviceForm.cost) || isNegativeNumber(serviceForm.next_due_mileage)) {
-      notifyError('Datos invalidos', 'El kilometraje, costo y proximo kilometraje no pueden ser negativos.')
+      notifyError('Datos inválidos', 'El kilometraje, costo y próximo kilometraje no pueden ser negativos.')
       return
     }
 
     const mileage = serviceForm.mileage ? Number(serviceForm.mileage) : selectedBike.mileage
     if (serviceForm.next_due_mileage && Number(serviceForm.next_due_mileage) < mileage) {
-      notifyError('Proximo servicio invalido', 'El proximo kilometraje no puede ser menor al kilometraje del servicio.')
+      notifyError('Próximo servicio inválido', 'El próximo kilometraje no puede ser menor al kilometraje del servicio.')
       return
     }
 
@@ -651,7 +656,7 @@ export function MyBikes() {
           .single()
 
         if (reminderError) {
-          notifyError('El servicio se guardo, pero no se creo el proximo pendiente', reminderError.message)
+          notifyError('El servicio se guardó, pero no se creó el próximo pendiente', reminderError.message)
         } else if (reminderData) {
           setReminders((current) => [reminderData as Reminder, ...current])
           nextReminderCreated = true
@@ -671,7 +676,7 @@ export function MyBikes() {
       setServiceForm(emptyServiceForm)
       setShowAddService(false)
       toast.success('Servicio registrado', {
-        description: nextReminderCreated ? 'Tambien se creo el proximo pendiente.' : 'El movimiento quedo en el historial.',
+        description: nextReminderCreated ? 'También se creó el próximo pendiente.' : 'El movimiento quedó en el historial.',
       })
     }
 
@@ -750,7 +755,7 @@ export function MyBikes() {
 
     const mileage = Number(mileageForm.mileage)
     if (Number.isNaN(mileage) || mileage < selectedBike.mileage) {
-      notifyError('Kilometraje invalido', 'El nuevo kilometraje no puede ser menor al kilometraje actual.')
+      notifyError('Kilometraje inválido', 'El nuevo kilometraje no puede ser menor al kilometraje actual.')
       return
     }
 
@@ -786,7 +791,7 @@ export function MyBikes() {
     event.preventDefault()
     if (!supabase || !user || !selectedBike) return
     if (isNegativeNumber(reminderForm.due_mileage)) {
-      notifyError('Kilometraje invalido', 'El kilometraje objetivo no puede ser negativo.')
+      notifyError('Kilometraje inválido', 'El kilometraje objetivo no puede ser negativo.')
       return
     }
     setIsSaving(true)
@@ -810,7 +815,7 @@ export function MyBikes() {
       setReminders((current) => [data as Reminder, ...current])
       setReminderForm(emptyReminderForm)
       setShowAddReminder(false)
-      toast.success('Recordatorio creado', { description: 'El pendiente quedo agregado a tu moto.' })
+      toast.success('Recordatorio creado', { description: 'El pendiente quedó agregado a tu moto.' })
     }
 
     setIsSaving(false)
@@ -820,7 +825,7 @@ export function MyBikes() {
     event.preventDefault()
     if (!supabase || !user || !editingReminder) return
     if (isNegativeNumber(editReminderForm.due_mileage)) {
-      notifyError('Kilometraje invalido', 'El kilometraje objetivo no puede ser negativo.')
+      notifyError('Kilometraje inválido', 'El kilometraje objetivo no puede ser negativo.')
       return
     }
     setIsSaving(true)
@@ -950,7 +955,7 @@ export function MyBikes() {
         .single()
 
       if (nextError) {
-        notifyError('El pendiente se completo, pero no se creo el proximo ajuste', nextError.message)
+        notifyError('El pendiente se completo, pero no se creó el próximo ajuste', nextError.message)
         setIsSaving(false)
         return
       }
@@ -980,7 +985,7 @@ export function MyBikes() {
     setCompletingReminder(null)
     setShowCompleteReminder(false)
     toast.success('Pendiente completado', {
-      description: nextReminder ? 'Se guardo en historial y se creo el proximo pendiente.' : 'Se guardo en el historial.',
+      description: nextReminder ? 'Se guardó en historial y se creó el próximo pendiente.' : 'Se guardó en el historial.',
     })
     setIsSaving(false)
   }
@@ -1014,7 +1019,7 @@ export function MyBikes() {
       notifyError('La foto subio, pero no pudimos asociarla a la moto', updateError.message)
     } else if (data) {
       setMotorcycles((current) => current.map((bike) => (bike.id === selectedBike.id ? (data as Motorcycle) : bike)))
-      toast.success('Foto actualizada', { description: 'La imagen de la moto quedo guardada.' })
+      toast.success('Foto actualizada', { description: 'La imagen de la moto quedó guardada.' })
     }
 
     setUploadingKey(null)
@@ -1051,7 +1056,7 @@ export function MyBikes() {
       notifyError('El archivo subio, pero no pudimos registrar el documento', insertError.message)
     } else if (data) {
       setDocuments((current) => [data as MotorcycleDocument, ...current])
-      toast.success('Documento cargado', { description: `${file.name} quedo guardado en la moto.` })
+      toast.success('Documento cargado', { description: `${file.name} quedó guardado en la moto.` })
     }
 
     setUploadingKey(null)
@@ -1165,7 +1170,7 @@ export function MyBikes() {
               <div className="mx-auto grid h-20 w-20 place-items-center rounded-2xl bg-moto-orange/20">
                 <Bike className="h-10 w-10 text-moto-orange" />
               </div>
-              <h2 className="mt-6 text-2xl font-bold">Crea tu primer garaje MotoHubX</h2>
+              <h2 className="mt-6 text-2xl font-bold">Crea tu primer garaje MotoCare Co</h2>
               <p className="mx-auto mt-2 max-w-md text-gray-400">
                 Registra tu moto para empezar a controlar SOAT, tecnomecanica, kilometraje y mantenimientos.
               </p>
@@ -1269,7 +1274,16 @@ export function MyBikes() {
                 </div>
 
                 <CardContent className="p-4 sm:p-6">
-                  <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as BikeTab)} className="w-full">
+                  <Tabs
+                    id="bike-sections"
+                    value={activeTab}
+                    onValueChange={(value) => {
+                      const nextTab = value as BikeTab
+                      setActiveTab(nextTab)
+                      window.history.replaceState(null, '', '#' + nextTab)
+                    }}
+                    className="w-full scroll-mt-24"
+                  >
                     <TabsList className="mb-4 grid h-auto w-full grid-cols-2 gap-2 border-white/5 bg-moto-darker p-1 sm:grid-cols-4">
                       <TabsTrigger value="reminders" className="min-w-0 data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker">
                         Pendientes
@@ -1369,7 +1383,7 @@ export function MyBikes() {
                         ))
                       ) : (
                         <div className="rounded-xl border border-white/5 bg-moto-darker p-5 text-center text-gray-400">
-                          Aun no hay mantenimientos registrados.
+                          Aún no hay mantenimientos registrados.
                         </div>
                       )}
                     </TabsContent>
@@ -1383,12 +1397,12 @@ export function MyBikes() {
                         <>
                           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                             <ReportCard icon={DollarSign} label="Gasto total" value={formatMoney(maintenanceReport.totalSpent)} detail={`${maintenanceReport.totalServices} servicios`} />
-                            <ReportCard icon={CalendarClock} label="Este ano" value={formatMoney(maintenanceReport.yearSpent)} detail={`Este mes: ${formatMoney(maintenanceReport.monthSpent)}`} />
+                            <ReportCard icon={CalendarClock} label="Este año" value={formatMoney(maintenanceReport.yearSpent)} detail={`Este mes: ${formatMoney(maintenanceReport.monthSpent)}`} />
                             <ReportCard icon={BarChart3} label="Promedio por servicio" value={formatMoney(maintenanceReport.averageCost)} detail="Servicios con costo" />
                             <ReportCard
                               icon={Clock}
-                              label="Ultimo servicio"
-                              value={maintenanceReport.daysSinceLast !== null ? `${maintenanceReport.daysSinceLast} dias` : 'Sin datos'}
+                              label="Último servicio"
+                              value={maintenanceReport.daysSinceLast !== null ? `${maintenanceReport.daysSinceLast} días` : 'Sin datos'}
                               detail={maintenanceReport.lastRecord?.service_type ?? 'Registra un mantenimiento'}
                             />
                           </div>
@@ -1398,9 +1412,9 @@ export function MyBikes() {
                               <CardContent className="p-4">
                                 <h3 className="mb-3 font-semibold">Tiempos y kilometraje</h3>
                                 <div className="space-y-3">
-                                  <ReportLine label="Promedio entre servicios" value={maintenanceReport.averageDaysBetweenServices !== null ? `${maintenanceReport.averageDaysBetweenServices} dias` : 'Sin datos suficientes'} />
+                                  <ReportLine label="Promedio entre servicios" value={maintenanceReport.averageDaysBetweenServices !== null ? `${maintenanceReport.averageDaysBetweenServices} días` : 'Sin datos suficientes'} />
                                   <ReportLine label="Promedio entre kilometrajes" value={maintenanceReport.averageKmBetweenServices !== null ? `${maintenanceReport.averageKmBetweenServices.toLocaleString()} km` : 'Sin datos suficientes'} />
-                                  <ReportLine label="Ultimo kilometraje registrado" value={maintenanceReport.lastRecord ? `${maintenanceReport.lastRecord.mileage.toLocaleString()} km` : 'Sin registros'} />
+                                  <ReportLine label="Último kilometraje registrado" value={maintenanceReport.lastRecord ? `${maintenanceReport.lastRecord.mileage.toLocaleString()} km` : 'Sin registros'} />
                                 </div>
                               </CardContent>
                             </Card>
@@ -1441,7 +1455,7 @@ export function MyBikes() {
                       <div className="grid gap-4 sm:grid-cols-2">
                         {([
                           ['SOAT', selectedBike.soat_expires_on, 'soat'],
-                          ['Tecnomecanica', selectedBike.technical_review_expires_on, 'technical_review'],
+                          ['Tecnomecánica', selectedBike.technical_review_expires_on, 'technical_review'],
                         ] satisfies Array<[string, string | null, MotorcycleDocument['document_type']]>).map(([title, date, documentType]) => {
                           const status = statusForDate(date)
                           const document = selectedDocuments.find((item) => item.document_type === documentType)
@@ -1551,7 +1565,7 @@ export function MyBikes() {
                         <p className="text-2xl font-bold">{selectedBike.mileage.toLocaleString()} km</p>
                       </div>
                     </div>
-                    <p className="mb-4 text-xs text-gray-500">Manten este dato al dia para activar pendientes por kilometraje.</p>
+                    <p className="mb-4 text-xs text-gray-500">Mantén este dato al día para activar pendientes por kilometraje.</p>
                     <Button size="sm" variant="outline" className="w-full border-white/10" onClick={openUpdateMileage}>
                       <Gauge className="mr-2 h-4 w-4" />
                       Actualizar km
@@ -1576,7 +1590,7 @@ export function MyBikes() {
                         <span className={statusForDate(selectedBike.soat_expires_on).tone}>{statusForDate(selectedBike.soat_expires_on).label}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-400">Tecnomecanica</span>
+                        <span className="text-gray-400">Tecnomecánica</span>
                         <span className={statusForDate(selectedBike.technical_review_expires_on).tone}>
                           {statusForDate(selectedBike.technical_review_expires_on).label}
                         </span>
@@ -1587,7 +1601,7 @@ export function MyBikes() {
 
                 <Card className="border-white/5 bg-moto-gray">
                   <CardContent className="p-4">
-                    <h3 className="mb-3 font-semibold">Acciones rapidas</h3>
+                    <h3 className="mb-3 font-semibold">Acciones rápidas</h3>
                     <div className="space-y-2">
                       <Button variant="outline" className="w-full justify-start border-white/10" onClick={openCreateService}>
                         <Wrench className="mr-2 h-4 w-4" />
@@ -1699,7 +1713,7 @@ export function MyBikes() {
           <DialogHeader>
             <DialogTitle>Actualizar kilometraje</DialogTitle>
             <DialogDescription className="text-gray-400">
-              Mantener este dato al dia ayuda a detectar servicios vencidos por kilometraje.
+              Mantener este dato al día ayuda a detectar servicios vencidos por kilometraje.
             </DialogDescription>
           </DialogHeader>
           <form className="mt-4 space-y-4" onSubmit={handleUpdateMileage}>
@@ -1861,7 +1875,7 @@ export function MyBikes() {
               <input type="number" className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={serviceForm.cost} onChange={(e) => setServiceForm({ ...serviceForm, cost: e.target.value })} placeholder="120000" />
             </label>
             <div className="rounded-xl border border-moto-orange/20 bg-moto-orange/10 p-3">
-              <p className="mb-3 text-sm font-medium text-moto-orange">Proximo servicio</p>
+              <p className="mb-3 text-sm font-medium text-moto-orange">Próximo servicio</p>
               <div className="grid gap-4 sm:grid-cols-2">
                 <label>
                   <span className="mb-1 block text-sm text-gray-400">A los km</span>
@@ -1914,7 +1928,7 @@ export function MyBikes() {
           <DialogHeader>
             <DialogTitle>Completar pendiente</DialogTitle>
             <DialogDescription className="text-gray-400">
-              Registra la actividad realizada y deja programado el proximo ajuste.
+              Registra la actividad realizada y deja programado el próximo ajuste.
             </DialogDescription>
           </DialogHeader>
           <form className="mt-4 space-y-4" onSubmit={handleCompleteReminder}>
@@ -1962,7 +1976,7 @@ export function MyBikes() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label>
-                <span className="mb-1 block text-sm text-gray-400">Proximo ajuste en km</span>
+                <span className="mb-1 block text-sm text-gray-400">Próximo ajuste en km</span>
                 <input
                   type="number"
                   min={0}
@@ -1985,7 +1999,7 @@ export function MyBikes() {
 
             {completionForm.mileage && completionForm.next_interval_km && (
               <div className="rounded-xl border border-white/10 bg-moto-darker p-3 text-sm text-gray-300">
-                Proximo pendiente a los{' '}
+                Próximo pendiente a los{' '}
                 {(Number(completionForm.mileage) + Number(completionForm.next_interval_km)).toLocaleString()} km.
               </div>
             )}

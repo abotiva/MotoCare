@@ -1,4 +1,4 @@
-# Manual de Administrador - MotoHubX
+# Manual de Administrador - MotoCare
 
 Documento vivo para registrar configuraciones, decisiones operativas y procesos internos del MVP.
 
@@ -16,19 +16,6 @@ Consume datos de:
 - `notifications`
 
 No reemplaza a Comunidad. Comunidad queda como feed social y se renderiza desde `Community.tsx`.
-
-## UI responsive
-
-Los indicadores superiores de **Inicio**, **Rutas**, **Comunidad**, **Mi perfil** y **Administracion** deben mantenerse compactos en celular.
-
-Criterios aplicados:
-
-- usar columnas fijas en movil para agrupar indicadores sin crear desplazamiento lateral
-- usar `min-w-0`, textos truncados y etiquetas abreviadas cuando el contenido puede crecer
-- reducir iconos, padding y tipografia en movil
-- ocultar detalles secundarios en movil cuando no son necesarios para la accion principal
-
-En **Administracion**, este criterio se centraliza en `MetricCard` dentro de `src/pages/Admin.tsx`.
 
 ## Catalogo de mantenimientos sugeridos
 
@@ -332,7 +319,7 @@ La integracion inicial de mapas usa Google Maps Embed en el detalle de rutas, me
 
 `VITE_GOOGLE_MAPS_EMBED_KEY`
 
-Nota para publicacion: esta clave debe quedar restringida en Google Cloud a la API **Maps Embed API** y al dominio real de MotoHubX. Para desarrollo local puede permitir `http://127.0.0.1:*` o `http://localhost:*`.
+Nota para publicacion: esta clave debe quedar restringida en Google Cloud a la API **Maps Embed API** y al dominio real de MotoCare. Para desarrollo local puede permitir `http://127.0.0.1:*` o `http://localhost:*`.
 
 ## Ajustes
 
