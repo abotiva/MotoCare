@@ -350,22 +350,28 @@ for update using (auth.uid() = id) with check (auth.uid() = id);
 create policy "motorcycles_own_all" on public.motorcycles
 for all using (
   auth.uid() = owner_id
-  and coalesce((
-    select s.plan
-    from public.user_subscriptions s
-    where s.user_id = auth.uid()
-      and s.status in ('active', 'trialing')
-      and (s.expires_at is null or s.expires_at >= now())
-  ), 'free') <> 'business'
+  and (
+    public.is_current_user_admin()
+    or coalesce((
+      select s.plan
+      from public.user_subscriptions s
+      where s.user_id = auth.uid()
+        and s.status in ('active', 'trialing')
+        and (s.expires_at is null or s.expires_at >= now())
+    ), 'free') <> 'business'
+  )
 ) with check (
   auth.uid() = owner_id
-  and coalesce((
-    select s.plan
-    from public.user_subscriptions s
-    where s.user_id = auth.uid()
-      and s.status in ('active', 'trialing')
-      and (s.expires_at is null or s.expires_at >= now())
-  ), 'free') <> 'business'
+  and (
+    public.is_current_user_admin()
+    or coalesce((
+      select s.plan
+      from public.user_subscriptions s
+      where s.user_id = auth.uid()
+        and s.status in ('active', 'trialing')
+        and (s.expires_at is null or s.expires_at >= now())
+    ), 'free') <> 'business'
+  )
 );
 
 create policy "maintenance_own_all" on public.maintenance_records
@@ -394,9 +400,35 @@ for select using (
 );
 
 create policy "routes_own_write" on public.routes
-for all using (auth.uid() = owner_id)
+for all using (
+  auth.uid() = owner_id
+  and coalesce((
+    select s.plan
+    from public.user_subscriptions s
+    where s.user_id = auth.uid()
+      and s.status in ('active', 'trialing')
+      and (s.expires_at is null or s.expires_at >= now())
+  ), 'free') <> 'business'
+)
 with check (
   auth.uid() = owner_id
+  and coalesce((
+    select s.plan
+    from public.user_subscriptions s
+    where s.user_id = auth.uid()
+      and s.status in ('active', 'trialing')
+      and (s.expires_at is null or s.expires_at >= now())
+  ), 'free') <> 'business'
+  and (
+    visibility = 'private'
+    or coalesce((
+      select s.plan
+      from public.user_subscriptions s
+      where s.user_id = auth.uid()
+        and s.status in ('active', 'trialing')
+        and (s.expires_at is null or s.expires_at >= now())
+    ), 'free') in ('pro', 'premium')
+  )
   and (
     motorcycle_id is null
     or exists (

@@ -231,6 +231,7 @@ export function MyBikes() {
   const [selectedRecordDetail, setSelectedRecordDetail] = useState<MaintenanceRecord | null>(null)
   const [viewerImage, setViewerImage] = useState<{ src: string; alt: string } | null>(null)
   const [bikeForm, setBikeForm] = useState<BikeForm>(emptyBikeForm)
+  const [bikePhotoFile, setBikePhotoFile] = useState<File | null>(null)
   const [serviceForm, setServiceForm] = useState<ServiceForm>(emptyServiceForm)
   const [reminderForm, setReminderForm] = useState<ReminderForm>(emptyReminderForm)
   const [editReminderForm, setEditReminderForm] = useState<ReminderForm>(emptyReminderForm)
@@ -439,10 +440,29 @@ export function MyBikes() {
     if (insertError) {
       notifyError('No pudimos agregar la moto', insertError.message)
     } else if (data) {
-      const motorcycle = data as Motorcycle
+      let motorcycle = data as Motorcycle
+      if (bikePhotoFile) {
+        const imageUrl = await uploadMotorcyclePhotoFile(motorcycle.id, bikePhotoFile)
+        if (imageUrl) {
+          const { data: updatedMotorcycle, error: photoUpdateError } = await supabase
+            .from('motorcycles')
+            .update({ image_url: imageUrl })
+            .eq('id', motorcycle.id)
+            .eq('owner_id', user.id)
+            .select('*')
+            .single()
+
+          if (photoUpdateError) {
+            notifyError('La moto se creó, pero no pudimos asociar la foto', photoUpdateError.message)
+          } else if (updatedMotorcycle) {
+            motorcycle = updatedMotorcycle as Motorcycle
+          }
+        }
+      }
       setMotorcycles((current) => [motorcycle, ...current])
       setSelectedId(motorcycle.id)
       setBikeForm(emptyBikeForm)
+      setBikePhotoFile(null)
       setShowAddBike(false)
 
       const starterReminders: StarterReminder[] = [
@@ -478,6 +498,7 @@ export function MyBikes() {
     }
     setEditingBike(null)
     setBikeForm(emptyBikeForm)
+    setBikePhotoFile(null)
     setShowAddBike(true)
   }
 
@@ -493,6 +514,7 @@ export function MyBikes() {
       soat_expires_on: motorcycle.soat_expires_on ?? '',
       technical_review_expires_on: motorcycle.technical_review_expires_on ?? '',
     })
+    setBikePhotoFile(null)
     setShowAddBike(true)
   }
 
@@ -532,6 +554,15 @@ export function MyBikes() {
     setIsSaving(true)
     setError(null)
 
+    let imageUrl: string | null = null
+    if (bikePhotoFile) {
+      imageUrl = await uploadMotorcyclePhotoFile(editingBike.id, bikePhotoFile)
+      if (!imageUrl) {
+        setIsSaving(false)
+        return
+      }
+    }
+
     const payload = {
       brand: bikeForm.brand.trim(),
       model: bikeForm.model.trim(),
@@ -541,6 +572,7 @@ export function MyBikes() {
       mileage: bikeForm.mileage ? Number(bikeForm.mileage) : 0,
       soat_expires_on: bikeForm.soat_expires_on || null,
       technical_review_expires_on: bikeForm.technical_review_expires_on || null,
+      ...(imageUrl ? { image_url: imageUrl } : {}),
     }
 
     const { data, error: updateError } = await supabase
@@ -560,6 +592,7 @@ export function MyBikes() {
       await upsertDocumentReminder(motorcycle, 'Renovar tecnomecanica', motorcycle.technical_review_expires_on)
       setEditingBike(null)
       setBikeForm(emptyBikeForm)
+      setBikePhotoFile(null)
       setShowAddBike(false)
       toast.success('Moto actualizada', { description: 'Los cambios quedaron guardados.' })
     }
@@ -992,25 +1025,53 @@ export function MyBikes() {
 
   const sanitizeFileName = (name: string) => name.toLowerCase().replace(/[^a-z0-9.]+/g, '-')
 
-  const uploadMotorcyclePhoto = async (file: File) => {
-    if (!supabase || !user || !selectedBike) return
-    setUploadingKey('photo')
-    setError(null)
+  const validateMotorcyclePhoto = (file: File) => {
+    if (!file.type.startsWith('image/')) return 'Selecciona una imagen en formato JPG, PNG o WebP.'
+    if (file.size > 5 * 1024 * 1024) return 'Usa una imagen de maximo 5 MB.'
+    return null
+  }
 
-    const path = `${user.id}/motorcycles/${selectedBike.id}/${Date.now()}-${sanitizeFileName(file.name)}`
-    const { error: uploadError } = await supabase.storage.from('motocare-public').upload(path, file, { upsert: true })
+  const uploadMotorcyclePhotoFile = async (motorcycleId: string, file: File) => {
+    if (!supabase || !user) return null
+
+    const validationError = validateMotorcyclePhoto(file)
+    if (validationError) {
+      notifyError(validationError.includes('maximo') ? 'Imagen muy pesada' : 'Archivo no valido', validationError)
+      return null
+    }
+
+    const path = `${user.id}/motorcycles/${motorcycleId}/${Date.now()}-${sanitizeFileName(file.name)}`
+    const { error: uploadError } = await supabase.storage.from('motocare-public').upload(path, file, { upsert: false })
 
     if (uploadError) {
       notifyError('No pudimos subir la foto', uploadError.message)
+      return null
+    }
+
+    const { data: publicUrlData } = supabase.storage.from('motocare-public').getPublicUrl(path)
+    return `${publicUrlData.publicUrl}?v=${Date.now()}`
+  }
+
+  const uploadMotorcyclePhoto = async (file: File) => {
+    if (!supabase || !user || !selectedBike) {
+      notifyError('No pudimos cambiar la foto', 'Selecciona una moto antes de cargar una imagen.')
+      return
+    }
+
+    setUploadingKey('photo')
+    setError(null)
+
+    const selectedBikeId = selectedBike.id
+    const imageUrl = await uploadMotorcyclePhotoFile(selectedBikeId, file)
+    if (!imageUrl) {
       setUploadingKey(null)
       return
     }
 
-    const { data: publicUrlData } = supabase.storage.from('motocare-public').getPublicUrl(path)
     const { data, error: updateError } = await supabase
       .from('motorcycles')
-      .update({ image_url: publicUrlData.publicUrl })
-      .eq('id', selectedBike.id)
+      .update({ image_url: imageUrl })
+      .eq('id', selectedBikeId)
       .eq('owner_id', user.id)
       .select('*')
       .single()
@@ -1018,8 +1079,10 @@ export function MyBikes() {
     if (updateError) {
       notifyError('La foto subio, pero no pudimos asociarla a la moto', updateError.message)
     } else if (data) {
-      setMotorcycles((current) => current.map((bike) => (bike.id === selectedBike.id ? (data as Motorcycle) : bike)))
-      toast.success('Foto actualizada', { description: 'La imagen de la moto quedó guardada.' })
+      setMotorcycles((current) => current.map((bike) => (bike.id === selectedBikeId ? (data as Motorcycle) : bike)))
+      toast.success('Foto actualizada', { description: 'La imagen de la moto quedo guardada.' })
+    } else {
+      notifyError('No pudimos actualizar la moto', 'La base de datos no devolvio la moto actualizada.')
     }
 
     setUploadingKey(null)
@@ -1647,7 +1710,7 @@ export function MyBikes() {
         </>
       )}
 
-      <Dialog open={showAddBike} onOpenChange={(open) => { setShowAddBike(open); if (!open) { setEditingBike(null); setBikeForm(emptyBikeForm) } }}>
+      <Dialog open={showAddBike} onOpenChange={(open) => { setShowAddBike(open); if (!open) { setEditingBike(null); setBikeForm(emptyBikeForm); setBikePhotoFile(null) } }}>
         <DialogContent className="max-w-md border-white/10 bg-moto-gray text-white">
           <DialogHeader>
             <DialogTitle>{editingBike ? 'Editar moto' : 'Agregar moto'}</DialogTitle>
@@ -1693,6 +1756,50 @@ export function MyBikes() {
                 <span className="mb-1 block text-sm text-gray-400">Vence tecnomecanica</span>
                 <input type="date" className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={bikeForm.technical_review_expires_on} onChange={(e) => setBikeForm({ ...bikeForm, technical_review_expires_on: e.target.value })} />
               </label>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-moto-darker p-3">
+              <div className="flex items-center gap-3">
+                <div className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-lg bg-moto-gray">
+                  {bikePhotoFile ? (
+                    <ImageUp className="h-6 w-6 text-moto-orange" />
+                  ) : editingBike?.image_url ? (
+                    <img src={editingBike.image_url} alt="Foto actual de la moto" className="h-full w-full object-cover" />
+                  ) : (
+                    <Bike className="h-6 w-6 text-gray-500" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium">{bikePhotoFile ? bikePhotoFile.name : editingBike ? 'Foto actual de la moto' : 'Foto de la moto'}</p>
+                  <p className="mt-1 text-xs text-gray-500">JPG, PNG o WebP. Maximo 5 MB.</p>
+                </div>
+              </div>
+              <label className="mt-3 inline-flex min-h-10 w-full cursor-pointer items-center justify-center rounded-md border border-white/10 px-4 text-sm font-medium transition-colors hover:bg-white/5">
+                <ImageUp className="mr-2 h-4 w-4" />
+                {bikePhotoFile ? 'Cambiar seleccion' : editingBike ? 'Cambiar foto' : 'Subir foto'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={isSaving}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0]
+                    if (!file) return
+                    const validationError = validateMotorcyclePhoto(file)
+                    if (validationError) {
+                      notifyError(validationError.includes('maximo') ? 'Imagen muy pesada' : 'Archivo no valido', validationError)
+                      event.target.value = ''
+                      return
+                    }
+                    setBikePhotoFile(file)
+                    event.target.value = ''
+                  }}
+                />
+              </label>
+              {bikePhotoFile && (
+                <button type="button" className="mt-2 text-sm text-gray-400 hover:text-white" onClick={() => setBikePhotoFile(null)}>
+                  Quitar foto seleccionada
+                </button>
+              )}
             </div>
             <Button type="submit" disabled={isSaving} className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
               {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : editingBike ? <Pencil className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}

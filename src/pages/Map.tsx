@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { useAuth } from '@/contexts/AuthContext'
+import { useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
 import type { Motorcycle, RoutePlan } from '@/types/database'
 
@@ -314,6 +315,9 @@ function CompactMetricCard({
 
 export function Map() {
   const { user } = useAuth()
+  const { effectivePlan, hasPlan, isLoadingSubscription } = useSubscription()
+  const canUseRoutes = effectivePlan !== 'business'
+  const canShareRoutes = effectivePlan === 'pro' || effectivePlan === 'premium' || (effectivePlan !== 'business' && hasPlan('premium'))
   const [motorcycles, setMotorcycles] = useState<Motorcycle[]>([])
   const [myRoutes, setMyRoutes] = useState<RoutePlan[]>([])
   const [routeForm, setRouteForm] = useState<RouteForm>(emptyRouteForm)
@@ -384,12 +388,20 @@ export function Map() {
   }
 
   const openCreateRoute = () => {
+    if (!canUseRoutes) {
+      toast.error('Rutas no disponible', { description: 'La licencia Business es para negocios y no permite operar como motero.' })
+      return
+    }
     setEditingRoute(null)
     setRouteForm({ ...emptyRouteForm, motorcycle_id: motorcycles[0]?.id ?? '' })
     setShowCreateRoute(true)
   }
 
   const openEditRoute = (route: RoutePlan) => {
+    if (!canUseRoutes) {
+      toast.error('Rutas no disponible', { description: 'La licencia Business es para negocios y no permite operar como motero.' })
+      return
+    }
     setEditingRoute(route)
     setRouteForm({
       motorcycle_id: route.motorcycle_id ?? '',
@@ -400,7 +412,7 @@ export function Map() {
       duration_minutes: route.duration_minutes?.toString() ?? '',
       start_date: route.start_date ?? '',
       end_date: route.end_date ?? '',
-      visibility: route.visibility,
+      visibility: canShareRoutes ? route.visibility : 'private',
       status: route.status ?? 'planned',
     })
     setShowCreateRoute(true)
@@ -409,6 +421,16 @@ export function Map() {
   const handleSubmitRoute = async (event: FormEvent) => {
     event.preventDefault()
     if (!supabase || !user) return
+
+    if (!canUseRoutes) {
+      toast.error('Rutas no disponible', { description: 'La licencia Business es para negocios y no permite crear rutas personales.' })
+      return
+    }
+
+    if (routeForm.visibility === 'community' && !canShareRoutes) {
+      toast.error('Función Premium', { description: 'Con la licencia Free puedes guardar rutas privadas. Compartir con comunidad requiere Premium.' })
+      return
+    }
 
     if (!routeForm.title.trim()) {
       toast.error('Nombre requerido', { description: 'La ruta necesita un nombre.' })
@@ -558,6 +580,10 @@ export function Map() {
   const toggleRouteVisibility = async (route: RoutePlan) => {
     if (!supabase || !user) return
     const nextVisibility = route.visibility === 'community' ? 'private' : 'community'
+    if (nextVisibility === 'community' && !canShareRoutes) {
+      toast.error('Función Premium', { description: 'Compartir rutas con la comunidad requiere licencia Premium.' })
+      return
+    }
     setIsSaving(true)
 
     const { data, error } = await supabase
@@ -621,7 +647,7 @@ export function Map() {
           <h1 className="text-2xl font-bold">Rutas</h1>
           <p className="text-gray-400">Guarda rutas manuales y comparte las mejores con la comunidad.</p>
         </div>
-        <Button className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={openCreateRoute}>
+        <Button className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={openCreateRoute} disabled={isLoadingSubscription || !canUseRoutes}>
           <Plus className="mr-2 h-5 w-5" />
           Nueva ruta
         </Button>
@@ -634,6 +660,14 @@ export function Map() {
         <CompactMetricCard icon={CheckCircle2} label="Realizadas" mobileLabel="Hechas" value={completedCount} tone="green" />
       </div>
 
+      {!canUseRoutes && (
+        <Card className="mb-5 border-yellow-500/30 bg-yellow-500/10 py-0">
+          <CardContent className="p-4 text-sm text-yellow-200">
+            La licencia Business está pensada para negocios. Las rutas personales están disponibles para cuentas de motero Free y Premium.
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-3">
           {myRoutes.length > 0 ? (
@@ -645,7 +679,7 @@ export function Map() {
                 onOpen={openRouteDetail}
                 onEdit={openEditRoute}
                 onDelete={deleteRoute}
-                onToggleVisibility={toggleRouteVisibility}
+                onToggleVisibility={canShareRoutes || route.visibility === 'community' ? toggleRouteVisibility : undefined}
                 onUpdateStatus={updateRouteStatus}
                 motorcycleName={motorcycleNameFor(route)}
               />
@@ -664,7 +698,9 @@ export function Map() {
           <CardContent className="p-5">
             <h2 className="mb-2 font-semibold">Rutas comunitarias</h2>
             <p className="mb-4 text-sm leading-6 text-gray-400">
-              El descubrimiento de rutas de otros moteros quedara reservado para licencias Premium. Por ahora este modulo se enfoca en planear y administrar tus propias rutas.
+              {canShareRoutes
+                ? 'Tu licencia permite compartir rutas con la comunidad. El descubrimiento de rutas de otros moteros será la siguiente fase.'
+                : 'Con Free puedes planear rutas privadas. Compartir y descubrir rutas comunitarias queda reservado para licencias Premium.'}
             </p>
             <Button asChild variant="outline" className="w-full border-white/10">
               <Link to="/app/my-bikes">Volver a Mi moto</Link>
@@ -770,8 +806,9 @@ export function Map() {
               <span className="mb-1 block text-sm text-gray-400">Visibilidad</span>
               <select className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={routeForm.visibility} onChange={(event) => setRouteForm({ ...routeForm, visibility: event.target.value as RouteForm['visibility'] })}>
                 <option value="private">Privada</option>
-                <option value="community">Comunidad</option>
+                {canShareRoutes && <option value="community">Comunidad</option>}
               </select>
+              {!canShareRoutes && <p className="mt-1 text-xs text-gray-500">Compartir con comunidad requiere licencia Premium.</p>}
             </label>
             <label>
               <span className="mb-1 block text-sm text-gray-400">Estado</span>
