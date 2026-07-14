@@ -10,6 +10,9 @@ export type Profile = {
   primary_motorcycle_id: string | null
   primary_club_id: string | null
   is_public: boolean
+  moderation_status?: 'active' | 'suspended' | 'deleted'
+  moderation_until?: string | null
+  moderation_reason?: string | null
   last_seen_at: string | null
   created_at: string
   updated_at: string
@@ -122,7 +125,7 @@ export type SavedRoute = {
 export type Notification = {
   id: string
   user_id: string
-  type: 'route_planned' | 'route_overdue' | 'club_invite'
+  type: 'route_planned' | 'route_overdue' | 'club_invite' | 'moderation_notice'
   title: string
   message: string
   route_id: string | null
@@ -147,6 +150,9 @@ export type Club = {
   description: string | null
   city: string | null
   image_url: string | null
+  moderation_status?: 'active' | 'suspended' | 'deleted'
+  moderation_until?: string | null
+  moderation_reason?: string | null
   created_at: string
   updated_at: string
 }
@@ -332,4 +338,29 @@ export type AdminMaintenanceSuggestionRow = {
   sort_order: number
   is_active: boolean
   updated_at: string
+}
+
+export type ModerationReason = 'violence' | 'harassment' | 'spam' | 'promotion_without_business' | 'other'
+
+export type ModerationReportStatus = 'pending' | 'reviewed' | 'dismissed' | 'actioned'
+
+export type ModerationTargetType = 'user' | 'club' | 'post' | 'club_post'
+
+export type ModerationActionType = 'warning' | 'temp_block' | 'delete'
+
+export type AdminModerationReportRow = {
+  id: string
+  reporter_id: string
+  reporter_display_name: string | null
+  target_type: ModerationTargetType
+  target_user_id: string | null
+  target_user_display_name: string | null
+  target_club_id: string | null
+  target_club_name: string | null
+  reason_category: ModerationReason
+  details: string | null
+  status: ModerationReportStatus
+  resolution_notes: string | null
+  created_at: string
+  reviewed_at: string | null
 }

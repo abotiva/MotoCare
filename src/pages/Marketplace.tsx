@@ -1,7 +1,8 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { 
   Search, Filter, Grid3X3, List, MapPin, Heart, MessageCircle, 
-  Star, TrendingUp, Bike, Wrench, Shirt, Clock3, Lock, Store
+  Star, TrendingUp, Bike, Wrench, Shirt, Clock3, Lock, Store, MapPinned, PackageCheck, Sparkles
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,6 +14,9 @@ const categories = [
   { id: 'motorcycles', name: 'Motos', icon: Bike },
   { id: 'parts', name: 'Repuestos', icon: Wrench },
   { id: 'gear', name: 'Equipamiento', icon: Shirt },
+  { id: 'services', name: 'Servicios', icon: Store },
+  { id: 'premium-routes', name: 'Rutas Premium', icon: MapPinned },
+  { id: 'packs', name: 'Packs', icon: PackageCheck },
 ]
 
 const listings = [
@@ -83,7 +87,7 @@ const listings = [
   },
   {
     id: 6,
-    title: 'Escape AkrapoviÄ Slip-on',
+    title: 'Escape Akrapovič Slip-on',
     price: 2500000,
     condition: 'Nuevo',
     location: 'Pereira, Risaralda',
@@ -92,6 +96,44 @@ const listings = [
     featured: false,
     likes: 34,
     category: 'parts'
+  },
+  {
+    id: 7,
+    title: 'Nevado del Ruiz Adventure',
+    price: 24900,
+    condition: 'Ruta Premium',
+    mileage: '168 km',
+    location: 'Manizales - Murillo - Líbano',
+    image: '/feature-gps.jpg',
+    seller: { name: 'MotoCare Experiences', rating: 5.0, verified: true },
+    featured: true,
+    likes: 91,
+    category: 'premium-routes'
+  },
+  {
+    id: 8,
+    title: 'Pack Eje Cafetero',
+    price: 59900,
+    condition: 'Pack Premium',
+    mileage: '5 rutas',
+    location: 'Salento, Filandia, Cocora y Buenavista',
+    image: '/community.jpg',
+    seller: { name: 'MotoCare Experiences', rating: 5.0, verified: true },
+    featured: false,
+    likes: 76,
+    category: 'packs'
+  },
+  {
+    id: 9,
+    title: 'Revisión pre-viaje Adventure',
+    price: 120000,
+    condition: 'Servicio',
+    location: 'Bogotá, Cundinamarca',
+    image: '/feature-maintenance.jpg',
+    seller: { name: 'Taller Aliado MotoCare', rating: 4.8, verified: true },
+    featured: false,
+    likes: 18,
+    category: 'services'
   },
 ]
 
@@ -109,9 +151,20 @@ export function Marketplace() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [selectedCategory, setSelectedCategory] = useState('all')
 
-  const filteredListings = listings.filter(
-    listing => selectedCategory === 'all' || listing.category === selectedCategory
-  )
+  const filteredListings = listings.filter((listing) => {
+    const matchesCategory = selectedCategory === 'all' || listing.category === selectedCategory
+    const searchTerm = searchQuery.trim().toLowerCase()
+    const matchesSearch = !searchTerm || [
+      listing.title,
+      listing.location,
+      listing.condition,
+      listing.seller.name,
+    ].some((value) => value.toLowerCase().includes(searchTerm))
+
+    return matchesCategory && matchesSearch
+  })
+
+  const featuredListings = filteredListings.filter((listing) => listing.featured)
 
   return (
     <div className="mx-auto max-w-7xl p-4 pb-24 lg:p-6">
@@ -119,7 +172,7 @@ export function Marketplace() {
       <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold mb-2">Marketplace</h1>
-          <p className="text-gray-400">Compra motos, repuestos y equipamiento. Publicar exige una licencia activa.</p>
+          <p className="text-gray-400">Compra motos, repuestos, equipamiento, servicios y rutas premium. Publicar exige una licencia activa.</p>
         </div>
         <Badge className="w-fit bg-moto-orange text-moto-darker">
           <Clock3 className="mr-2 h-4 w-4" />
@@ -170,16 +223,36 @@ export function Marketplace() {
         </CardContent>
       </Card>
 
+      <Card className="mb-6 overflow-hidden border-moto-orange/30 bg-moto-gray">
+        <CardContent className="relative p-0">
+          <div className="absolute inset-0 bg-[url('/feature-gps.jpg')] bg-cover bg-center opacity-20" />
+          <div className="relative grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-center">
+            <div>
+              <Badge className="mb-3 bg-moto-orange text-moto-darker">
+                <Sparkles className="mr-2 h-4 w-4" />
+                MotoCare Experiences
+              </Badge>
+              <h2 className="text-2xl font-bold">Rutas premium dentro de la tienda</h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-300">
+                Además de comprar motos y accesorios, ahora puedes adquirir rutas verificadas, archivos GPX, puntos de interés, checklist de preparación y packs listos para rodar por Colombia.
+              </p>
+            </div>
+            <Button asChild className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
+              <Link to="/app/premium-routes">Explorar rutas</Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Search & Filters */}
       <div className="mb-6 flex flex-col gap-4 lg:flex-row">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
           <Input
-            placeholder="Buscar motos, repuestos, equipamiento..."
+            placeholder="Buscar motos, rutas, repuestos, servicios..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            disabled
-            className="pl-10 bg-moto-gray border-white/5 opacity-70"
+            className="pl-10 bg-moto-gray border-white/5"
           />
         </div>
         <div className="grid grid-cols-2 gap-2 sm:flex">
@@ -214,7 +287,6 @@ export function Marketplace() {
           <button
             key={cat.id}
             onClick={() => setSelectedCategory(cat.id)}
-            disabled
             className={`flex items-center gap-2 px-5 py-3 rounded-xl whitespace-nowrap transition-colors ${
               selectedCategory === cat.id
                 ? 'bg-moto-orange text-white'
@@ -237,8 +309,8 @@ export function Marketplace() {
           <Button variant="ghost" size="sm" disabled>Ver todos</Button>
         </div>
         <div className="grid md:grid-cols-2 gap-4">
-          {listings.filter(l => l.featured).map((listing) => (
-            <Card key={listing.id} className="bg-moto-gray border-white/5 overflow-hidden opacity-75">
+          {featuredListings.map((listing) => (
+            <Card key={listing.id} className="bg-moto-gray border-white/5 overflow-hidden">
               <div className="relative h-48 overflow-hidden">
                 <img 
                   src={listing.image} 
@@ -288,9 +360,15 @@ export function Marketplace() {
                     <Button size="sm" variant="outline" className="border-white/10" disabled>
                       <MessageCircle className="w-4 h-4" />
                     </Button>
-                    <Button size="sm" className="bg-moto-orange hover:bg-moto-orange-dark" disabled>
-                      Ver más
-                    </Button>
+                    {listing.category === 'premium-routes' || listing.category === 'packs' ? (
+                      <Button asChild size="sm" className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
+                        <Link to="/app/premium-routes">Ver más</Link>
+                      </Button>
+                    ) : (
+                      <Button size="sm" className="bg-moto-orange hover:bg-moto-orange-dark" disabled>
+                        Ver más
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -306,7 +384,7 @@ export function Marketplace() {
           {filteredListings.filter(l => !l.featured).map((listing) => (
             <Card 
               key={listing.id} 
-              className={`bg-moto-gray border-white/5 overflow-hidden opacity-75 ${
+              className={`bg-moto-gray border-white/5 overflow-hidden ${
                 viewMode === 'list' ? 'sm:flex' : ''
               }`}
             >
@@ -342,9 +420,15 @@ export function Marketplace() {
                       <Badge variant="secondary" className="text-[10px]">Verificado</Badge>
                     )}
                   </div>
-                  <Button size="sm" variant="ghost" className="text-moto-orange" disabled>
-                    Contactar
-                  </Button>
+                  {listing.category === 'premium-routes' || listing.category === 'packs' ? (
+                    <Button asChild size="sm" variant="ghost" className="text-moto-orange">
+                      <Link to="/app/premium-routes">Ver ruta</Link>
+                    </Button>
+                  ) : (
+                    <Button size="sm" variant="ghost" className="text-moto-orange" disabled>
+                      Contactar
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>

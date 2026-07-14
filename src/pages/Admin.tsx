@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { AlertTriangle, Bike, ChevronDown, ChevronUp, CreditCard, Database, Loader2, Lock, Route, Search, Shield, SlidersHorizontal, Users } from 'lucide-react'
+import { AlertTriangle, Ban, Bike, ChevronDown, ChevronUp, CreditCard, Database, Loader2, Lock, Route, Search, Shield, SlidersHorizontal, Trash2, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
@@ -8,9 +8,9 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { appVersion, buildTime } from '@/lib/appVersion'
 import { supabase, supabaseUrl } from '@/lib/supabase'
-import type { AdminClubRow, AdminMaintenanceSuggestionRow, AdminOverview, AdminUserRow } from '@/types/database'
+import type { AdminClubRow, AdminMaintenanceSuggestionRow, AdminModerationReportRow, AdminOverview, AdminUserRow, ModerationActionType } from '@/types/database'
 
-type AdminTab = 'usuarios' | 'clubes' | 'catálogos'
+type AdminTab = 'usuarios' | 'clubes' | 'moderacion' | 'catalogos'
 type UserPlan = AdminUserRow['plan']
 type UserPlanStatus = AdminUserRow['plan_status']
 
@@ -67,11 +67,13 @@ export function Admin() {
   const [overview, setOverview] = useState<AdminOverview>(emptyOverview)
   const [users, setUsers] = useState<AdminUserRow[]>([])
   const [clubs, setClubs] = useState<AdminClubRow[]>([])
+  const [moderationReports, setModerationReports] = useState<AdminModerationReportRow[]>([])
   const [suggestions, setSuggestions] = useState<AdminMaintenanceSuggestionRow[]>([])
   const [search, setSearch] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [hasAccess, setHasAccess] = useState(false)
   const [savingLicenseUserId, setSavingLicenseUserId] = useState<string | null>(null)
+  const [savingModerationReportId, setSavingModerationReportId] = useState<string | null>(null)
   const projectRef = useMemo(() => {
     if (!supabaseUrl) return 'Sin configurar'
     return supabaseUrl.replace('https://', '').split('.')[0]
@@ -101,6 +103,23 @@ export function Admin() {
     )
   }, [search, suggestions])
 
+  const filteredModerationReports = useMemo(() => {
+    const term = search.trim().toLowerCase()
+    if (!term) return moderationReports
+    return moderationReports.filter((item) =>
+      [
+        item.reporter_display_name,
+        item.target_user_display_name,
+        item.target_club_name,
+        item.target_type,
+        item.reason_category,
+        item.status,
+        item.details,
+        item.id,
+      ].some((value) => value?.toLowerCase().includes(term))
+    )
+  }, [moderationReports, search])
+
   useEffect(() => {
     const loadAdminData = async () => {
       if (!supabase) return
@@ -114,10 +133,11 @@ export function Admin() {
       }
 
       setHasAccess(true)
-      const [overviewResult, usersResult, clubsResult, suggestionsResult] = await Promise.all([
+      const [overviewResult, usersResult, clubsResult, reportsResult, suggestionsResult] = await Promise.all([
         supabase.rpc('admin_overview'),
         supabase.rpc('admin_users'),
         supabase.rpc('admin_clubs'),
+        supabase.rpc('admin_moderation_reports'),
         supabase.rpc('admin_maintenance_suggestions'),
       ])
 
@@ -137,6 +157,12 @@ export function Admin() {
         toast.error('No pudimos cargar clubes', { description: clubsResult.error.message })
       } else {
         setClubs((clubsResult.data ?? []) as AdminClubRow[])
+      }
+
+      if (reportsResult.error) {
+        toast.error('No pudimos cargar moderación', { description: reportsResult.error.message })
+      } else {
+        setModerationReports((reportsResult.data ?? []) as AdminModerationReportRow[])
       }
 
       if (suggestionsResult.error) {
@@ -176,6 +202,47 @@ export function Admin() {
     }
 
     setSavingLicenseUserId(null)
+  }
+
+  const applyModerationAction = async (report: AdminModerationReportRow, actionType: ModerationActionType) => {
+    if (!supabase || savingModerationReportId) return
+
+    const targetId = report.target_club_id ?? report.target_user_id
+    const targetType = report.target_club_id ? 'club' : 'user'
+    if (!targetId) {
+      toast.error('Reporte sin objetivo accionable')
+      return
+    }
+
+    const defaultReason =
+      actionType === 'warning'
+        ? 'Advertencia: MotoCare no permite violencia, acoso, spam ni promociones sin licencia Business.'
+        : actionType === 'temp_block'
+          ? 'Bloqueo temporal por incumplir las normas de convivencia de MotoCare.'
+          : 'Eliminacion logica por infraccion grave o reiterada de las normas de MotoCare.'
+
+    const reason = window.prompt('Motivo que recibira el usuario o dueno del club:', defaultReason)
+    if (!reason?.trim()) return
+
+    setSavingModerationReportId(report.id)
+    const { error } = await supabase.rpc('admin_apply_moderation_action', {
+      report_id: report.id,
+      target_type: targetType,
+      target_id: targetId,
+      action_type: actionType,
+      reason: reason.trim(),
+      duration_days: actionType === 'temp_block' ? 7 : null,
+    })
+
+    if (error) {
+      toast.error('No pudimos aplicar la acción', { description: error.message })
+    } else {
+      toast.success('Acción aplicada', { description: 'Se registró la acción y se envió notificación interna.' })
+      const { data } = await supabase.rpc('admin_moderation_reports')
+      setModerationReports((data ?? []) as AdminModerationReportRow[])
+    }
+
+    setSavingModerationReportId(null)
   }
 
   if (isLoading) {
@@ -231,7 +298,8 @@ export function Admin() {
           <div className="flex flex-wrap gap-2">
             <TabButton label="Usuarios" active={activeTab === 'usuarios'} onClick={() => setActiveTab('usuarios')} />
             <TabButton label="Clubes" active={activeTab === 'clubes'} onClick={() => setActiveTab('clubes')} />
-            <TabButton label="Catálogos" active={activeTab === 'catálogos'} onClick={() => setActiveTab('catálogos')} />
+            <TabButton label="Moderación" active={activeTab === 'moderacion'} onClick={() => setActiveTab('moderacion')} />
+            <TabButton label="Catálogos" active={activeTab === 'catalogos'} onClick={() => setActiveTab('catalogos')} />
           </div>
           <label className="flex min-w-0 items-center gap-2 rounded-xl border border-white/10 bg-moto-darker px-3 py-2 lg:w-80">
             <Search className="h-4 w-4 text-gray-500" />
@@ -247,7 +315,14 @@ export function Admin() {
 
       {activeTab === 'usuarios' && <UsersTable users={filteredUsers} savingLicenseUserId={savingLicenseUserId} onUpdateLicense={updateUserLicense} />}
       {activeTab === 'clubes' && <ClubsTable clubs={filteredClubs} />}
-      {activeTab === 'catálogos' && <SuggestionsTable suggestions={filteredSuggestions} />}
+      {activeTab === 'moderacion' && (
+        <ModerationTable
+          reports={filteredModerationReports}
+          savingReportId={savingModerationReportId}
+          onApplyAction={applyModerationAction}
+        />
+      )}
+      {activeTab === 'catalogos' && <SuggestionsTable suggestions={filteredSuggestions} />}
     </div>
   )
 }
@@ -328,74 +403,108 @@ function UsersTable({
   onUpdateLicense: (user: AdminUserRow, plan: UserPlan, status?: UserPlanStatus) => void
 }) {
   const [openUserId, setOpenUserId] = useState<string | null>(null)
+  const [openLicenseGroups, setOpenLicenseGroups] = useState<UserPlan[]>(['free', 'premium', 'business'])
+  const groupedUsers = useMemo(() => {
+    const groups: Array<{ key: UserPlan; label: string; users: AdminUserRow[] }> = [
+      { key: 'free', label: 'Licencia Free', users: [] },
+      { key: 'premium', label: 'Licencia Premium', users: [] },
+      { key: 'business', label: 'Licencia Business', users: [] },
+    ]
+
+    users.forEach((user) => {
+      const normalizedPlan: UserPlan = user.plan === 'pro' ? 'premium' : user.plan
+      const group = groups.find((item) => item.key === normalizedPlan)
+      if (group) group.users.push(user)
+    })
+
+    return groups.filter((group) => group.users.length > 0)
+  }, [users])
+  const toggleLicenseGroup = (plan: UserPlan) => {
+    setOpenLicenseGroups((current) =>
+      current.includes(plan) ? current.filter((item) => item !== plan) : [...current, plan]
+    )
+    setOpenUserId(null)
+  }
 
   return (
-    <AdminTable title="Usuarios" description="Listado básico para revisar rápido. Abra el detalle para licencia, métricas y datos operativos.">
+    <AdminTable title="Usuarios" description="Usuarios agrupados por tipo de licencia. Abra el detalle para licencia, metricas y datos operativos.">
       {users.length > 0 ? (
-        users.map((user) => {
-          const isOpen = openUserId === user.id
+        groupedUsers.map((group) => {
+          const isGroupOpen = openLicenseGroups.includes(group.key)
 
           return (
-            <div key={user.id} className="border-t border-white/5">
-              <div className="grid gap-3 p-4 md:grid-cols-[minmax(0,1fr)_140px_120px_120px] md:items-center">
-                <div className="min-w-0">
-                  <div className="mb-1 flex flex-wrap items-center gap-2">
-                    <p className="truncate font-medium">{user.display_name || 'Motero MotoCare Co'}</p>
-                    <Badge className={user.is_public ? 'bg-green-500/15 text-green-300' : 'bg-white/10 text-gray-300'}>
-                      {user.is_public ? 'Público' : 'Privado'}
-                    </Badge>
+            <section key={group.key} className="border-t border-white/5">
+              <button
+                type="button"
+                className="flex w-full items-center justify-between gap-3 bg-moto-darker/40 px-4 py-3 text-left transition-colors hover:bg-moto-darker/70"
+                aria-expanded={isGroupOpen}
+                onClick={() => toggleLicenseGroup(group.key)}
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  {isGroupOpen ? <ChevronUp className="h-4 w-4 shrink-0 text-gray-400" /> : <ChevronDown className="h-4 w-4 shrink-0 text-gray-400" />}
+                  <div className="min-w-0">
+                    <h3 className="truncate text-sm font-semibold text-white">{group.label}</h3>
+                    <p className="text-xs text-gray-500">{group.users.length.toLocaleString()} usuarios</p>
                   </div>
-                  <p className="truncate text-sm text-gray-400">@{user.username || `usuario-${shortId(user.id)}`}</p>
                 </div>
+                <Badge className={planBadgeClasses[group.key]}>{planLabels[group.key]}</Badge>
+              </button>
 
-                <div className="flex flex-wrap items-center gap-2 md:block">
-                  <p className="text-xs text-gray-500">Licencia</p>
-                  <Badge className={planBadgeClasses[user.plan]}>{planLabels[user.plan]}</Badge>
-                </div>
+              {isGroupOpen && group.users.map((user) => {
+              const isOpen = openUserId === user.id
 
-                <AdminValue label="Estado" value={planStatusLabels[user.plan_status]} />
+              return (
+                <div key={user.id} className="border-t border-white/5">
+                  <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="min-w-0 truncate font-medium">{user.display_name || 'Motero MotoCare Co'}</p>
 
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full border-white/10 md:w-auto"
-                  onClick={() => setOpenUserId((current) => (current === user.id ? null : user.id))}
-                >
-                  {isOpen ? <ChevronUp className="mr-2 h-4 w-4" /> : <ChevronDown className="mr-2 h-4 w-4" />}
-                  {isOpen ? 'Ocultar' : 'Ver detalle'}
-                </Button>
-              </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full border-white/10 sm:w-auto"
+                      onClick={() => setOpenUserId((current) => (current === user.id ? null : user.id))}
+                    >
+                      {isOpen ? <ChevronUp className="mr-2 h-4 w-4" /> : <ChevronDown className="mr-2 h-4 w-4" />}
+                      {isOpen ? 'Ocultar' : 'Ver detalle'}
+                    </Button>
+                  </div>
 
-              {isOpen && (
-                <div className="border-t border-white/5 bg-moto-darker/50 p-4">
-                  <div className="grid gap-4 xl:grid-cols-[260px_minmax(0,1fr)]">
-                    <div>
-                      <h3 className="mb-3 text-sm font-semibold text-gray-300">Licencia</h3>
-                      <LicenseEditor
-                        user={user}
-                        isSaving={savingLicenseUserId === user.id}
-                        onUpdateLicense={onUpdateLicense}
-                      />
-                    </div>
+                  {isOpen && (
+                    <div className="border-t border-white/5 bg-moto-darker/50 p-4">
+                      <div className="grid gap-4 xl:grid-cols-[260px_minmax(0,1fr)]">
+                        <div>
+                          <h3 className="mb-3 text-sm font-semibold text-gray-300">Licencia</h3>
+                          <LicenseEditor
+                            user={user}
+                            isSaving={savingLicenseUserId === user.id}
+                            onUpdateLicense={onUpdateLicense}
+                          />
+                        </div>
 
-                    <div>
-                      <h3 className="mb-3 text-sm font-semibold text-gray-300">Datos operativos</h3>
-                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                        <AdminValue label="Ciudad" value={user.city || 'No visible'} />
-                        <AdminValue label="Tipo de motero" value={user.rider_type || 'No visible'} />
-                        <AdminValue label="Fecha de alta" value={formatDate(user.created_at)} />
-                        <AdminValue label="Motos" value={user.motorcycles_count.toLocaleString()} />
-                        <AdminValue label="Rutas" value={user.routes_count.toLocaleString()} />
-                        <AdminValue label="Publicaciones" value={user.posts_count.toLocaleString()} />
-                        <AdminValue label="Clubes" value={user.clubs_count.toLocaleString()} />
-                        <AdminValue label="ID interno" value={shortId(user.id)} muted />
-                        <AdminValue label="Vencimiento" value={user.plan_expires_at ? formatDate(user.plan_expires_at) : 'Sin vencimiento'} />
+                        <div>
+                          <h3 className="mb-3 text-sm font-semibold text-gray-300">Datos operativos</h3>
+                          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            <AdminValue label="Usuario" value={`@${user.username || `usuario-${shortId(user.id)}`}`} />
+                            <AdminValue label="Perfil" value={user.is_public ? 'Publico' : 'Privado'} />
+                            <AdminValue label="Estado licencia" value={planStatusLabels[user.plan_status]} />
+                            <AdminValue label="Ciudad" value={user.city || 'No visible'} />
+                            <AdminValue label="Tipo de motero" value={user.rider_type || 'No visible'} />
+                            <AdminValue label="Fecha de alta" value={formatDate(user.created_at)} />
+                            <AdminValue label="Motos" value={user.motorcycles_count.toLocaleString()} />
+                            <AdminValue label="Rutas" value={user.routes_count.toLocaleString()} />
+                            <AdminValue label="Publicaciones" value={user.posts_count.toLocaleString()} />
+                            <AdminValue label="Clubes" value={user.clubs_count.toLocaleString()} />
+                            <AdminValue label="ID interno" value={shortId(user.id)} muted />
+                            <AdminValue label="Vencimiento" value={user.plan_expires_at ? formatDate(user.plan_expires_at) : 'Sin vencimiento'} />
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
-              )}
-            </div>
+              )
+              })}
+            </section>
           )
         })
       ) : (
@@ -405,6 +514,7 @@ function UsersTable({
       )}
     </AdminTable>
   )
+
 }
 
 function LicenseEditor({
@@ -467,6 +577,100 @@ function ClubsTable({ clubs }: { clubs: AdminClubRow[] }) {
           <AdminValue label="Invitaciones" value={club.pending_invitations_count.toLocaleString()} />
         </div>
       ))}
+    </AdminTable>
+  )
+}
+
+const moderationReasonLabels: Record<AdminModerationReportRow['reason_category'], string> = {
+  violence: 'Violencia',
+  harassment: 'Acoso',
+  spam: 'Spam',
+  promotion_without_business: 'Promocion sin Business',
+  other: 'Otro',
+}
+
+const moderationStatusClasses: Record<AdminModerationReportRow['status'], string> = {
+  pending: 'bg-yellow-500/15 text-yellow-300',
+  reviewed: 'bg-sky-500/15 text-sky-300',
+  dismissed: 'bg-white/10 text-gray-300',
+  actioned: 'bg-red-500/15 text-red-300',
+}
+
+function ModerationTable({
+  reports,
+  savingReportId,
+  onApplyAction,
+}: {
+  reports: AdminModerationReportRow[]
+  savingReportId: string | null
+  onApplyAction: (report: AdminModerationReportRow, actionType: ModerationActionType) => void
+}) {
+  return (
+    <AdminTable title="Moderación" description="Reportes por violencia, acoso, spam o promociones sin licencia Business. Las acciones notifican al usuario dentro de la app.">
+      {reports.length > 0 ? (
+        reports.map((report) => {
+          const targetName = report.target_club_name || report.target_user_display_name || 'Objetivo sin dato'
+          const targetType = report.target_club_id ? 'Club' : 'Usuario'
+          const busy = savingReportId === report.id
+
+          return (
+            <div key={report.id} className="border-t border-white/5 p-4">
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_330px] lg:items-start">
+                <div className="min-w-0">
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <Badge className={moderationStatusClasses[report.status]}>{report.status}</Badge>
+                    <Badge className="bg-white/10 text-gray-300">{targetType}</Badge>
+                    <Badge className="bg-moto-orange/15 text-moto-orange">{moderationReasonLabels[report.reason_category]}</Badge>
+                  </div>
+                  <p className="font-semibold text-white">{targetName}</p>
+                  <p className="mt-1 text-sm text-gray-400">Reportado por {report.reporter_display_name || 'Usuario MotoCare'} - {formatDate(report.created_at)}</p>
+                  <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-gray-300">{report.details || 'Sin detalle adicional.'}</p>
+                  {report.resolution_notes && (
+                    <p className="mt-3 rounded-xl bg-moto-darker p-3 text-sm text-gray-300">Resolucion: {report.resolution_notes}</p>
+                  )}
+                </div>
+
+                <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={busy}
+                    className="border-yellow-500/30 text-yellow-300 hover:text-yellow-200"
+                    onClick={() => onApplyAction(report, 'warning')}
+                  >
+                    {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <AlertTriangle className="mr-2 h-4 w-4" />}
+                    Advertir
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={busy}
+                    className="border-red-500/30 text-red-300 hover:text-red-200"
+                    onClick={() => onApplyAction(report, 'temp_block')}
+                  >
+                    <Ban className="mr-2 h-4 w-4" />
+                    Bloquear 7 dias
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={busy}
+                    className="border-red-500/30 text-red-300 hover:text-red-200"
+                    onClick={() => onApplyAction(report, 'delete')}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Eliminar
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )
+        })
+      ) : (
+        <div className="border-t border-white/5 p-6 text-center text-sm text-gray-400">
+          No hay reportes para mostrar con el filtro actual.
+        </div>
+      )}
     </AdminTable>
   )
 }

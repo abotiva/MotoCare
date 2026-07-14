@@ -473,7 +473,7 @@ export function MyBikes() {
           ? {
               owner_id: user.id,
               motorcycle_id: motorcycle.id,
-              title: 'Renovar tecnomecanica',
+              title: 'Renovar tecnomecánica',
               due_date: motorcycle.technical_review_expires_on,
             }
           : null,
@@ -589,7 +589,7 @@ export function MyBikes() {
       const motorcycle = data as Motorcycle
       setMotorcycles((current) => current.map((bike) => (bike.id === motorcycle.id ? motorcycle : bike)))
       await upsertDocumentReminder(motorcycle, 'Renovar SOAT', motorcycle.soat_expires_on)
-      await upsertDocumentReminder(motorcycle, 'Renovar tecnomecanica', motorcycle.technical_review_expires_on)
+      await upsertDocumentReminder(motorcycle, 'Renovar tecnomecánica', motorcycle.technical_review_expires_on)
       setEditingBike(null)
       setBikeForm(emptyBikeForm)
       setBikePhotoFile(null)
@@ -909,7 +909,7 @@ export function MyBikes() {
       notifyError('No pudimos cancelar el pendiente', updateError.message)
     } else if (data) {
       setReminders((current) => current.map((item) => (item.id === reminder.id ? (data as Reminder) : item)))
-      toast.success('Pendiente cancelado', { description: 'Ya no aparecera en la lista de pendientes.' })
+      toast.success('Pendiente cancelado', { description: 'Ya no aparecerá en la lista de pendientes.' })
     }
 
     setIsSaving(false)
@@ -1027,7 +1027,7 @@ export function MyBikes() {
 
   const validateMotorcyclePhoto = (file: File) => {
     if (!file.type.startsWith('image/')) return 'Selecciona una imagen en formato JPG, PNG o WebP.'
-    if (file.size > 5 * 1024 * 1024) return 'Usa una imagen de maximo 5 MB.'
+    if (file.size > 5 * 1024 * 1024) return 'Usa una imagen de máximo 5 MB.'
     return null
   }
 
@@ -1036,7 +1036,7 @@ export function MyBikes() {
 
     const validationError = validateMotorcyclePhoto(file)
     if (validationError) {
-      notifyError(validationError.includes('maximo') ? 'Imagen muy pesada' : 'Archivo no valido', validationError)
+      notifyError(validationError.includes('máximo') ? 'Imagen muy pesada' : 'Archivo no válido', validationError)
       return null
     }
 
@@ -1235,7 +1235,7 @@ export function MyBikes() {
               </div>
               <h2 className="mt-6 text-2xl font-bold">Crea tu primer garaje MotoCare Co</h2>
               <p className="mx-auto mt-2 max-w-md text-gray-400">
-                Registra tu moto para empezar a controlar SOAT, tecnomecanica, kilometraje y mantenimientos.
+                Registra tu moto para empezar a controlar SOAT, tecnomecánica, kilometraje y mantenimientos.
               </p>
               <Button className="mt-6 bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={openCreateBike}>
                 <Plus className="mr-2 h-5 w-5" />
@@ -1753,7 +1753,7 @@ export function MyBikes() {
                 <input type="date" className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={bikeForm.soat_expires_on} onChange={(e) => setBikeForm({ ...bikeForm, soat_expires_on: e.target.value })} />
               </label>
               <label>
-                <span className="mb-1 block text-sm text-gray-400">Vence tecnomecanica</span>
+                <span className="mb-1 block text-sm text-gray-400">Vence tecnomecánica</span>
                 <input type="date" className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={bikeForm.technical_review_expires_on} onChange={(e) => setBikeForm({ ...bikeForm, technical_review_expires_on: e.target.value })} />
               </label>
             </div>
@@ -1786,7 +1786,7 @@ export function MyBikes() {
                     if (!file) return
                     const validationError = validateMotorcyclePhoto(file)
                     if (validationError) {
-                      notifyError(validationError.includes('maximo') ? 'Imagen muy pesada' : 'Archivo no valido', validationError)
+                      notifyError(validationError.includes('máximo') ? 'Imagen muy pesada' : 'Archivo no válido', validationError)
                       event.target.value = ''
                       return
                     }
@@ -1996,7 +1996,7 @@ export function MyBikes() {
                   />
                 </label>
                 <label>
-                  <span className="mb-1 block text-sm text-gray-400">Fecha proxima</span>
+                  <span className="mb-1 block text-sm text-gray-400">Fecha próxima</span>
                   <input
                     type="date"
                     className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white"
@@ -2006,7 +2006,7 @@ export function MyBikes() {
                 </label>
               </div>
               <p className="mt-2 text-xs text-gray-400">
-                Estos valores vienen sugeridos por el catalogo, pero puede editarlos o dejarlos vacios.
+                Estos valores vienen sugeridos por el catálogo, pero puede editarlos o dejarlos vacíos.
               </p>
             </div>
             <label>
@@ -2047,7 +2047,7 @@ export function MyBikes() {
             </div>
 
             <label>
-              <span className="mb-1 block text-sm text-gray-400">Descripcion de la accion</span>
+              <span className="mb-1 block text-sm text-gray-400">Descripción de la acción</span>
               <input
                 className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white"
                 value={completionForm.action}
@@ -2094,7 +2094,7 @@ export function MyBikes() {
                 />
               </label>
               <label>
-                <span className="mb-1 block text-sm text-gray-400">Fecha proxima opcional</span>
+                <span className="mb-1 block text-sm text-gray-400">Fecha próxima opcional</span>
                 <input
                   type="date"
                   className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white"
@@ -2228,7 +2228,7 @@ export function MyBikes() {
           <DialogHeader>
             <DialogTitle>Nuevo recordatorio por kilometraje</DialogTitle>
             <DialogDescription className="text-gray-400">
-              Crea alertas como cambio de aceite, llantas, frenos o cadena segun el kilometraje objetivo.
+              Crea alertas como cambio de aceite, llantas, frenos o cadena según el kilometraje objetivo.
             </DialogDescription>
           </DialogHeader>
           <form className="mt-4 space-y-4" onSubmit={handleCreateReminder}>
@@ -2283,7 +2283,7 @@ export function MyBikes() {
                 required
               />
               <span className="mt-1 block text-xs text-gray-500">
-                La sugerencia lo llena automaticamente, pero puede cambiarlo antes de crear el pendiente.
+                La sugerencia lo llena automáticamente, pero puede cambiarlo antes de crear el pendiente.
               </span>
             </label>
             <label>

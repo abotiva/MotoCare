@@ -511,7 +511,7 @@ export function Map() {
       const { error: insertError } = await supabase.from('notifications').insert(plannedNotifications)
 
       if (insertError) {
-        toast.error('La ruta se guardo, pero no pudimos crear sus notificaciones', { description: insertError.message })
+        toast.error('La ruta se guardó, pero no pudimos crear sus notificaciones', { description: insertError.message })
       }
     }
 

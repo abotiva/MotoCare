@@ -15,10 +15,10 @@ import { Button } from '@/components/ui/button'
 import { MotoCareLogo } from '@/components/MotoCareLogo'
 
 const featureCards = [
-  { icon: ShieldCheck, title: 'Hoja de vida', desc: 'La historia tecnica de tu moto en un solo lugar.', path: '/app/my-bikes' },
+  { icon: ShieldCheck, title: 'Hoja de vida', desc: 'La historia técnica de tu moto en un solo lugar.', path: '/app/my-bikes' },
   { icon: Wrench, title: 'Servicios', desc: 'Registra mantenimientos realizados con fecha, km y costo.', path: '/app/my-bikes#history' },
   { icon: CalendarClock, title: 'Programados', desc: 'Pendientes por fecha o kilometraje para anticiparte.', path: '/app/my-bikes#reminders' },
-  { icon: FileText, title: 'Documentos', desc: 'SOAT, tecnomecanica y soportes en un solo lugar.', path: '/app/my-bikes#documents' },
+  { icon: FileText, title: 'Documentos', desc: 'SOAT, tecnomecánica y soportes en un solo lugar.', path: '/app/my-bikes#documents' },
   { icon: Clock3, title: 'Informes', desc: 'Gastos y promedios de mantenimiento para usuarios Premium.', path: '/app/my-bikes#reports' },
   { icon: ShoppingBag, title: 'Premium', desc: 'Rutas, comunidad, clubes y tienda quedaran como funciones avanzadas.', path: '/app/map' },
 ]
@@ -82,7 +82,7 @@ export function LandingPage() {
 
             <button
               type="button"
-              aria-label={isMenuOpen ? 'Cerrar menu' : 'Abrir menu'}
+              aria-label={isMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
               aria-expanded={isMenuOpen}
               className="rounded-lg p-2 transition-colors hover:bg-white/5 lg:hidden"
               onClick={() => setIsMenuOpen(!isMenuOpen)}

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { AlertTriangle, Bell, Bike, Calendar, CheckCircle2, FileText, Loader2, Plus, Settings, UserPlus, Wrench, X } from 'lucide-react'
+import { AlertTriangle, Bell, Bike, Calendar, CheckCircle2, FileText, Loader2, MapPinned, Plus, Settings, UserPlus, Wrench, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -57,6 +57,14 @@ function daysUntilDate(value: string) {
 }
 
 function notificationDisplay(notification: Notification) {
+  if (notification.type === 'moderation_notice') {
+    return {
+      title: notification.title || 'Aviso de moderación',
+      message: notification.message,
+      dateLabel: `Emitido: ${new Date(notification.scheduled_for).toLocaleDateString('es-CO')}`,
+    }
+  }
+
   if (notification.type === 'route_planned' && notification.routes?.start_date) {
     const days = daysUntilDate(notification.routes.start_date)
     const title = 'Ruta planeada cercana'
@@ -268,7 +276,7 @@ export function Home() {
 
       if ((count ?? 0) >= 1) {
         toast.error('Tu licencia Free permite un solo club', {
-          description: 'Solo puedes unirte por invitacion y pertenecer a un club a la vez.',
+          description: 'Solo puedes unirte por invitación y pertenecer a un club a la vez.',
         })
         return
       }
@@ -283,7 +291,7 @@ export function Home() {
       .eq('invited_user_id', user.id)
 
     if (invitationError) {
-      toast.error('No pudimos responder la invitacion', { description: invitationError.message })
+      toast.error('No pudimos responder la invitación', { description: invitationError.message })
       return
     }
 
@@ -301,7 +309,7 @@ export function Home() {
           .eq('id', notification.club_invitation_id)
           .eq('invited_user_id', user.id)
 
-        toast.error('La invitacion fue aprobada, pero no pudimos agregarte al club', { description: memberError.message })
+        toast.error('La invitación fue aprobada, pero no pudimos agregarte al club', { description: memberError.message })
         return
       }
     }
@@ -374,6 +382,30 @@ export function Home() {
               {nextStep.actionLabel}
             </span>
           </Link>
+        </CardContent>
+      </Card>
+
+      <Card className="mb-5 overflow-hidden border-moto-orange/25 bg-moto-darker py-0">
+        <CardContent className="relative grid gap-4 p-5 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-center">
+          <div className="absolute inset-0 bg-[url('/feature-gps.jpg')] bg-cover bg-center opacity-15" />
+          <div className="absolute inset-0 bg-gradient-to-r from-moto-darker via-moto-darker/95 to-moto-darker/70" />
+          <div className="relative min-w-0">
+            <Badge className="mb-3 bg-moto-orange text-moto-darker">
+              <MapPinned className="mr-1.5 h-3.5 w-3.5" />
+              Nueva opcion premium
+            </Badge>
+            <h2 className="text-xl font-bold">Rutas Premium predeterminadas</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-300">
+              Tu moto. Tu historia. Tu ruta. Explora experiencias de pago con GPX, checklist,
+              puntos de interes y compatibilidad con tu moto.
+            </p>
+          </div>
+          <Button asChild className="relative bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
+            <Link to="/app/premium-routes">
+              <MapPinned className="mr-2 h-4 w-4" />
+              Ver Rutas Premium
+            </Link>
+          </Button>
         </CardContent>
       </Card>
 

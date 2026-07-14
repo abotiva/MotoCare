@@ -51,13 +51,13 @@ export function AppUpdatePrompt() {
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-3">
-              <h3 className="text-sm font-semibold">Nueva version disponible</h3>
+              <h3 className="text-sm font-semibold">Nueva versión disponible</h3>
               <button type="button" className="rounded-lg p-1 transition-colors hover:bg-white/5" onClick={() => setIsDismissed(true)}>
                 <X className="h-4 w-4 text-gray-400" />
               </button>
             </div>
             <p className="mt-1 text-xs text-gray-400">
-              Actualiza MotoCare Co para cargar los ultimos cambios y limpiar la cache local.
+              Actualiza MotoCare Co para cargar los últimos cambios y limpiar la caché local.
             </p>
             <p className="mt-2 text-[11px] text-gray-500">
               Version actual: {appVersion} · Build: {new Date(buildTime).toLocaleString('es-CO')}

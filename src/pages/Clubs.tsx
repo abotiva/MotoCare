@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Camera, Crown, Edit3, Loader2, Plus, Save, Shield, Trash2, UserPlus, Users } from 'lucide-react'
+import { Camera, Crown, Edit3, Flag, Loader2, Plus, Save, Shield, Trash2, UserPlus, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -105,7 +105,7 @@ export function Clubs() {
       return
     }
     toast.info('Actualice su cuenta para poder crear un club', {
-      description: 'Free solo puede unirse por invitacion y pertenecer a un club.',
+      description: 'Free solo puede unirse por invitación y pertenecer a un club.',
     })
   }
 
@@ -346,12 +346,12 @@ export function Clubs() {
     if (!supabase || !user || !selectedClub || !canManageSelectedClub) return
 
     if (!file.type.startsWith('image/')) {
-      toast.error('Archivo no valido', { description: 'Seleccione una imagen.' })
+      toast.error('Archivo no válido', { description: 'Seleccione una imagen.' })
       return
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Imagen muy pesada', { description: 'Use una imagen de maximo 5 MB.' })
+      toast.error('Imagen muy pesada', { description: 'Use una imagen de máximo 5 MB.' })
       return
     }
 
@@ -433,7 +433,7 @@ export function Clubs() {
       .maybeSingle()
 
     if (pendingInvitation) {
-      toast.info('Invitación pendiente', { description: `${profile.full_name || `@${profile.username}` || 'Este usuario'} ya debe aprobar esta invitacion.` })
+      toast.info('Invitación pendiente', { description: `${profile.full_name || `@${profile.username}` || 'Este usuario'} ya debe aprobar esta invitación.` })
       setInviteUsername('')
       setInviteSuggestions([])
       setIsSaving(false)
@@ -452,7 +452,7 @@ export function Clubs() {
       .single()
 
     if (invitationError || !invitation) {
-      toast.error('No pudimos enviar la invitacion', { description: invitationError?.message })
+      toast.error('No pudimos enviar la invitación', { description: invitationError?.message })
       setIsSaving(false)
       return
     }
@@ -467,7 +467,7 @@ export function Clubs() {
     })
 
     if (notificationError) {
-      toast.error('La invitacion se creo, pero no pudimos notificar', { description: notificationError.message })
+      toast.error('La invitación se creó, pero no pudimos notificar', { description: notificationError.message })
     } else {
       setInviteUsername('')
       setInviteSuggestions([])
@@ -498,7 +498,7 @@ export function Clubs() {
   const deleteClub = async (club: Club) => {
     if (!supabase || !user || club.owner_id !== user.id) return
 
-    const confirmed = window.confirm(`Eliminar el club "${club.name}"? Esta accion no se puede deshacer.`)
+    const confirmed = window.confirm(`¿Eliminar el club "${club.name}"? Esta acción no se puede deshacer.`)
     if (!confirmed) return
 
     const { error } = await supabase
@@ -525,6 +525,38 @@ export function Clubs() {
     }
 
     toast.success('Club eliminado')
+  }
+
+  const reportClub = async (club: Club) => {
+    if (!supabase || !user) return
+
+    const reason = window.prompt('Motivo del reporte: 1 violencia, 2 acoso, 3 spam, 4 promocion sin Business, 5 otro', '3')
+    const reasonMap = {
+      '1': 'violence',
+      '2': 'harassment',
+      '3': 'spam',
+      '4': 'promotion_without_business',
+      '5': 'other',
+    } as const
+    const normalizedReason = reasonMap[reason?.trim() as keyof typeof reasonMap]
+    if (!normalizedReason) {
+      toast.error('Motivo no válido', { description: 'Seleccione un número del 1 al 5.' })
+      return
+    }
+
+    const details = window.prompt('Detalle breve para moderación:', '') ?? ''
+    const { error } = await supabase.rpc('submit_moderation_report', {
+      target_type: 'club',
+      target_id: club.id,
+      reason_category: normalizedReason,
+      details,
+    })
+
+    if (error) {
+      toast.error('No pudimos enviar el reporte', { description: error.message })
+    } else {
+      toast.success('Reporte enviado', { description: 'El equipo de MotoCare revisara este club.' })
+    }
   }
 
   const removeMember = async (member: ClubMemberWithProfile) => {
@@ -615,7 +647,7 @@ export function Clubs() {
                 <div className="mb-3 rounded-xl border border-moto-orange/20 bg-moto-orange/10 p-3 text-sm text-gray-200">
                   {effectivePlan === 'business'
                     ? 'La licencia Business es para negocios. No permite crear clubes ni operar como motero.'
-                    : 'Free solo puede unirse por invitacion y pertenecer a un club. Crear clubes requiere Premium.'}
+                    : 'Free solo puede unirse por invitación y pertenecer a un club. Crear clubes requiere Premium.'}
                 </div>
               )}
               <form className="space-y-3" onSubmit={createClub}>
@@ -677,7 +709,7 @@ export function Clubs() {
                       {selectedClub.id === profile?.primary_club_id && <Badge className="bg-green-500/15 text-green-300">Predeterminado</Badge>}
                     </div>
                     <p className="text-gray-400">{selectedClub.city || 'Ciudad sin definir'}</p>
-                    <p className="mt-3 text-sm leading-6 text-gray-300">{selectedClub.description || 'Club sin descripcion todavia.'}</p>
+                    <p className="mt-3 text-sm leading-6 text-gray-300">{selectedClub.description || 'Club sin descripción todavía.'}</p>
                     {canManageSelectedClub && (
                       <div className="mt-4 flex flex-wrap justify-center gap-2 sm:justify-start">
                         {selectedClub.id !== profile?.primary_club_id && (
@@ -692,6 +724,14 @@ export function Clubs() {
                             Eliminar club
                           </Button>
                         )}
+                      </div>
+                    )}
+                    {selectedClub.owner_id !== user?.id && (
+                      <div className="mt-4 flex justify-center sm:justify-start">
+                        <Button size="sm" variant="outline" className="border-yellow-500/30 text-yellow-300 hover:text-yellow-200" onClick={() => void reportClub(selectedClub)}>
+                          <Flag className="mr-2 h-4 w-4" />
+                          Reportar club
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -825,7 +865,7 @@ export function Clubs() {
                               </Avatar>
                               <div className="min-w-0">
                                 <p className="truncate font-medium">{invitedName}</p>
-                                <p className="truncate text-xs text-gray-500">@{invitation.profiles?.username || 'motocare'} - pendiente de aprobacion</p>
+                                <p className="truncate text-xs text-gray-500">@{invitation.profiles?.username || 'motocare'} - pendiente de aprobación</p>
                               </div>
                             </div>
                             <Badge className="w-fit shrink-0 bg-yellow-500/15 text-yellow-300">Pendiente</Badge>

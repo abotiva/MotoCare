@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { Calendar, Edit3, Heart, Image as ImageIcon, Loader2, MapPin, MessageCircle, Plus, Route as RouteIcon, Send, Trash2, Users, X } from 'lucide-react'
+import { Calendar, Edit3, Flag, Heart, Image as ImageIcon, Loader2, MapPin, MessageCircle, Plus, Route as RouteIcon, Send, Trash2, Users, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -267,7 +267,7 @@ export function Community() {
     const { data, error } = await supabase.rpc('community_public_profiles')
 
     if (error) {
-      toast.error('No pudimos cargar usuarios publicos', { description: error.message })
+      toast.error('No pudimos cargar usuarios públicos', { description: error.message })
     } else {
       setPublicProfiles((data ?? []) as PublicProfileSummary[])
     }
@@ -333,12 +333,12 @@ export function Community() {
     if (selectedFiles.length === 0) return
 
     if (selectedFiles.some((file) => !file.type.startsWith('image/'))) {
-      toast.error('Archivo no valido', { description: 'Seleccione una imagen.' })
+      toast.error('Archivo no válido', { description: 'Seleccione una imagen.' })
       return
     }
 
     if (selectedFiles.some((file) => file.size > 5 * 1024 * 1024)) {
-      toast.error('Imagen muy pesada', { description: 'Use una imagen de maximo 5 MB.' })
+      toast.error('Imagen muy pesada', { description: 'Use una imagen de máximo 5 MB.' })
       return
     }
 
@@ -522,6 +522,38 @@ export function Community() {
     }
 
     setDeletingPostId(null)
+  }
+
+  const reportContent = async (targetType: 'post' | 'club_post' | 'user', targetId: string) => {
+    if (!supabase || !user) return
+
+    const reason = window.prompt('Motivo del reporte: 1 violencia, 2 acoso, 3 spam, 4 promocion sin Business, 5 otro', '2')
+    const reasonMap = {
+      '1': 'violence',
+      '2': 'harassment',
+      '3': 'spam',
+      '4': 'promotion_without_business',
+      '5': 'other',
+    } as const
+    const normalizedReason = reasonMap[reason?.trim() as keyof typeof reasonMap]
+    if (!normalizedReason) {
+      toast.error('Motivo no válido', { description: 'Seleccione un número del 1 al 5.' })
+      return
+    }
+
+    const details = window.prompt('Detalle breve para moderación:', '') ?? ''
+    const { error } = await supabase.rpc('submit_moderation_report', {
+      target_type: targetType,
+      target_id: targetId,
+      reason_category: normalizedReason,
+      details,
+    })
+
+    if (error) {
+      toast.error('No pudimos enviar el reporte', { description: error.message })
+    } else {
+      toast.success('Reporte enviado', { description: 'El equipo de MotoCare revisara la conducta reportada.' })
+    }
   }
 
   const toggleLike = async (post: PostWithAuthor) => {
@@ -785,6 +817,12 @@ export function Community() {
                           </Button>
                         </div>
                       )}
+                      {!isOwnPost && (
+                        <Button size="sm" variant="outline" className="border-yellow-500/30 text-yellow-300 hover:text-yellow-200" onClick={() => void reportContent('post', post.id)}>
+                          <Flag className="mr-1 h-4 w-4" />
+                          Reportar
+                        </Button>
+                      )}
                       </div>
                     </div>
                   </CardHeader>
@@ -944,7 +982,7 @@ export function Community() {
             <CardContent className="p-5">
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div>
-                  <h2 className="font-semibold">Moteros publicos</h2>
+                  <h2 className="font-semibold">Moteros públicos</h2>
                   <p className="text-sm text-gray-400">{onlineProfilesCount} conectados</p>
                 </div>
                 <Badge className="bg-white/10 text-gray-300">{publicProfiles.length}</Badge>
@@ -1004,7 +1042,7 @@ export function Community() {
                 <p>Una ruta recomendada del fin de semana.</p>
                 <p>Un mantenimiento que acaba de hacer.</p>
                 <p>Una alerta de carretera o clima.</p>
-                <p>Una invitacion a rodar.</p>
+                <p>Una invitación a rodar.</p>
               </div>
             </CardContent>
           </Card>
@@ -1015,7 +1053,7 @@ export function Community() {
               <div className="space-y-2 text-sm text-gray-400">
                 <p>Respeto entre moteros.</p>
                 <p>No spam ni ventas repetidas.</p>
-                <p>Comparte informacion util para la comunidad.</p>
+                <p>Comparte información útil para la comunidad.</p>
               </div>
             </CardContent>
           </Card>
@@ -1109,15 +1147,23 @@ export function Community() {
                     return (
                       <Card key={post.id} className="border-white/5 bg-moto-gray py-0">
                         <CardContent className="p-4">
-                          <div className="mb-3 flex items-center gap-3">
-                            <Avatar className="h-10 w-10">
-                              <AvatarImage src={author?.avatar_url ?? undefined} />
-                              <AvatarFallback>{initials(authorName, author?.username)}</AvatarFallback>
-                            </Avatar>
-                            <div className="min-w-0">
-                              <p className="truncate font-medium">{authorName}</p>
-                              <p className="text-xs text-gray-500">@{author?.username || 'motocare'} - {relativeDate(post.created_at)}</p>
+                          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex min-w-0 items-center gap-3">
+                              <Avatar className="h-10 w-10">
+                                <AvatarImage src={author?.avatar_url ?? undefined} />
+                                <AvatarFallback>{initials(authorName, author?.username)}</AvatarFallback>
+                              </Avatar>
+                              <div className="min-w-0">
+                                <p className="truncate font-medium">{authorName}</p>
+                                <p className="text-xs text-gray-500">@{author?.username || 'motocare'} - {relativeDate(post.created_at)}</p>
+                              </div>
                             </div>
+                            {post.author_id !== user?.id && (
+                              <Button size="sm" variant="outline" className="border-yellow-500/30 text-yellow-300 hover:text-yellow-200" onClick={() => void reportContent('club_post', post.id)}>
+                                <Flag className="mr-1 h-4 w-4" />
+                                Reportar
+                              </Button>
+                            )}
                           </div>
                           <p className="whitespace-pre-wrap text-sm leading-6 text-gray-100">{post.content}</p>
                           {post.routes && (

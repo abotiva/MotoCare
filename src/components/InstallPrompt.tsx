@@ -74,7 +74,7 @@ export function InstallPrompt() {
               </button>
             </div>
             <p className="mt-1 text-xs text-gray-400">
-              Instala la app para acceso rapido y notificaciones incluso sin conexion.
+              Instala la app para acceso rápido y notificaciones incluso sin conexión.
             </p>
             <div className="mt-3 flex gap-2">
               <Button size="sm" className="flex-1 bg-moto-orange text-xs text-moto-darker hover:bg-moto-orange-dark" onClick={handleInstall}>

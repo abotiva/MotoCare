@@ -1,6 +1,6 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Bell, Calendar, Check, CheckCheck, Crown, Loader2, Route, Shield, Users, X } from 'lucide-react'
+import { Bell, Calendar, Check, CheckCheck, Crown, Loader2, Route, Shield, ShieldAlert, Users, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
@@ -11,22 +11,25 @@ import { planLabels, useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
 import type { Notification } from '@/types/database'
 
-type NotificationFilter = 'all' | 'unread' | 'routes' | 'clubs'
+type NotificationFilter = 'all' | 'unread' | 'routes' | 'clubs' | 'moderation'
 
 const filters: Array<{ id: NotificationFilter; label: string }> = [
   { id: 'all', label: 'Todas' },
   { id: 'unread', label: 'Pendientes' },
   { id: 'routes', label: 'Rutas' },
   { id: 'clubs', label: 'Clubes' },
+  { id: 'moderation', label: 'Moderación' },
 ]
 
 function typeLabel(type: Notification['type']) {
+  if (type === 'moderation_notice') return 'Moderación'
   if (type === 'club_invite') return 'Club'
   if (type === 'route_overdue') return 'Ruta vencida'
   return 'Ruta'
 }
 
 function typeIcon(type: Notification['type']) {
+  if (type === 'moderation_notice') return ShieldAlert
   if (type === 'club_invite') return Users
   if (type === 'route_overdue') return Shield
   return Route
@@ -61,12 +64,14 @@ export function Notifications() {
   const unreadCount = useMemo(() => notifications.filter((item) => !item.read_at).length, [notifications])
   const routeCount = useMemo(() => notifications.filter((item) => item.type === 'route_planned' || item.type === 'route_overdue').length, [notifications])
   const clubCount = useMemo(() => notifications.filter((item) => item.type === 'club_invite').length, [notifications])
+  const moderationCount = useMemo(() => notifications.filter((item) => item.type === 'moderation_notice').length, [notifications])
   const canUseAdvancedNotifications = hasPlan('premium')
 
   const visibleNotifications = useMemo(() => {
     if (filter === 'unread') return notifications.filter((item) => !item.read_at)
     if (filter === 'routes') return notifications.filter((item) => item.type === 'route_planned' || item.type === 'route_overdue')
     if (filter === 'clubs') return notifications.filter((item) => item.type === 'club_invite')
+    if (filter === 'moderation') return notifications.filter((item) => item.type === 'moderation_notice')
     return notifications
   }, [filter, notifications])
 
@@ -106,7 +111,7 @@ export function Notifications() {
       .eq('id', notification.id)
 
     if (error) {
-      toast.error('No pudimos marcarla como leida', { description: error.message })
+      toast.error('No pudimos marcarla como leída', { description: error.message })
     } else {
       setNotifications((current) => current.map((item) => (item.id === notification.id ? { ...item, read_at: readAt } : item)))
     }
@@ -144,7 +149,7 @@ export function Notifications() {
       .eq('invited_user_id', user.id)
 
     if (invitationError) {
-      toast.error('No pudimos responder la invitacion', { description: invitationError.message })
+      toast.error('No pudimos responder la invitación', { description: invitationError.message })
       setBusyId(null)
       return
     }
@@ -191,10 +196,11 @@ export function Notifications() {
         </Button>
       </div>
 
-      <div className="mb-5 grid grid-cols-3 gap-3">
+      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <MetricCard icon={Bell} label="Pendientes" value={unreadCount} />
         <MetricCard icon={Route} label="Rutas" value={routeCount} />
         <MetricCard icon={Users} label="Clubes" value={clubCount} />
+        <MetricCard icon={ShieldAlert} label="Moderación" value={moderationCount} />
       </div>
 
       <Card className="mb-5 border-white/5 bg-moto-gray py-0">

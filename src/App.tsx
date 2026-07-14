@@ -7,6 +7,7 @@ import { Home } from './pages/Home'
 import { Map } from './pages/Map'
 import { RouteDetail } from './pages/RouteDetail'
 import { Marketplace } from './pages/Marketplace'
+import { PremiumRoutes } from './pages/PremiumRoutes'
 import { Messages } from './pages/Messages'
 import { Clubs } from './pages/Clubs'
 import { Profile } from './pages/Profile'
@@ -22,7 +23,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Landing Page - pagina publica */}
+        {/* Landing Page - página pública */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         
@@ -33,6 +34,7 @@ function App() {
           <Route path="explore" element={<Navigate to="/app/home" replace />} />
           <Route path="map" element={<Map />} />
           <Route path="routes/:routeId" element={<RouteDetail />} />
+          <Route path="premium-routes" element={<PremiumRoutes />} />
           <Route path="marketplace" element={<Marketplace />} />
           <Route path="messages" element={<Messages />} />
           <Route path="community" element={<Navigate to="/app/messages" replace />} />

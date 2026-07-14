@@ -271,12 +271,12 @@ export function Profile() {
     if (!supabase || !user) return
 
     if (!file.type.startsWith('image/')) {
-      toast.error('Archivo no valido', { description: 'Seleccione una imagen.' })
+      toast.error('Archivo no válido', { description: 'Seleccione una imagen.' })
       return
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Imagen muy pesada', { description: 'Use una imagen de maximo 5 MB.' })
+      toast.error('Imagen muy pesada', { description: 'Use una imagen de máximo 5 MB.' })
       return
     }
 
@@ -628,7 +628,7 @@ export function Profile() {
                 value={form.primary_motorcycle_id}
                 onChange={(event) => setForm({ ...form, primary_motorcycle_id: event.target.value })}
               >
-                <option value="">Usar la mas reciente</option>
+                <option value="">Usar la más reciente</option>
                 {motorcycles.map((motorcycle) => (
                   <option key={motorcycle.id} value={motorcycle.id}>
                     {motorcycle.brand} {motorcycle.model}
@@ -644,7 +644,7 @@ export function Profile() {
                   Perfil público
                 </span>
                 <span className="mt-1 block text-xs text-gray-400">
-                  Si lo apaga, no aparece en búsquedas y las invitaciones a clubes quedan pendientes de aprobacion.
+                  Si lo apaga, no aparece en búsquedas y las invitaciones a clubes quedan pendientes de aprobación.
                 </span>
               </span>
               <input

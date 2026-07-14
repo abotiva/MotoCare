@@ -81,6 +81,13 @@ function initials(name: string | null | undefined, email: string | undefined) {
 }
 
 function notificationPreview(notification: Notification) {
+  if (notification.type === 'moderation_notice') {
+    return {
+      title: notification.title || 'Aviso de moderación',
+      message: notification.message,
+    }
+  }
+
   if (notification.type === 'club_invite' && notification.club_invitations?.clubs) {
     return {
       title: 'Invitación a club',
@@ -345,7 +352,7 @@ export function MainLayout() {
             <div className="flex min-w-0 items-center gap-3 lg:hidden">
               <button
                 type="button"
-                aria-label={isMobileMenuOpen ? 'Cerrar menu' : 'Abrir menu'}
+                  aria-label={isMobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
                 aria-expanded={isMobileMenuOpen}
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="shrink-0 rounded-lg p-2 hover:bg-white/5"
