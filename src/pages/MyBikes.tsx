@@ -399,14 +399,21 @@ export function MyBikes() {
         setReminders((remindersResult.data ?? []) as Reminder[])
         setDocuments((documentsResult.data ?? []) as MotorcycleDocument[])
         setMaintenanceSuggestions((suggestionsResult.data ?? []) as MaintenanceSuggestion[])
-        setSelectedId((current) => current ?? nextMotorcycles[0]?.id ?? null)
+        setSelectedId((current) => {
+          const primaryMotorcycle = nextMotorcycles.find(
+            (motorcycle) => motorcycle.id === profile?.primary_motorcycle_id
+          )
+          if (primaryMotorcycle) return primaryMotorcycle.id
+          if (current && nextMotorcycles.some((motorcycle) => motorcycle.id === current)) return current
+          return nextMotorcycles[0]?.id ?? null
+        })
       }
 
       setIsLoading(false)
     }
 
     loadGarage()
-  }, [user])
+  }, [user, profile?.primary_motorcycle_id])
 
   const handleCreateBike = async (event: FormEvent) => {
     event.preventDefault()
