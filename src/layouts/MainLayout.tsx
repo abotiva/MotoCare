@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import {
   BarChart3,
@@ -110,6 +110,7 @@ function notificationPreview(notification: Notification) {
 
 export function MainLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const contentRef = useRef<HTMLDivElement>(null)
   const [unreadNotifications, setUnreadNotifications] = useState(0)
   const [notificationItems, setNotificationItems] = useState<Notification[]>([])
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
@@ -442,7 +443,7 @@ export function MainLayout() {
           </div>
         </header>
 
-        <div className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
+        <div ref={contentRef} className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto" tabIndex={-1}>
           <Outlet />
         </div>
 

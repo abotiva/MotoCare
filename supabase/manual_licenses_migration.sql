@@ -115,7 +115,7 @@ begin
     raise exception 'Admin access required';
   end if;
 
-  if target_plan not in ('free', 'pro', 'premium') then
+  if target_plan not in ('free', 'pro', 'premium', 'business') then
     raise exception 'Invalid plan';
   end if;
 

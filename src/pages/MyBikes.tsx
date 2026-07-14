@@ -373,9 +373,9 @@ export function MyBikes() {
 
       const [motorcyclesResult, recordsResult, remindersResult, documentsResult, suggestionsResult] = await Promise.all([
         client.from('motorcycles').select('*').eq('owner_id', user.id).order('created_at', { ascending: false }),
-        client.from('maintenance_records').select('*').eq('owner_id', user.id).order('service_date', { ascending: false }),
-        client.from('reminders').select('*').eq('owner_id', user.id).order('due_date', { ascending: true, nullsFirst: false }),
-        client.from('motorcycle_documents').select('*').eq('owner_id', user.id).order('created_at', { ascending: false }),
+        client.from('maintenance_records').select('*').eq('owner_id', user.id).order('service_date', { ascending: false }).limit(500),
+        client.from('reminders').select('*').eq('owner_id', user.id).order('due_date', { ascending: true, nullsFirst: false }).limit(500),
+        client.from('motorcycle_documents').select('*').eq('owner_id', user.id).order('created_at', { ascending: false }).limit(500),
         client
           .from('maintenance_suggestions')
           .select('*')

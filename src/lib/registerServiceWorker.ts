@@ -1,3 +1,5 @@
+import { buildTime } from './appVersion'
+
 let isRefreshing = false
 
 function dispatchUpdateAvailable(registration: ServiceWorkerRegistration) {
@@ -25,7 +27,7 @@ export function registerServiceWorker() {
 
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register('/sw.js')
+      .register(`/sw.js?v=${encodeURIComponent(buildTime)}`)
       .then((registration) => {
         if (registration.waiting) {
           dispatchUpdateAvailable(registration)
