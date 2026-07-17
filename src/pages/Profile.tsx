@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { Calendar, Camera, Edit3, ExternalLink, Loader2, Mail, MapPin, Route, Save, Shield, UserRound, Users } from 'lucide-react'
+import { Calendar, Camera, Edit3, ExternalLink, Loader2, Mail, MapPin, Route, Save, Shield, Star, Store, UserRound, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ImageViewer } from '@/components/ImageViewer'
 import { useAuth } from '@/contexts/AuthContext'
+import { useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
 import type { Club, Motorcycle, Profile as ProfileType, RoutePlan } from '@/types/database'
 
@@ -143,6 +144,7 @@ function CompactMetricCard({
 
 export function Profile() {
   const { user, profile, refreshProfile } = useAuth()
+  const { effectivePlan } = useSubscription()
   const [form, setForm] = useState<ProfileForm>({
     full_name: '',
     username: '',
@@ -169,6 +171,8 @@ export function Profile() {
   const username = profile?.username || user?.email?.split('@')[0] || 'motocare'
   const avatarFallback = initials(profile?.full_name, user?.email)
   const socialUrl = normalizeUrl(profile?.social_url)
+  const isPremiumProfile = effectivePlan === 'pro' || effectivePlan === 'premium'
+  const isBusinessProfile = effectivePlan === 'business'
 
   const primaryBike = useMemo(
     () => motorcycles.find((motorcycle) => motorcycle.id === profile?.primary_motorcycle_id) ?? motorcycles[0] ?? null,
@@ -331,6 +335,24 @@ export function Profile() {
                   <AvatarFallback className="text-2xl sm:text-3xl">{avatarFallback}</AvatarFallback>
                 </Avatar>
               </button>
+                {isPremiumProfile && (
+                  <span
+                    className="absolute right-0 top-0 z-20 grid h-8 w-8 place-items-center rounded-full border-2 border-moto-darker bg-amber-400 text-amber-950 shadow-lg sm:h-10 sm:w-10"
+                    title="Licencia Premium"
+                    aria-label="Licencia Premium"
+                  >
+                    <Star className="h-4 w-4 fill-current sm:h-5 sm:w-5" />
+                  </span>
+                )}
+                {isBusinessProfile && (
+                  <span
+                    className="absolute right-0 top-0 z-20 grid h-8 w-8 place-items-center rounded-full border-2 border-moto-darker bg-violet-500 text-white shadow-lg sm:h-10 sm:w-10"
+                    title="Licencia Business"
+                    aria-label="Licencia Business"
+                  >
+                    <Store className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </span>
+                )}
                 <label className="absolute bottom-0 right-0 z-20 grid h-9 w-9 cursor-pointer place-items-center rounded-full border border-white/20 bg-moto-orange text-moto-darker shadow-lg sm:bottom-1 sm:right-1 sm:h-10 sm:w-10">
                   {isUploadingAvatar ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
                   <input
