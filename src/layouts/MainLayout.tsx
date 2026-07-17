@@ -15,6 +15,8 @@ import {
   ShoppingBag,
   LogOut,
   ShieldCheck,
+  Star,
+  Store,
   User,
   Users,
   Wrench,
@@ -24,6 +26,7 @@ import { AppUpdatePrompt } from '@/components/AppUpdatePrompt'
 import { MotoCareLogo } from '@/components/MotoCareLogo'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuth } from '@/contexts/AuthContext'
+import { useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
 import type { Notification } from '@/types/database'
 
@@ -116,12 +119,15 @@ export function MainLayout() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const { user, profile, signOut } = useAuth()
+  const { effectivePlan } = useSubscription()
   const location = useLocation()
   const userId = user?.id
 
   const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Motero MotoCare Co'
   const username = profile?.username || user?.email?.split('@')[0] || 'motocare'
   const avatarFallback = initials(profile?.full_name, user?.email)
+  const isPremiumProfile = effectivePlan === 'pro' || effectivePlan === 'premium'
+  const isBusinessProfile = effectivePlan === 'business'
 
   const pageTitle =
     (location.pathname.startsWith('/app/routes/') ? 'Detalle de ruta' : null) ||
@@ -328,10 +334,22 @@ export function MainLayout() {
 
         <div className="border-t border-white/5 p-4">
           <NavLink to="/app/profile" className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-white/5">
-            <Avatar className="h-10 w-10 bg-moto-gray">
-              <AvatarImage src={profile?.avatar_url ?? undefined} />
-              <AvatarFallback>{avatarFallback}</AvatarFallback>
-            </Avatar>
+            <div className="relative shrink-0">
+              <Avatar className="h-10 w-10 bg-moto-gray">
+                <AvatarImage src={profile?.avatar_url ?? undefined} />
+                <AvatarFallback>{avatarFallback}</AvatarFallback>
+              </Avatar>
+              {isPremiumProfile && (
+                <span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full border-2 border-moto-darker bg-amber-400 text-amber-950" title="Licencia Premium" aria-label="Licencia Premium">
+                  <Star className="h-2.5 w-2.5 fill-current" />
+                </span>
+              )}
+              {isBusinessProfile && (
+                <span className="absolute -right-1 -top-1 grid h-5 w-5 place-items-center rounded-full border-2 border-moto-darker bg-violet-500 text-white" title="Licencia Business" aria-label="Licencia Business">
+                  <Store className="h-2.5 w-2.5" />
+                </span>
+              )}
+            </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold">{displayName}</p>
               <p className="truncate text-xs text-gray-500">@{username}</p>
@@ -434,10 +452,22 @@ export function MainLayout() {
               </div>
 
               <NavLink to="/app/profile" className="lg:hidden">
-                <Avatar className="h-8 w-8 bg-moto-gray">
-                  <AvatarImage src={profile?.avatar_url ?? undefined} />
-                  <AvatarFallback className="text-xs">{avatarFallback}</AvatarFallback>
-                </Avatar>
+                <div className="relative">
+                  <Avatar className="h-8 w-8 bg-moto-gray">
+                    <AvatarImage src={profile?.avatar_url ?? undefined} />
+                    <AvatarFallback className="text-xs">{avatarFallback}</AvatarFallback>
+                  </Avatar>
+                  {isPremiumProfile && (
+                    <span className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full border border-moto-darker bg-amber-400 text-amber-950" title="Licencia Premium" aria-label="Licencia Premium">
+                      <Star className="h-2.5 w-2.5 fill-current" />
+                    </span>
+                  )}
+                  {isBusinessProfile && (
+                    <span className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full border border-moto-darker bg-violet-500 text-white" title="Licencia Business" aria-label="Licencia Business">
+                      <Store className="h-2.5 w-2.5" />
+                    </span>
+                  )}
+                </div>
               </NavLink>
             </div>
           </div>

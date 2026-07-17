@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { AlertTriangle, Bell, Bike, Calendar, CheckCircle2, FileText, Loader2, MapPinned, Plus, Settings, UserPlus, Wrench, X } from 'lucide-react'
+import { AlertTriangle, Bell, Bike, Calendar, CheckCircle2, FileText, Loader2, MapPinned, Plus, Settings, Star, Store, UserPlus, Wrench, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -332,10 +332,22 @@ export function Home() {
     <div className="mx-auto max-w-7xl p-4 pb-24 lg:p-6">
       <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
         <div className="flex items-center gap-4">
-          <Avatar className="h-14 w-14 bg-moto-gray">
-            <AvatarImage src={profile?.avatar_url ?? undefined} />
-            <AvatarFallback>{initials(profile?.full_name, user?.email)}</AvatarFallback>
-          </Avatar>
+          <div className="relative shrink-0">
+            <Avatar className="h-14 w-14 bg-moto-gray">
+              <AvatarImage src={profile?.avatar_url ?? undefined} />
+              <AvatarFallback>{initials(profile?.full_name, user?.email)}</AvatarFallback>
+            </Avatar>
+            {(effectivePlan === 'pro' || effectivePlan === 'premium') && (
+              <span className="absolute -right-1 -top-1 grid h-6 w-6 place-items-center rounded-full border-2 border-moto-dark bg-amber-400 text-amber-950 shadow-lg" title="Licencia Premium" aria-label="Licencia Premium">
+                <Star className="h-3 w-3 fill-current" />
+              </span>
+            )}
+            {effectivePlan === 'business' && (
+              <span className="absolute -right-1 -top-1 grid h-6 w-6 place-items-center rounded-full border-2 border-moto-dark bg-violet-500 text-white shadow-lg" title="Licencia Business" aria-label="Licencia Business">
+                <Store className="h-3 w-3" />
+              </span>
+            )}
+          </div>
           <div>
             <h1 className="text-2xl font-bold">Hola, {profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'motero'}</h1>
             <p className="text-gray-400">Este es el estado actual de tu MotoCare Co.</p>
