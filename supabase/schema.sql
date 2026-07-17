@@ -383,6 +383,11 @@ for all using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
 create policy "maintenance_suggestions_read_active" on public.maintenance_suggestions
 for select using (is_active = true);
 
+create policy "maintenance_suggestions_admin_write" on public.maintenance_suggestions
+for all
+using (public.is_current_user_admin())
+with check (public.is_current_user_admin());
+
 create policy "motorcycle_documents_own_all" on public.motorcycle_documents
 for all using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
 

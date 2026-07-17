@@ -1,11 +1,12 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { AlertTriangle, Ban, Bike, ChevronDown, ChevronUp, CreditCard, Database, Loader2, Lock, Route, Search, Shield, SlidersHorizontal, Trash2, Users } from 'lucide-react'
+import { AlertTriangle, Ban, Bike, ChevronDown, ChevronUp, CreditCard, Database, Edit3, Loader2, Lock, Plus, Route, Search, Shield, SlidersHorizontal, Trash2, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { appVersion, buildTime } from '@/lib/appVersion'
 import { supabase, supabaseUrl } from '@/lib/supabase'
 import type { AdminClubRow, AdminMaintenanceSuggestionRow, AdminModerationReportRow, AdminOverview, AdminUserRow, ModerationActionType } from '@/types/database'
@@ -13,6 +14,27 @@ import type { AdminClubRow, AdminMaintenanceSuggestionRow, AdminModerationReport
 type AdminTab = 'usuarios' | 'clubes' | 'moderacion' | 'catalogos'
 type UserPlan = AdminUserRow['plan']
 type UserPlanStatus = AdminUserRow['plan_status']
+type SuggestionForm = {
+  code: string
+  name: string
+  category: string
+  recommended_interval_km: string
+  recommended_interval_days: string
+  applies_to: string
+  sort_order: string
+  is_active: boolean
+}
+
+const emptySuggestionForm: SuggestionForm = {
+  code: '',
+  name: '',
+  category: 'general',
+  recommended_interval_km: '',
+  recommended_interval_days: '',
+  applies_to: 'all',
+  sort_order: '0',
+  is_active: true,
+}
 
 const emptyOverview: AdminOverview = {
   users: 0,
@@ -74,6 +96,10 @@ export function Admin() {
   const [hasAccess, setHasAccess] = useState(false)
   const [savingLicenseUserId, setSavingLicenseUserId] = useState<string | null>(null)
   const [savingModerationReportId, setSavingModerationReportId] = useState<string | null>(null)
+  const [editingSuggestion, setEditingSuggestion] = useState<AdminMaintenanceSuggestionRow | null>(null)
+  const [suggestionForm, setSuggestionForm] = useState<SuggestionForm>(emptySuggestionForm)
+  const [showSuggestionForm, setShowSuggestionForm] = useState(false)
+  const [isSavingSuggestion, setIsSavingSuggestion] = useState(false)
   const projectRef = useMemo(() => {
     if (!supabaseUrl) return 'Sin configurar'
     return supabaseUrl.replace('https://', '').split('.')[0]
@@ -245,6 +271,88 @@ export function Admin() {
     setSavingModerationReportId(null)
   }
 
+  const openAdminDetail = (tab: AdminTab, filter = '') => {
+    setActiveTab(tab)
+    setSearch(filter)
+    window.setTimeout(() => document.getElementById('admin-detail')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
+  }
+
+  const openCreateSuggestion = () => {
+    setEditingSuggestion(null)
+    setSuggestionForm(emptySuggestionForm)
+    setShowSuggestionForm(true)
+  }
+
+  const openEditSuggestion = (suggestion: AdminMaintenanceSuggestionRow) => {
+    setEditingSuggestion(suggestion)
+    setSuggestionForm({
+      code: suggestion.code,
+      name: suggestion.name,
+      category: suggestion.category,
+      recommended_interval_km: suggestion.recommended_interval_km?.toString() ?? '',
+      recommended_interval_days: suggestion.recommended_interval_days?.toString() ?? '',
+      applies_to: suggestion.applies_to,
+      sort_order: suggestion.sort_order.toString(),
+      is_active: suggestion.is_active,
+    })
+    setShowSuggestionForm(true)
+  }
+
+  const saveSuggestion = async () => {
+    if (!supabase || isSavingSuggestion) return
+    if (!suggestionForm.code.trim() || !suggestionForm.name.trim()) {
+      toast.error('Código y nombre son obligatorios')
+      return
+    }
+
+    setIsSavingSuggestion(true)
+    const payload = {
+      code: suggestionForm.code.trim().toLowerCase().replace(/\s+/g, '_'),
+      name: suggestionForm.name.trim(),
+      category: suggestionForm.category.trim() || 'general',
+      recommended_interval_km: suggestionForm.recommended_interval_km ? Number(suggestionForm.recommended_interval_km) : null,
+      recommended_interval_days: suggestionForm.recommended_interval_days ? Number(suggestionForm.recommended_interval_days) : null,
+      applies_to: suggestionForm.applies_to.trim() || 'all',
+      sort_order: Number(suggestionForm.sort_order) || 0,
+      is_active: suggestionForm.is_active,
+      updated_at: new Date().toISOString(),
+    }
+
+    const query = editingSuggestion
+      ? supabase.from('maintenance_suggestions').update(payload).eq('id', editingSuggestion.id)
+      : supabase.from('maintenance_suggestions').insert(payload)
+    const { error } = await query
+
+    if (error) {
+      toast.error('No pudimos guardar el registro', { description: error.message })
+    } else {
+      const { data } = await supabase.rpc('admin_maintenance_suggestions')
+      setSuggestions((data ?? []) as AdminMaintenanceSuggestionRow[])
+      const { data: nextOverview } = await supabase.rpc('admin_overview')
+      if (nextOverview) setOverview(nextOverview as AdminOverview)
+      setShowSuggestionForm(false)
+      toast.success(editingSuggestion ? 'Registro actualizado' : 'Registro agregado')
+    }
+    setIsSavingSuggestion(false)
+  }
+
+  const deleteSuggestion = async (suggestion: AdminMaintenanceSuggestionRow) => {
+    if (!supabase || isSavingSuggestion) return
+    if (!window.confirm(`¿Eliminar "${suggestion.name}" del catálogo? Esta acción no se puede deshacer.`)) return
+
+    setIsSavingSuggestion(true)
+    const { error } = await supabase.from('maintenance_suggestions').delete().eq('id', suggestion.id)
+    if (error) {
+      toast.error('No pudimos eliminar el registro', { description: error.message })
+    } else {
+      setSuggestions((current) => current.filter((item) => item.id !== suggestion.id))
+      const { data: nextOverview } = await supabase.rpc('admin_overview')
+      if (nextOverview) setOverview(nextOverview as AdminOverview)
+      toast.success('Registro eliminado')
+    }
+    setIsSavingSuggestion(false)
+  }
+
   if (isLoading) {
     return (
       <div className="grid min-h-[70vh] place-items-center text-moto-orange">
@@ -281,19 +389,19 @@ export function Admin() {
       </div>
 
       <div className="mb-4 grid grid-cols-4 gap-2 sm:mb-5 sm:gap-4 xl:grid-cols-8">
-        <MetricCard icon={Users} label="Usuarios" value={overview.users} detail={`${overview.private_users} privados`} />
-        <MetricCard icon={CreditCard} label="Free" value={overview.free_users} detail="Usuarios base" />
-        <MetricCard icon={CreditCard} label="Premium" value={overview.premium_users + overview.pro_users} detail="Incluye Pro legado" />
-        <MetricCard icon={Bike} label="Motos" value={overview.motorcycles} detail="Registradas" />
-        <MetricCard icon={Route} label="Rutas" value={overview.routes} detail={`${overview.community_routes} comunidad`} />
-        <MetricCard icon={Users} label="Clubes" value={overview.clubs} detail={`${overview.club_memberships} membresías`} />
-        <MetricCard icon={AlertTriangle} label="Invitaciones" value={overview.pending_club_invitations} detail="Pendientes" />
-        <MetricCard icon={SlidersHorizontal} label="Catálogo" value={overview.active_maintenance_suggestions} detail={`${overview.maintenance_suggestions} totales`} />
+        <MetricCard icon={Users} label="Usuarios" value={overview.users} detail={`${overview.private_users} privados`} onClick={() => openAdminDetail('usuarios')} />
+        <MetricCard icon={CreditCard} label="Free" value={overview.free_users} detail="Usuarios base" onClick={() => openAdminDetail('usuarios', 'free')} />
+        <MetricCard icon={CreditCard} label="Premium" value={overview.premium_users + overview.pro_users} detail="Incluye Pro legado" onClick={() => openAdminDetail('usuarios', 'premium')} />
+        <MetricCard icon={Bike} label="Motos" value={overview.motorcycles} detail="Registradas" onClick={() => openAdminDetail('usuarios')} />
+        <MetricCard icon={Route} label="Rutas" value={overview.routes} detail={`${overview.community_routes} comunidad`} onClick={() => openAdminDetail('usuarios')} />
+        <MetricCard icon={Users} label="Clubes" value={overview.clubs} detail={`${overview.club_memberships} membresías`} onClick={() => openAdminDetail('clubes')} />
+        <MetricCard icon={AlertTriangle} label="Invitaciones" value={overview.pending_club_invitations} detail="Pendientes" onClick={() => openAdminDetail('clubes')} />
+        <MetricCard icon={SlidersHorizontal} label="Catálogo" value={overview.active_maintenance_suggestions} detail={`${overview.maintenance_suggestions} totales`} onClick={() => openAdminDetail('catalogos')} />
       </div>
 
       <AppDataCard projectRef={projectRef} />
 
-      <Card className="mb-5 border-white/5 bg-moto-gray py-0">
+      <Card id="admin-detail" className="mb-5 scroll-mt-24 border-white/5 bg-moto-gray py-0">
         <CardContent className="flex flex-col gap-3 p-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap gap-2">
             <TabButton label="Usuarios" active={activeTab === 'usuarios'} onClick={() => setActiveTab('usuarios')} />
@@ -322,7 +430,43 @@ export function Admin() {
           onApplyAction={applyModerationAction}
         />
       )}
-      {activeTab === 'catalogos' && <SuggestionsTable suggestions={filteredSuggestions} />}
+      {activeTab === 'catalogos' && (
+        <SuggestionsTable
+          suggestions={filteredSuggestions}
+          isSaving={isSavingSuggestion}
+          onCreate={openCreateSuggestion}
+          onEdit={openEditSuggestion}
+          onDelete={deleteSuggestion}
+        />
+      )}
+
+      <Dialog open={showSuggestionForm} onOpenChange={setShowSuggestionForm}>
+        <DialogContent className="max-h-[90vh] max-w-xl overflow-y-auto border-white/10 bg-moto-gray text-white">
+          <DialogHeader>
+            <DialogTitle>{editingSuggestion ? 'Editar registro del catálogo' : 'Agregar registro al catálogo'}</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Configure el mantenimiento y sus intervalos recomendados.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+            <CatalogInput label="Código" value={suggestionForm.code} onChange={(value) => setSuggestionForm({ ...suggestionForm, code: value })} />
+            <CatalogInput label="Nombre" value={suggestionForm.name} onChange={(value) => setSuggestionForm({ ...suggestionForm, name: value })} />
+            <CatalogInput label="Categoría" value={suggestionForm.category} onChange={(value) => setSuggestionForm({ ...suggestionForm, category: value })} />
+            <CatalogInput label="Aplica a" value={suggestionForm.applies_to} onChange={(value) => setSuggestionForm({ ...suggestionForm, applies_to: value })} />
+            <CatalogInput label="Intervalo en km" type="number" value={suggestionForm.recommended_interval_km} onChange={(value) => setSuggestionForm({ ...suggestionForm, recommended_interval_km: value })} />
+            <CatalogInput label="Intervalo en días" type="number" value={suggestionForm.recommended_interval_days} onChange={(value) => setSuggestionForm({ ...suggestionForm, recommended_interval_days: value })} />
+            <CatalogInput label="Orden" type="number" value={suggestionForm.sort_order} onChange={(value) => setSuggestionForm({ ...suggestionForm, sort_order: value })} />
+            <label className="flex items-center gap-3 self-end rounded-xl border border-white/10 bg-moto-darker px-3 py-2.5 text-sm">
+              <input type="checkbox" checked={suggestionForm.is_active} onChange={(event) => setSuggestionForm({ ...suggestionForm, is_active: event.target.checked })} />
+              Registro activo
+            </label>
+          </div>
+          <Button className="mt-5 w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" disabled={isSavingSuggestion} onClick={saveSuggestion}>
+            {isSavingSuggestion ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            {editingSuggestion ? 'Guardar cambios' : 'Agregar registro'}
+          </Button>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -363,18 +507,20 @@ function AppDataCard({ projectRef }: { projectRef: string }) {
   )
 }
 
-function MetricCard({ icon: Icon, label, value, detail }: { icon: LucideIcon; label: string; value: number; detail: string }) {
+function MetricCard({ icon: Icon, label, value, detail, onClick }: { icon: LucideIcon; label: string; value: number; detail: string; onClick: () => void }) {
   return (
-    <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0">
-      <CardContent className="flex min-w-0 flex-col items-center gap-1.5 p-2 text-center sm:flex-row sm:gap-4 sm:p-4 sm:text-left">
-        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-moto-orange/20 text-moto-orange sm:h-11 sm:w-11 sm:rounded-xl">
-          <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
-        </div>
-        <div className="min-w-0">
-          <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">{label}</p>
-          <p className="truncate text-base font-bold leading-tight sm:text-xl">{value.toLocaleString()}</p>
-          <p className="hidden truncate text-xs text-gray-500 sm:block">{detail}</p>
-        </div>
+    <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0 transition-colors hover:border-moto-orange/40 hover:bg-white/[0.04]">
+      <CardContent className="p-0">
+        <button type="button" className="flex w-full min-w-0 flex-col items-center gap-1.5 p-2 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-moto-orange sm:flex-row sm:gap-4 sm:p-4 sm:text-left" onClick={onClick} aria-label={`Ver detalle de ${label}`}>
+          <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-moto-orange/20 text-moto-orange sm:h-11 sm:w-11 sm:rounded-xl">
+            <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+          </div>
+          <div className="min-w-0">
+            <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">{label}</p>
+            <p className="truncate text-base font-bold leading-tight sm:text-xl">{value.toLocaleString()}</p>
+            <p className="hidden truncate text-xs text-gray-500 sm:block">{detail}</p>
+          </div>
+        </button>
       </CardContent>
     </Card>
   )
@@ -675,11 +821,29 @@ function ModerationTable({
   )
 }
 
-function SuggestionsTable({ suggestions }: { suggestions: AdminMaintenanceSuggestionRow[] }) {
+function SuggestionsTable({
+  suggestions,
+  isSaving,
+  onCreate,
+  onEdit,
+  onDelete,
+}: {
+  suggestions: AdminMaintenanceSuggestionRow[]
+  isSaving: boolean
+  onCreate: () => void
+  onEdit: (suggestion: AdminMaintenanceSuggestionRow) => void
+  onDelete: (suggestion: AdminMaintenanceSuggestionRow) => void
+}) {
   return (
     <AdminTable title="Catálogo de mantenimientos" description="Vista operativa del catálogo que alimenta recordatorios y servicios.">
+      <div className="flex justify-end border-t border-white/5 p-4">
+        <Button className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark sm:w-auto" onClick={onCreate}>
+          <Plus className="mr-2 h-4 w-4" />
+          Agregar registro
+        </Button>
+      </div>
       {suggestions.map((item) => (
-        <div key={item.id} className="grid gap-3 border-t border-white/5 p-4 md:grid-cols-[minmax(0,1.5fr)_130px_120px_120px_120px] md:items-center">
+        <div key={item.id} className="grid gap-3 border-t border-white/5 p-4 md:grid-cols-[minmax(0,1.5fr)_110px_90px_90px_70px_170px] md:items-center">
           <div className="min-w-0">
             <div className="mb-1 flex flex-wrap items-center gap-2">
               <p className="truncate font-medium">{item.name}</p>
@@ -693,9 +857,43 @@ function SuggestionsTable({ suggestions }: { suggestions: AdminMaintenanceSugges
           <AdminValue label="Km" value={item.recommended_interval_km ? item.recommended_interval_km.toLocaleString() : 'N/A'} />
           <AdminValue label="Dias" value={item.recommended_interval_days ? item.recommended_interval_days.toLocaleString() : 'N/A'} />
           <AdminValue label="Orden" value={item.sort_order.toString()} />
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" className="flex-1 border-white/10" disabled={isSaving} onClick={() => onEdit(item)}>
+              <Edit3 className="mr-1.5 h-4 w-4" />
+              Editar
+            </Button>
+            <Button size="sm" variant="outline" className="border-red-500/30 text-red-300 hover:text-red-200" disabled={isSaving} onClick={() => onDelete(item)} aria-label={`Eliminar ${item.name}`}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       ))}
     </AdminTable>
+  )
+}
+
+function CatalogInput({
+  label,
+  value,
+  onChange,
+  type = 'text',
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  type?: 'text' | 'number'
+}) {
+  return (
+    <label>
+      <span className="mb-1 block text-sm text-gray-400">{label}</span>
+      <input
+        type={type}
+        min={type === 'number' ? 0 : undefined}
+        className="w-full rounded-xl border border-white/10 bg-moto-darker px-3 py-2.5 text-sm text-white outline-none focus:border-moto-orange/60"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </label>
   )
 }
 

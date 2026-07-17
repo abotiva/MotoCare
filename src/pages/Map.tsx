@@ -276,18 +276,22 @@ function RouteCard({
   )
 }
 
+type RouteMetric = 'routes' | 'kilometers' | 'shared' | 'completed'
+
 function CompactMetricCard({
   icon: Icon,
   label,
   mobileLabel,
   value,
   tone,
+  onClick,
 }: {
   icon: LucideIcon
   label: string
   mobileLabel?: string
   value: string | number
   tone: 'orange' | 'yellow' | 'green'
+  onClick: () => void
 }) {
   const tones = {
     orange: 'bg-moto-orange/20 text-moto-orange',
@@ -296,18 +300,25 @@ function CompactMetricCard({
   }
 
   return (
-    <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0">
-      <CardContent className="flex min-w-0 flex-col items-center gap-1.5 p-2 text-center sm:flex-row sm:gap-4 sm:p-4 sm:text-left">
-        <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg sm:h-12 sm:w-12 sm:rounded-xl ${tones[tone]}`}>
-          <Icon className="h-4 w-4 sm:h-6 sm:w-6" />
-        </div>
-        <div className="min-w-0">
-          <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">
-            <span className="sm:hidden">{mobileLabel ?? label}</span>
-            <span className="hidden sm:inline">{label}</span>
-          </p>
-          <p className="truncate text-base font-bold leading-tight sm:text-xl">{value}</p>
-        </div>
+    <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0 transition-colors hover:border-moto-orange/40 hover:bg-white/[0.04]">
+      <CardContent className="p-0">
+        <button
+          type="button"
+          className="flex w-full min-w-0 flex-col items-center gap-1.5 p-2 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-moto-orange sm:flex-row sm:gap-4 sm:p-4 sm:text-left"
+          onClick={onClick}
+          aria-label={`Ver detalle de ${label}`}
+        >
+          <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg sm:h-12 sm:w-12 sm:rounded-xl ${tones[tone]}`}>
+            <Icon className="h-4 w-4 sm:h-6 sm:w-6" />
+          </div>
+          <div className="min-w-0">
+            <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">
+              <span className="sm:hidden">{mobileLabel ?? label}</span>
+              <span className="hidden sm:inline">{label}</span>
+            </p>
+            <p className="truncate text-base font-bold leading-tight sm:text-xl">{value}</p>
+          </div>
+        </button>
       </CardContent>
     </Card>
   )
@@ -325,6 +336,7 @@ export function Map() {
   const [selectedRoute, setSelectedRoute] = useState<RoutePlan | null>(null)
   const [showCreateRoute, setShowCreateRoute] = useState(false)
   const [showRouteDetail, setShowRouteDetail] = useState(false)
+  const [selectedMetric, setSelectedMetric] = useState<RouteMetric | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -342,6 +354,32 @@ export function Map() {
     () => myRoutes.filter((route) => route.status === 'completed').length,
     [myRoutes]
   )
+
+  const metricRoutes = useMemo(() => {
+    if (selectedMetric === 'shared') return myRoutes.filter((route) => route.visibility === 'community')
+    if (selectedMetric === 'completed') return myRoutes.filter((route) => route.status === 'completed')
+    if (selectedMetric === 'kilometers') return myRoutes.filter((route) => (route.distance_km ?? 0) > 0)
+    return myRoutes
+  }, [myRoutes, selectedMetric])
+
+  const metricCopy = {
+    routes: {
+      title: 'Detalle de mis rutas',
+      description: `${myRoutes.length} ruta${myRoutes.length === 1 ? '' : 's'} guardada${myRoutes.length === 1 ? '' : 's'}.`,
+    },
+    kilometers: {
+      title: 'Detalle de kilómetros',
+      description: `${totalKm.toLocaleString()} km planeados entre ${metricRoutes.length} ruta${metricRoutes.length === 1 ? '' : 's'} con distancia registrada.`,
+    },
+    shared: {
+      title: 'Detalle de rutas compartidas',
+      description: `${sharedCount} ruta${sharedCount === 1 ? '' : 's'} visible${sharedCount === 1 ? '' : 's'} para la comunidad.`,
+    },
+    completed: {
+      title: 'Detalle de rutas realizadas',
+      description: `${completedCount} ruta${completedCount === 1 ? '' : 's'} marcada${completedCount === 1 ? '' : 's'} como realizada${completedCount === 1 ? '' : 's'}.`,
+    },
+  } satisfies Record<RouteMetric, { title: string; description: string }>
 
   const motorcyclesById = useMemo(() => new globalThis.Map(motorcycles.map((motorcycle) => [motorcycle.id, motorcycle])), [motorcycles])
 
@@ -654,10 +692,10 @@ export function Map() {
       </div>
 
       <div className="mb-4 grid grid-cols-4 gap-2 sm:mb-5 sm:gap-4">
-        <CompactMetricCard icon={Route} label="Mis rutas" mobileLabel="Rutas" value={myRoutes.length} tone="orange" />
-        <CompactMetricCard icon={Navigation} label="Km planeados" mobileLabel="Km" value={`${totalKm.toLocaleString()} km`} tone="green" />
-        <CompactMetricCard icon={Eye} label="Mis compartidas" mobileLabel="Compart." value={sharedCount} tone="yellow" />
-        <CompactMetricCard icon={CheckCircle2} label="Realizadas" mobileLabel="Hechas" value={completedCount} tone="green" />
+        <CompactMetricCard icon={Route} label="Mis rutas" mobileLabel="Rutas" value={myRoutes.length} tone="orange" onClick={() => setSelectedMetric('routes')} />
+        <CompactMetricCard icon={Navigation} label="Km planeados" mobileLabel="Km" value={`${totalKm.toLocaleString()} km`} tone="green" onClick={() => setSelectedMetric('kilometers')} />
+        <CompactMetricCard icon={Eye} label="Mis compartidas" mobileLabel="Compart." value={sharedCount} tone="yellow" onClick={() => setSelectedMetric('shared')} />
+        <CompactMetricCard icon={CheckCircle2} label="Realizadas" mobileLabel="Hechas" value={completedCount} tone="green" onClick={() => setSelectedMetric('completed')} />
       </div>
 
       {!canUseRoutes && (
@@ -708,6 +746,50 @@ export function Map() {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={selectedMetric !== null} onOpenChange={(open) => !open && setSelectedMetric(null)}>
+        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto border-white/10 bg-moto-gray text-white">
+          <DialogHeader>
+            <DialogTitle>{selectedMetric ? metricCopy[selectedMetric].title : 'Detalle de rutas'}</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              {selectedMetric ? metricCopy[selectedMetric].description : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-2 space-y-3">
+            {metricRoutes.length > 0 ? (
+              metricRoutes.map((route) => {
+                const status = getRouteStatus(route)
+                return (
+                  <button
+                    key={route.id}
+                    type="button"
+                    className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/5 bg-moto-darker p-4 text-left transition-colors hover:border-moto-orange/40"
+                    onClick={() => {
+                      setSelectedMetric(null)
+                      openRouteDetail(route)
+                    }}
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold">{route.title}</p>
+                      <p className="mt-1 truncate text-sm text-gray-400">
+                        {route.origin || 'Origen sin definir'}{' → '}{route.destination || 'Destino sin definir'}
+                      </p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="font-semibold text-moto-orange">{(route.distance_km ?? 0).toLocaleString()} km</p>
+                      <p className="mt-1 text-xs text-gray-400">{status.label}</p>
+                    </div>
+                  </button>
+                )
+              })
+            ) : (
+              <div className="rounded-xl border border-dashed border-white/10 p-8 text-center text-sm text-gray-400">
+                No hay rutas para mostrar en este detalle.
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showCreateRoute} onOpenChange={(open) => {
         setShowCreateRoute(open)

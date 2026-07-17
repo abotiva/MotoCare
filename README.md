@@ -10,12 +10,14 @@ Estado actual: **MVP Alpha**. No es una version publica 1.0.
 - Perfil de usuario con avatar, bio, ciudad, moto principal y clubes.
 - Hoja de vida: motos, documentos, kilometraje, mantenimientos realizados, recordatorios y pendientes programados.
 - Dashboard principal enfocado en motos, servicios, programados y documentos.
+- Tarjetas de resumen interactivas en Perfil, Rutas, Comunidad, Notificaciones y Administracion, con acceso al detalle o filtro relacionado.
 - Rutas: creacion manual, estado, fechas, notificaciones y mapas embebidos. Esta funcionalidad queda orientada a Premium.
 - Comunidad: publicaciones, imagenes, likes, comentarios y rutas adjuntas. Esta funcionalidad queda orientada a Premium.
 - Clubes: crear club, editar informacion, imagen, miembros y mensajes privados. Esta funcionalidad queda orientada a Premium.
 - Explorar: modulo retirado de la navegacion activa; las rutas comunitarias se reservaran para Premium.
 - Tienda/Marketplace: pantalla visual en estado proximamente.
 - Ajustes basicos de cuenta y preferencias locales.
+- Panel administrativo con gestion de licencias, moderacion y CRUD del catalogo de mantenimientos.
 
 ## Arquitectura de producto
 
@@ -66,6 +68,9 @@ Para bases existentes, revisar y ejecutar las migraciones necesarias en `supabas
 - `storage_migration.sql`
 - `storage_delete_policy_migration.sql`
 - `clubs_migration.sql`
+- `admin_catalog_crud_migration.sql`
+
+La migracion `admin_catalog_crud_migration.sql` permite crear, editar, activar, desactivar y eliminar elementos del catalogo exclusivamente a usuarios registrados en `public.app_admins`.
 
 ## Google Maps
 

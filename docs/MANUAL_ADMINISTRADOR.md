@@ -49,6 +49,21 @@ La app usa estos valores para llenar automaticamente el titulo, kilometraje obje
 
 El mismo catalogo tambien alimenta el formulario **Registrar servicio**. En ese caso, la sugerencia llena automaticamente el tipo de servicio y propone el proximo kilometraje o fecha de servicio. El usuario puede editar esos valores antes de guardar.
 
+Desde **Administracion > Catalogos**, un administrador puede:
+
+- agregar registros;
+- editar codigo, nombre, categoria, aplicacion, intervalos y orden;
+- activar o desactivar registros;
+- eliminar registros con confirmacion.
+
+En una base existente debe ejecutarse:
+
+```txt
+supabase/admin_catalog_crud_migration.sql
+```
+
+La politica creada por esta migracion permite escritura solamente cuando `is_current_user_admin()` devuelve verdadero.
+
 ## Recordatorios por kilometraje
 
 Los recordatorios se guardan en la tabla:
@@ -377,6 +392,8 @@ El panel incluye:
 - administracion manual de licencias `Free` y `Premium`
 - listado de clubes con metricas
 - catalogo de mantenimientos sugeridos
+
+Las tarjetas superiores del panel son interactivas. Cada una abre la pestaña operativa relacionada y, cuando corresponde, aplica el filtro de licencia. Usuarios, motos y rutas llevan al detalle por usuario; clubes e invitaciones llevan a Clubes; catalogo lleva a la gestion de mantenimientos sugeridos.
 
 Las consultas se sirven por funciones RPC `security definer` que validan `public.is_current_user_admin()` antes de devolver datos.
 

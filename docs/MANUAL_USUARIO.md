@@ -167,6 +167,12 @@ Funciones disponibles:
 
 La foto de perfil se guarda en Supabase Storage y la informacion se actualiza en la tabla `profiles`.
 
+Los bloques de resumen del perfil son interactivos:
+
+- **Tipo de motero** abre la edicion del perfil.
+- **Rutas creadas** y **Km en rutas** abren el detalle de las rutas recientes.
+- **Publicaciones** abre el modulo Comunidad.
+
 ## Perfil publico o privado
 
 El usuario puede controlar la visibilidad de su perfil desde **Mi perfil** o **Ajustes**.
@@ -200,6 +206,8 @@ Funciones disponibles:
 - cambiar la moto asociada a una ruta propia
 - eliminar una ruta propia
 - cambiar una ruta propia entre privada y comunidad
+
+Los bloques **Rutas**, **Km**, **Compartidas** y **Hechas** abren un detalle filtrado. Desde ese resumen se puede entrar al detalle completo de una ruta.
 - cambiar el estado de una ruta propia
 
 ## Comunidad
@@ -227,6 +235,12 @@ Funciones disponibles:
 - usar la pestana **Club privado** para mensajes internos de los clubes a los que pertenece
 
 Si se adjunta una ruta privada a una publicacion, la app la marca como visible para comunidad.
+
+Los bloques **Publicaciones**, **Mias** y **Rutas publicadas** abren el listado correspondiente. Al seleccionar un elemento, la pantalla se desplaza hasta la publicacion dentro del feed.
+
+## Centro de notificaciones
+
+Los bloques **Pendientes**, **Rutas**, **Clubes** y **Moderacion** funcionan como filtros directos del centro de notificaciones y llevan al listado correspondiente.
 
 Las imagenes de publicaciones aceptan archivos de imagen de hasta 5 MB cada una. En esta version se pueden adjuntar hasta 6 imagenes por publicacion.
 

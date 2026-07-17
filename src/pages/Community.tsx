@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ImageViewer } from '@/components/ImageViewer'
 import { useAuth } from '@/contexts/AuthContext'
@@ -15,6 +16,7 @@ import { supabase } from '@/lib/supabase'
 import type { Club, ClubPostWithAuthor, PostCommentWithAuthor, PostWithAuthor, RoutePlan } from '@/types/database'
 
 type LikeState = Record<string, { count: number; likedByMe: boolean }>
+type CommunityMetric = 'posts' | 'mine' | 'routes'
 type PublicProfileSummary = {
   id: string
   full_name: string | null
@@ -86,12 +88,14 @@ function CompactMetricCard({
   mobileLabel,
   value,
   tone,
+  onClick,
 }: {
   icon: LucideIcon
   label: string
   mobileLabel?: string
   value: string | number
   tone: 'orange' | 'green' | 'sky'
+  onClick: () => void
 }) {
   const tones = {
     orange: 'bg-moto-orange/20 text-moto-orange',
@@ -100,18 +104,25 @@ function CompactMetricCard({
   }
 
   return (
-    <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0">
-      <CardContent className="flex min-w-0 flex-col items-center gap-1.5 p-2 text-center sm:flex-row sm:gap-4 sm:p-4 sm:text-left">
-        <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg sm:h-12 sm:w-12 sm:rounded-xl ${tones[tone]}`}>
-          <Icon className="h-4 w-4 sm:h-6 sm:w-6" />
-        </div>
-        <div className="min-w-0">
-          <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">
-            <span className="sm:hidden">{mobileLabel ?? label}</span>
-            <span className="hidden sm:inline">{label}</span>
-          </p>
-          <p className="truncate text-base font-bold leading-tight sm:text-xl">{value}</p>
-        </div>
+    <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0 transition-colors hover:border-moto-orange/40 hover:bg-white/[0.04]">
+      <CardContent className="p-0">
+        <button
+          type="button"
+          className="flex w-full min-w-0 flex-col items-center gap-1.5 p-2 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-moto-orange sm:flex-row sm:gap-4 sm:p-4 sm:text-left"
+          onClick={onClick}
+          aria-label={`Ver detalle de ${label}`}
+        >
+          <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg sm:h-12 sm:w-12 sm:rounded-xl ${tones[tone]}`}>
+            <Icon className="h-4 w-4 sm:h-6 sm:w-6" />
+          </div>
+          <div className="min-w-0">
+            <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">
+              <span className="sm:hidden">{mobileLabel ?? label}</span>
+              <span className="hidden sm:inline">{label}</span>
+            </p>
+            <p className="truncate text-base font-bold leading-tight sm:text-xl">{value}</p>
+          </div>
+        </button>
       </CardContent>
     </Card>
   )
@@ -146,9 +157,29 @@ export function Community() {
   const [commentingPostId, setCommentingPostId] = useState<string | null>(null)
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null)
   const [viewerImage, setViewerImage] = useState<{ src: string; alt: string } | null>(null)
+  const [selectedMetric, setSelectedMetric] = useState<CommunityMetric | null>(null)
 
   const myPostsCount = useMemo(() => posts.filter((post) => post.author_id === user?.id).length, [posts, user?.id])
   const routePostsCount = useMemo(() => posts.filter((post) => post.route_id).length, [posts])
+  const metricPosts = useMemo(() => {
+    if (selectedMetric === 'mine') return posts.filter((post) => post.author_id === user?.id)
+    if (selectedMetric === 'routes') return posts.filter((post) => post.route_id)
+    return posts
+  }, [posts, selectedMetric, user?.id])
+  const metricCopy = {
+    posts: {
+      title: 'Detalle de publicaciones',
+      description: `${posts.length} publicación${posts.length === 1 ? '' : 'es'} en la comunidad pública.`,
+    },
+    mine: {
+      title: 'Detalle de mis publicaciones',
+      description: `${myPostsCount} publicación${myPostsCount === 1 ? '' : 'es'} creada${myPostsCount === 1 ? '' : 's'} por ti.`,
+    },
+    routes: {
+      title: 'Detalle de rutas publicadas',
+      description: `${routePostsCount} publicación${routePostsCount === 1 ? '' : 'es'} con una ruta adjunta.`,
+    },
+  } satisfies Record<CommunityMetric, { title: string; description: string }>
   const selectedClub = useMemo(() => myClubs.find((club) => club.id === selectedClubId) ?? myClubs[0] ?? null, [myClubs, selectedClubId])
   const onlineProfilesCount = useMemo(() => publicProfiles.filter((item) => isOnline(item.last_seen_at)).length, [publicProfiles])
   const visibleProfiles = useMemo(
@@ -676,10 +707,52 @@ export function Community() {
       </div>
 
       <div className="mb-4 grid grid-cols-3 gap-2 sm:mb-5 sm:gap-4">
-        <CompactMetricCard icon={Users} label="Publicaciones" mobileLabel="Posts" value={posts.length} tone="orange" />
-        <CompactMetricCard icon={Send} label="Mías" mobileLabel="Mías" value={myPostsCount} tone="green" />
-        <CompactMetricCard icon={RouteIcon} label="Rutas publicadas" mobileLabel="Rutas" value={routePostsCount} tone="sky" />
+        <CompactMetricCard icon={Users} label="Publicaciones" mobileLabel="Posts" value={posts.length} tone="orange" onClick={() => setSelectedMetric('posts')} />
+        <CompactMetricCard icon={Send} label="Mías" mobileLabel="Mías" value={myPostsCount} tone="green" onClick={() => setSelectedMetric('mine')} />
+        <CompactMetricCard icon={RouteIcon} label="Rutas publicadas" mobileLabel="Rutas" value={routePostsCount} tone="sky" onClick={() => setSelectedMetric('routes')} />
       </div>
+
+      <Dialog open={selectedMetric !== null} onOpenChange={(open) => !open && setSelectedMetric(null)}>
+        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto border-white/10 bg-moto-gray text-white">
+          <DialogHeader>
+            <DialogTitle>{selectedMetric ? metricCopy[selectedMetric].title : 'Detalle de comunidad'}</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              {selectedMetric ? metricCopy[selectedMetric].description : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-2 space-y-3">
+            {metricPosts.length > 0 ? (
+              metricPosts.map((post) => {
+                const authorName = post.profiles?.full_name || post.profiles?.username || 'Motero MotoCare Co'
+                return (
+                  <button
+                    key={post.id}
+                    type="button"
+                    className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/5 bg-moto-darker p-4 text-left transition-colors hover:border-moto-orange/40"
+                    onClick={() => {
+                      setSelectedMetric(null)
+                      window.setTimeout(() => document.getElementById(`post-${post.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150)
+                    }}
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold">{authorName}</p>
+                      <p className="mt-1 line-clamp-2 text-sm text-gray-400">{post.content || 'Publicación con contenido adjunto'}</p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="text-xs text-gray-400">{relativeDate(post.created_at)}</p>
+                      {post.routes && <p className="mt-1 max-w-32 truncate text-xs font-medium text-moto-orange">{post.routes.title}</p>}
+                    </div>
+                  </button>
+                )
+              })
+            ) : (
+              <div className="rounded-xl border border-dashed border-white/10 p-8 text-center text-sm text-gray-400">
+                No hay publicaciones para mostrar en este detalle.
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Tabs defaultValue="public" className="w-full min-w-0">
         <TabsList className="mb-5 grid h-auto w-full grid-cols-2 gap-1 border-white/5 bg-moto-gray p-1">
@@ -785,7 +858,7 @@ export function Community() {
                   ? [post.image_url]
                   : []
               return (
-                <Card key={post.id} className="overflow-hidden border-white/5 bg-moto-gray py-0">
+                <Card id={`post-${post.id}`} key={post.id} className="scroll-mt-24 overflow-hidden border-white/5 bg-moto-gray py-0">
                   <CardHeader className="p-4 pb-0">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="flex min-w-0 items-center gap-3">

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Calendar, Camera, Edit3, ExternalLink, Loader2, Mail, MapPin, Route, Save, Shield, Star, Store, UserRound, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { toast } from 'sonner'
@@ -145,6 +145,7 @@ function CompactMetricCard({
 export function Profile() {
   const { user, profile, refreshProfile } = useAuth()
   const { effectivePlan } = useSubscription()
+  const navigate = useNavigate()
   const [form, setForm] = useState<ProfileForm>({
     full_name: '',
     username: '',
@@ -449,10 +450,10 @@ export function Profile() {
       </Card>
 
       <div className="mb-4 grid grid-cols-4 gap-2 sm:mb-5 sm:gap-4">
-        <CompactMetricCard icon={UserRound} label="Tipo de motero" mobileLabel="Tipo" value={profile?.rider_type || 'Sin definir'} tone="orange" />
+        <CompactMetricCard icon={UserRound} label="Tipo de motero" mobileLabel="Tipo" value={profile?.rider_type || 'Sin definir'} tone="orange" onClick={() => setShowEditProfile(true)} />
         <CompactMetricCard icon={Route} label="Rutas creadas" mobileLabel="Rutas" value={stats.routes} tone="green" onClick={() => setShowRoutesPreview(true)} />
-        <CompactMetricCard icon={Route} label="Km en rutas" mobileLabel="Km" value={`${routes.reduce((total, route) => total + (route.distance_km ?? 0), 0).toLocaleString()} km`} tone="green" />
-        <CompactMetricCard icon={UserRound} label="Publicaciones" mobileLabel="Posts" value={stats.posts} tone="yellow" />
+        <CompactMetricCard icon={Route} label="Km en rutas" mobileLabel="Km" value={`${routes.reduce((total, route) => total + (route.distance_km ?? 0), 0).toLocaleString()} km`} tone="green" onClick={() => setShowRoutesPreview(true)} />
+        <CompactMetricCard icon={UserRound} label="Publicaciones" mobileLabel="Posts" value={stats.posts} tone="yellow" onClick={() => navigate('/app/messages')} />
       </div>
 
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">

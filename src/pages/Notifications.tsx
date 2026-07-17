@@ -197,10 +197,10 @@ export function Notifications() {
       </div>
 
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <MetricCard icon={Bell} label="Pendientes" value={unreadCount} />
-        <MetricCard icon={Route} label="Rutas" value={routeCount} />
-        <MetricCard icon={Users} label="Clubes" value={clubCount} />
-        <MetricCard icon={ShieldAlert} label="Moderación" value={moderationCount} />
+        <MetricCard icon={Bell} label="Pendientes" value={unreadCount} onClick={() => setFilter('unread')} />
+        <MetricCard icon={Route} label="Rutas" value={routeCount} onClick={() => setFilter('routes')} />
+        <MetricCard icon={Users} label="Clubes" value={clubCount} onClick={() => setFilter('clubs')} />
+        <MetricCard icon={ShieldAlert} label="Moderación" value={moderationCount} onClick={() => setFilter('moderation')} />
       </div>
 
       <Card className="mb-5 border-white/5 bg-moto-gray py-0">
@@ -224,7 +224,7 @@ export function Notifications() {
         </CardContent>
       </Card>
 
-      <div className="mb-5 grid grid-cols-2 gap-2 sm:flex">
+      <div id="notification-detail" className="mb-5 grid scroll-mt-24 grid-cols-2 gap-2 sm:flex">
         {filters.map((item) => (
           <button
             key={item.id}
@@ -267,19 +267,29 @@ export function Notifications() {
   )
 }
 
-function MetricCard({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: number }) {
+function MetricCard({ icon: Icon, label, value, onClick }: { icon: LucideIcon; label: string; value: number; onClick: () => void }) {
   return (
-    <Card className="border-white/5 bg-moto-gray py-0">
-      <CardContent className="p-3 sm:p-4">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-moto-orange/20">
-            <Icon className="h-5 w-5 text-moto-orange" />
+    <Card className="border-white/5 bg-moto-gray py-0 transition-colors hover:border-moto-orange/40 hover:bg-white/[0.04]">
+      <CardContent className="p-0">
+        <button
+          type="button"
+          className="w-full p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-moto-orange sm:p-4"
+          onClick={() => {
+            onClick()
+            window.setTimeout(() => document.getElementById('notification-detail')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
+          }}
+          aria-label={`Ver detalle de ${label}`}
+        >
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-moto-orange/20">
+              <Icon className="h-5 w-5 text-moto-orange" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 sm:text-sm">{label}</p>
+              <p className="text-xl font-bold">{value}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs text-gray-400 sm:text-sm">{label}</p>
-            <p className="text-xl font-bold">{value}</p>
-          </div>
-        </div>
+        </button>
       </CardContent>
     </Card>
   )
