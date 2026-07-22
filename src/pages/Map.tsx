@@ -766,7 +766,7 @@ export function Map() {
           setRouteForm(emptyRouteForm)
         }
       }}>
-        <DialogContent className="max-w-md border-white/10 bg-moto-gray text-white">
+        <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-md overflow-x-hidden overflow-y-auto overscroll-contain border-white/10 bg-moto-gray p-4 text-white sm:max-h-[90vh] sm:p-6">
           <DialogHeader>
             <DialogTitle>{editingRoute ? 'Editar ruta' : 'Nueva ruta'}</DialogTitle>
             <DialogDescription className="text-gray-400">
