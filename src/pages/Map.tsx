@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { Bike, Calendar, CheckCircle2, Clock, Edit3, Eye, EyeOff, Flag, Loader2, MapPin, Navigation, PlayCircle, Plus, Route, Save, Trash2 } from 'lucide-react'
+import { Bike, Calendar, CheckCircle2, Clock, Edit3, Eye, EyeOff, Flag, Loader2, Lock, MapPin, Navigation, PackageCheck, PlayCircle, Plus, Route, Save, Trash2 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -14,6 +14,7 @@ import { supabase } from '@/lib/supabase'
 import { GpxMap } from '@/components/GpxMap'
 import { parseGpx, trackDistanceKm } from '@/lib/gpx'
 import type { RouteTrack } from '@/lib/gpx'
+import { premiumRouteSummaries, readOwnedRouteIds } from '@/lib/premiumRoutePurchases'
 import type { Motorcycle, RoutePlan } from '@/types/database'
 
 type RouteForm = {
@@ -279,6 +280,7 @@ export function Map() {
   const { effectivePlan, hasPlan, isLoadingSubscription } = useSubscription()
   const canUseRoutes = effectivePlan !== 'business'
   const canShareRoutes = effectivePlan === 'pro' || effectivePlan === 'premium' || (effectivePlan !== 'business' && hasPlan('premium'))
+  const canUploadExternalGpx = effectivePlan === 'pro' || effectivePlan === 'premium'
   const [motorcycles, setMotorcycles] = useState<Motorcycle[]>([])
   const [myRoutes, setMyRoutes] = useState<RoutePlan[]>([])
   const [routeForm, setRouteForm] = useState<RouteForm>(emptyRouteForm)
@@ -289,6 +291,23 @@ export function Map() {
   const [selectedMetric, setSelectedMetric] = useState<RouteMetric | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [ownedPremiumRouteIds, setOwnedPremiumRouteIds] = useState(() => readOwnedRouteIds(user?.id))
+
+  const purchasedRoutes = useMemo(
+    () => premiumRouteSummaries.filter((route) => ownedPremiumRouteIds.includes(route.id)),
+    [ownedPremiumRouteIds],
+  )
+
+  useEffect(() => {
+    const refreshPurchasedRoutes = () => setOwnedPremiumRouteIds(readOwnedRouteIds(user?.id))
+    refreshPurchasedRoutes()
+    window.addEventListener('focus', refreshPurchasedRoutes)
+    window.addEventListener('motocare:premium-routes-updated', refreshPurchasedRoutes)
+    return () => {
+      window.removeEventListener('focus', refreshPurchasedRoutes)
+      window.removeEventListener('motocare:premium-routes-updated', refreshPurchasedRoutes)
+    }
+  }, [user?.id])
 
   const totalKm = useMemo(
     () => myRoutes.reduce((total, route) => total + (route.distance_km ?? 0), 0),
@@ -412,12 +431,20 @@ export function Map() {
   }
 
   const loadDemoGpx = async () => {
+    if (purchasedRoutes.length === 0) {
+      toast.error('No tienes rutas compradas', { description: 'Compra una ruta en MotoCare para usar el GPX incluido.' })
+      return
+    }
     try { const response = await fetch('/demo-guatavita.gpx'); if (!response.ok) throw new Error('No pudimos cargar el GPX demo.'); applyGpx(parseGpx(await response.text(), 'demo-guatavita.gpx')) }
     catch (error) { toast.error('GPX demo no disponible', { description: error instanceof Error ? error.message : 'Intenta nuevamente.' }) }
   }
 
   const handleGpxFile = async (file?: File) => {
     if (!file) return
+    if (!canUploadExternalGpx) {
+      toast.error('Función Premium', { description: 'Subir archivos GPX externos requiere una licencia Premium.' })
+      return
+    }
     if (!file.name.toLowerCase().endsWith('.gpx')) return toast.error('Selecciona un archivo .gpx')
     try { applyGpx(parseGpx(await file.text(), file.name)) }
     catch (error) { toast.error('No pudimos leer el GPX', { description: error instanceof Error ? error.message : 'Revisa el archivo.' }) }
@@ -674,6 +701,39 @@ export function Map() {
         </Card>
       )}
 
+      <Card className="mb-5 border-moto-orange/20 bg-moto-gray py-0">
+        <CardContent className="p-5">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+            <div>
+              <div className="flex items-center gap-2">
+                <PackageCheck className="h-5 w-5 text-moto-orange" />
+                <h2 className="font-semibold">Rutas compradas</h2>
+              </div>
+              <p className="mt-1 text-sm text-gray-400">Sus GPX incluidos están disponibles para cualquier licencia.</p>
+            </div>
+            <Button asChild variant="outline" className="border-white/10">
+              <Link to="/app/premium-routes">Ver catálogo</Link>
+            </Button>
+          </div>
+          {purchasedRoutes.length > 0 ? (
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {purchasedRoutes.map((route) => (
+                <div key={route.id} className="rounded-xl border border-white/5 bg-moto-darker p-4">
+                  <Badge className="mb-2 bg-green-500/15 text-green-300">Comprada</Badge>
+                  <p className="font-semibold">{route.title}</p>
+                  <p className="mt-1 text-sm text-gray-400">{route.location}</p>
+                  <div className="mt-3 flex gap-2 text-xs text-gray-300">
+                    <span>{route.distance}</span><span>•</span><span>{route.terrain}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-4 rounded-xl border border-dashed border-white/10 p-4 text-sm text-gray-400">Aún no has comprado rutas.</p>
+          )}
+        </CardContent>
+      </Card>
+
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-3">
           {myRoutes.length > 0 ? (
@@ -806,8 +866,12 @@ export function Map() {
             <div className="overflow-hidden rounded-xl border border-white/10 bg-moto-darker">
               <GpxMap track={routeForm.track_geojson} />
               <div className="grid gap-2 border-t border-white/10 p-3 sm:grid-cols-2">
-                <label className="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-md border border-white/10 px-3 text-sm font-medium hover:bg-white/5">Importar GPX<input type="file" accept=".gpx,application/gpx+xml" className="sr-only" onChange={(event) => void handleGpxFile(event.target.files?.[0])} /></label>
-                <Button type="button" size="sm" variant="outline" className="border-white/10" onClick={() => void loadDemoGpx()}>Usar GPX demo</Button>
+                {canUploadExternalGpx ? (
+                  <label className="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-md border border-white/10 px-3 text-sm font-medium hover:bg-white/5">Importar GPX propio<input type="file" accept=".gpx,application/gpx+xml" className="sr-only" onChange={(event) => void handleGpxFile(event.target.files?.[0])} /></label>
+                ) : (
+                  <div className="flex min-h-9 items-center justify-center rounded-md border border-moto-orange/20 bg-moto-orange/10 px-3 text-center text-xs text-moto-orange"><Lock className="mr-2 h-4 w-4" />GPX propio requiere Premium</div>
+                )}
+                <Button type="button" size="sm" variant="outline" className="border-white/10" disabled={purchasedRoutes.length === 0} onClick={() => void loadDemoGpx()}>Usar GPX de ruta comprada</Button>
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">

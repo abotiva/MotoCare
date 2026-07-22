@@ -245,6 +245,7 @@ export function MyBikes() {
 
   const isNegativeNumber = (value: string) => value.trim() !== '' && Number(value) < 0
   const canViewMaintenanceReports = hasPlan('premium')
+  const canUploadDocuments = effectivePlan === 'pro' || effectivePlan === 'premium'
   const isBusinessAccount = effectivePlan === 'business'
 
   useEffect(() => {
@@ -1097,6 +1098,10 @@ export function MyBikes() {
 
   const uploadMotorcycleDocument = async (file: File, documentType: MotorcycleDocument['document_type']) => {
     if (!supabase || !user || !selectedBike) return
+    if (!canUploadDocuments) {
+      toast.error('Función Premium', { description: 'La carga de SOAT, tecnomecánica y otros documentos requiere licencia Premium.' })
+      return
+    }
     setUploadingKey(documentType)
     setError(null)
 
@@ -1522,6 +1527,15 @@ export function MyBikes() {
                     </TabsContent>
 
                     <TabsContent value="documents">
+                      {!canUploadDocuments && (
+                        <div className="mb-4 flex items-start justify-between gap-3 rounded-xl border border-moto-orange/20 bg-moto-orange/10 p-4">
+                          <div>
+                            <p className="font-semibold text-white">Carga de documentos Premium</p>
+                            <p className="mt-1 text-sm text-gray-300">Puedes registrar las fechas de SOAT y tecnomecánica con Free. Guardar archivos consume almacenamiento y está disponible con Premium.</p>
+                          </div>
+                          <Badge className="shrink-0 bg-moto-orange text-moto-darker">Premium</Badge>
+                        </div>
+                      )}
                       <div className="grid gap-4 sm:grid-cols-2">
                         {([
                           ['SOAT', selectedBike.soat_expires_on, 'soat'],
@@ -1540,7 +1554,7 @@ export function MyBikes() {
                                   <p className={`text-sm ${status.tone}`}>{status.label}</p>
                                   {document && <p className="mt-1 truncate text-xs text-gray-500">{document.file_name}</p>}
                                   <div className="mt-3 flex flex-wrap gap-2">
-                                    <label className="inline-flex cursor-pointer items-center rounded-md border border-white/10 px-3 py-2 text-xs transition-colors hover:bg-white/5">
+                                    {canUploadDocuments && <label className="inline-flex cursor-pointer items-center rounded-md border border-white/10 px-3 py-2 text-xs transition-colors hover:bg-white/5">
                                       {uploadingKey === documentType ? (
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                       ) : (
@@ -1558,7 +1572,7 @@ export function MyBikes() {
                                           event.target.value = ''
                                         }}
                                       />
-                                    </label>
+                                    </label>}
                                     {document && (
                                       <>
                                         <Button size="sm" variant="outline" className="border-white/10 text-xs" onClick={() => openPrivateDocument(document)}>
@@ -1603,7 +1617,7 @@ export function MyBikes() {
                             ))}
                         </div>
                       )}
-                      <label className="mt-4 inline-flex cursor-pointer items-center rounded-md border border-white/10 px-3 py-2 text-sm transition-colors hover:bg-white/5">
+                      {canUploadDocuments && <label className="mt-4 inline-flex cursor-pointer items-center rounded-md border border-white/10 px-3 py-2 text-sm transition-colors hover:bg-white/5">
                         {uploadingKey === 'other' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                         Subir otro documento
                         <input
@@ -1617,7 +1631,7 @@ export function MyBikes() {
                             event.target.value = ''
                           }}
                         />
-                      </label>
+                      </label>}
                     </TabsContent>
                   </Tabs>
                 </CardContent>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Bike,
   CheckCircle2,
@@ -27,6 +27,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useAuth } from '@/contexts/AuthContext'
+import { readOwnedRouteIds, writeOwnedRouteIds } from '@/lib/premiumRoutePurchases'
 
 type PremiumRoute = {
   id: string
@@ -127,8 +129,6 @@ const premiumRoutes: PremiumRoute[] = [
   },
 ]
 
-const initialOwnedRouteIds = ['nevado-ruiz-adventure', 'pack-eje-cafetero']
-
 function formatPrice(value: number) {
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
@@ -144,9 +144,10 @@ function levelLabel(level: PremiumRoute['level']) {
 }
 
 export function PremiumRoutes() {
+  const { user } = useAuth()
   const [filter, setFilter] = useState<'all' | 'route' | 'pack' | 'level-3' | 'level-4'>('all')
   const [selectedRoute, setSelectedRoute] = useState<PremiumRoute>(premiumRoutes[0])
-  const [ownedRouteIds, setOwnedRouteIds] = useState(initialOwnedRouteIds)
+  const [ownedRouteIds, setOwnedRouteIds] = useState(() => readOwnedRouteIds(user?.id))
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
 
   const filteredRoutes = useMemo(() => {
@@ -162,6 +163,10 @@ export function PremiumRoutes() {
   const ownedRoutes = premiumRoutes.filter((routeItem) => ownedRouteIds.includes(routeItem.id))
   const isSelectedOwned = ownedRouteIds.includes(selectedRoute.id)
 
+  useEffect(() => {
+    setOwnedRouteIds(readOwnedRouteIds(user?.id))
+  }, [user?.id])
+
   const openCheckout = (routeItem: PremiumRoute) => {
     setSelectedRoute(routeItem)
     if (ownedRouteIds.includes(routeItem.id)) {
@@ -172,7 +177,11 @@ export function PremiumRoutes() {
   }
 
   const confirmPurchase = () => {
-    setOwnedRouteIds((current) => Array.from(new Set([...current, selectedRoute.id])))
+    setOwnedRouteIds((current) => {
+      const next = Array.from(new Set([...current, selectedRoute.id]))
+      writeOwnedRouteIds(next, user?.id)
+      return next
+    })
     setIsCheckoutOpen(false)
     toast.success('Ruta agregada a Mis rutas', {
       description: `${selectedRoute.title} quedo disponible para preparar tu viaje.`,
