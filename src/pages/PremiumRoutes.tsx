@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   Bike,
   CheckCircle2,
@@ -145,8 +146,11 @@ function levelLabel(level: PremiumRoute['level']) {
 
 export function PremiumRoutes() {
   const { user } = useAuth()
+  const [searchParams] = useSearchParams()
+  const requestedRoute = premiumRoutes.find((routeItem) => routeItem.id === searchParams.get('route'))
   const [filter, setFilter] = useState<'all' | 'route' | 'pack' | 'level-3' | 'level-4'>('all')
-  const [selectedRoute, setSelectedRoute] = useState<PremiumRoute>(premiumRoutes[0])
+  const [selectedRoute, setSelectedRoute] = useState<PremiumRoute>(requestedRoute ?? premiumRoutes[0])
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') === 'detail' ? 'detail' : 'catalog')
   const [ownedRouteIds, setOwnedRouteIds] = useState(() => readOwnedRouteIds(user?.id))
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
 
@@ -232,7 +236,7 @@ export function PremiumRoutes() {
         </div>
       </section>
 
-      <Tabs defaultValue="catalog" className="space-y-5">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
         <TabsList className="grid w-full grid-cols-3 border border-white/10 bg-moto-darker p-1 sm:w-fit">
           <TabsTrigger value="catalog">Catálogo</TabsTrigger>
           <TabsTrigger value="detail">Detalle</TabsTrigger>
@@ -263,7 +267,10 @@ export function PremiumRoutes() {
                 key={routeItem.id}
                 routeItem={routeItem}
                 owned={ownedRouteIds.includes(routeItem.id)}
-                onDetail={() => setSelectedRoute(routeItem)}
+                onDetail={() => {
+                  setSelectedRoute(routeItem)
+                  setActiveTab('detail')
+                }}
                 onBuy={() => openCheckout(routeItem)}
               />
             ))}
@@ -306,7 +313,10 @@ export function PremiumRoutes() {
                     <Button
                       variant="outline"
                       className="mt-4 w-full border-white/10"
-                      onClick={() => setSelectedRoute(routeItem)}
+                      onClick={() => {
+                        setSelectedRoute(routeItem)
+                        setActiveTab('detail')
+                      }}
                     >
                       Continuar preparacion
                     </Button>

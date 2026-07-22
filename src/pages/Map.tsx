@@ -725,6 +725,9 @@ export function Map() {
                   <div className="mt-3 flex gap-2 text-xs text-gray-300">
                     <span>{route.distance}</span><span>•</span><span>{route.terrain}</span>
                   </div>
+                  <Button asChild size="sm" variant="outline" className="mt-4 w-full border-white/10">
+                    <Link to={`/app/premium-routes?route=${encodeURIComponent(route.id)}&tab=detail`}>Ver detalle</Link>
+                  </Button>
                 </div>
               ))}
             </div>
