@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="MotoCare" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata><name>Bogotá - Guatavita demo</name></metadata>
+  <trk><name>Bogotá - Guatavita demo</name><trkseg>
+    <trkpt lat="4.7110" lon="-74.0721"/><trkpt lat="4.7504" lon="-74.0442"/>
+    <trkpt lat="4.8062" lon="-74.0281"/><trkpt lat="4.8615" lon="-73.9928"/>
+    <trkpt lat="4.9171" lon="-73.9482"/><trkpt lat="4.9778" lon="-73.9072"/>
+    <trkpt lat="5.0341" lon="-73.8597"/><trkpt lat="5.0694" lon="-73.8331"/>
+  </trkseg></trk>
+</gpx>

@@ -11,6 +11,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
+import { GpxMap } from '@/components/GpxMap'
+import { parseGpx, trackDistanceKm } from '@/lib/gpx'
+import type { RouteTrack } from '@/lib/gpx'
 import type { Motorcycle, RoutePlan } from '@/types/database'
 
 type RouteForm = {
@@ -24,6 +27,7 @@ type RouteForm = {
   end_date: string
   visibility: 'private' | 'community'
   status: RoutePlan['status']
+  track_geojson: RouteTrack | null
 }
 
 const emptyRouteForm: RouteForm = {
@@ -37,6 +41,7 @@ const emptyRouteForm: RouteForm = {
   end_date: '',
   visibility: 'private',
   status: 'planned',
+  track_geojson: null,
 }
 
 const routeStatusMeta: Record<RoutePlan['status'], { label: string; className: string; icon: typeof Flag }> = {
@@ -77,63 +82,8 @@ function formatRouteDates(route: RoutePlan) {
   return `Finaliza ${formatDate(route.end_date!)}`
 }
 
-function routeSearchValue(route: RoutePlan) {
-  const points = [route.origin, route.destination].filter(Boolean)
-  return points.length > 0 ? points.join(' to ') : route.title
-}
-
-function routeFormSearchValue(routeForm: RouteForm) {
-  const points = [routeForm.origin.trim(), routeForm.destination.trim()].filter(Boolean)
-  return points.length > 0 ? points.join(' to ') : routeForm.title.trim()
-}
-
 function motorcycleLabel(motorcycle: Pick<Motorcycle, 'brand' | 'model' | 'plate'>) {
   return `${motorcycle.brand} ${motorcycle.model}${motorcycle.plate ? ` - ${motorcycle.plate}` : ''}`
-}
-
-function googleMapsUrl(route: RoutePlan) {
-  const query = encodeURIComponent(routeSearchValue(route))
-  return `https://www.google.com/maps/search/?api=1&query=${query}`
-}
-
-function googleMapsFormUrl(routeForm: RouteForm) {
-  const query = encodeURIComponent(routeFormSearchValue(routeForm))
-  return `https://www.google.com/maps/search/?api=1&query=${query}`
-}
-
-function googleMapsEmbedUrl(route: RoutePlan) {
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_EMBED_KEY as string | undefined
-  if (!apiKey) return null
-
-  const origin = route.origin?.trim()
-  const destination = route.destination?.trim()
-  const mode = origin && destination ? 'directions' : 'place'
-  const query = encodeURIComponent(routeSearchValue(route))
-
-  if (mode === 'directions') {
-    return `https://www.google.com/maps/embed/v1/directions?key=${apiKey}&origin=${encodeURIComponent(origin!)}&destination=${encodeURIComponent(destination!)}&mode=driving`
-  }
-
-  return `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${query}`
-}
-
-function googleMapsFormEmbedUrl(routeForm: RouteForm) {
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_EMBED_KEY as string | undefined
-  if (!apiKey) return null
-
-  const origin = routeForm.origin.trim()
-  const destination = routeForm.destination.trim()
-  const query = encodeURIComponent(routeFormSearchValue(routeForm))
-
-  if (origin && destination) {
-    return `https://www.google.com/maps/embed/v1/directions?key=${apiKey}&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&mode=driving`
-  }
-
-  if (origin || destination || routeForm.title.trim()) {
-    return `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${query}`
-  }
-
-  return null
 }
 
 function routePlannedNotificationRows(route: RoutePlan) {
@@ -452,8 +402,25 @@ export function Map() {
       end_date: route.end_date ?? '',
       visibility: canShareRoutes ? route.visibility : 'private',
       status: route.status ?? 'planned',
+      track_geojson: route.track_geojson,
     })
     setShowCreateRoute(true)
+  }
+
+  const applyGpx = (track: RouteTrack) => {
+    setRouteForm((current) => ({ ...current, title: current.title || track.properties.name || 'Ruta GPX', distance_km: trackDistanceKm(track).toFixed(1), track_geojson: track }))
+  }
+
+  const loadDemoGpx = async () => {
+    try { const response = await fetch('/demo-guatavita.gpx'); if (!response.ok) throw new Error('No pudimos cargar el GPX demo.'); applyGpx(parseGpx(await response.text(), 'demo-guatavita.gpx')) }
+    catch (error) { toast.error('GPX demo no disponible', { description: error instanceof Error ? error.message : 'Intenta nuevamente.' }) }
+  }
+
+  const handleGpxFile = async (file?: File) => {
+    if (!file) return
+    if (!file.name.toLowerCase().endsWith('.gpx')) return toast.error('Selecciona un archivo .gpx')
+    try { applyGpx(parseGpx(await file.text(), file.name)) }
+    catch (error) { toast.error('No pudimos leer el GPX', { description: error instanceof Error ? error.message : 'Revisa el archivo.' }) }
   }
 
   const handleSubmitRoute = async (event: FormEvent) => {
@@ -499,6 +466,7 @@ export function Map() {
       end_date: routeForm.end_date || null,
       visibility: routeForm.visibility,
       status: routeForm.status,
+      track_geojson: routeForm.track_geojson,
     }
 
     const query = editingRoute
@@ -683,7 +651,7 @@ export function Map() {
       <div className="mb-5 flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
         <div>
           <h1 className="text-2xl font-bold">Rutas</h1>
-          <p className="text-gray-400">Guarda rutas manuales y comparte las mejores con la comunidad.</p>
+          <p className="text-gray-400">Importa rutas GPX, visualízalas con MapLibre y guárdalas en tu cuenta.</p>
         </div>
         <Button className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={openCreateRoute} disabled={isLoadingSubscription || !canUseRoutes}>
           <Plus className="mr-2 h-5 w-5" />
@@ -802,7 +770,7 @@ export function Map() {
           <DialogHeader>
             <DialogTitle>{editingRoute ? 'Editar ruta' : 'Nueva ruta'}</DialogTitle>
             <DialogDescription className="text-gray-400">
-              {editingRoute ? 'Actualiza los datos de tu ruta.' : 'Crea una ruta manual sin activar GPS ni mapas pagos.'}
+              {editingRoute ? 'Actualiza los datos de tu ruta.' : 'Importa un GPX propio o prueba el demo; MapLibre usa cartografía abierta sin API de pago.'}
             </DialogDescription>
           </DialogHeader>
           <form className="mt-4 space-y-4" onSubmit={handleSubmitRoute}>
@@ -836,32 +804,10 @@ export function Map() {
               </label>
             </div>
             <div className="overflow-hidden rounded-xl border border-white/10 bg-moto-darker">
-              {googleMapsFormEmbedUrl(routeForm) ? (
-                <iframe
-                  key={googleMapsFormEmbedUrl(routeForm)!}
-                  title="Vista previa de ruta"
-                  src={googleMapsFormEmbedUrl(routeForm)!}
-                  className="h-64 w-full border-0"
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                />
-              ) : (
-                <div className="grid h-40 place-items-center p-4 text-center text-sm text-gray-400">
-                  Escriba el origen y destino para ubicar los puntos en el mapa.
-                </div>
-              )}
-              <div className="border-t border-white/10 p-3">
-                <Button
-                  asChild
-                  size="sm"
-                  variant="outline"
-                  className="w-full border-white/10"
-                  disabled={!routeForm.origin.trim() && !routeForm.destination.trim() && !routeForm.title.trim()}
-                >
-                  <a href={googleMapsFormUrl(routeForm)} target="_blank" rel="noreferrer">
-                    Ajustar en Google Maps
-                  </a>
-                </Button>
+              <GpxMap track={routeForm.track_geojson} />
+              <div className="grid gap-2 border-t border-white/10 p-3 sm:grid-cols-2">
+                <label className="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-md border border-white/10 px-3 text-sm font-medium hover:bg-white/5">Importar GPX<input type="file" accept=".gpx,application/gpx+xml" className="sr-only" onChange={(event) => void handleGpxFile(event.target.files?.[0])} /></label>
+                <Button type="button" size="sm" variant="outline" className="border-white/10" onClick={() => void loadDemoGpx()}>Usar GPX demo</Button>
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -953,29 +899,7 @@ export function Map() {
                 <p className="mt-1 font-semibold">{formatRouteDates(selectedRoute)}</p>
               </div>
               <div className="overflow-hidden rounded-xl border border-white/10 bg-moto-darker">
-                {googleMapsEmbedUrl(selectedRoute) ? (
-                  <iframe
-                    title={`Mapa de ${selectedRoute.title}`}
-                    src={googleMapsEmbedUrl(selectedRoute)!}
-                    className="h-72 w-full border-0"
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                  />
-                ) : (
-                  <div className="p-4">
-                    <p className="text-sm text-gray-400">Mapa</p>
-                    <p className="mt-1 text-sm text-gray-300">
-                      Configure `VITE_GOOGLE_MAPS_EMBED_KEY` para ver el mapa embebido sin activar APIs de calculo de rutas.
-                    </p>
-                  </div>
-                )}
-                <div className="border-t border-white/10 p-3">
-                  <Button asChild size="sm" variant="outline" className="w-full border-white/10">
-                    <a href={googleMapsUrl(selectedRoute)} target="_blank" rel="noreferrer">
-                      Abrir en Google Maps
-                    </a>
-                  </Button>
-                </div>
+                <GpxMap track={selectedRoute.track_geojson} className="h-72" />
               </div>
               <div className="rounded-xl border border-white/10 bg-moto-darker p-4">
                 <p className="text-sm text-gray-400">Creada</p>

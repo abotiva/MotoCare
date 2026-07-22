@@ -100,6 +100,8 @@ create table if not exists public.routes (
   end_date date,
   visibility text not null default 'private' check (visibility in ('private', 'community')),
   status text not null default 'planned' check (status in ('planned', 'in_progress', 'completed')),
+  track_geojson jsonb,
+  constraint routes_track_geojson_linestring_check check (track_geojson is null or (track_geojson->>'type' = 'Feature' and track_geojson->'geometry'->>'type' = 'LineString' and jsonb_array_length(track_geojson->'geometry'->'coordinates') >= 2)),
   constraint routes_dates_order_check check (start_date is null or end_date is null or end_date >= start_date),
   created_at timestamptz not null default now()
 );

@@ -98,6 +98,7 @@ export type RoutePlan = {
   end_date: string | null
   visibility: 'private' | 'community'
   status: 'planned' | 'in_progress' | 'completed'
+  track_geojson: import('@/lib/gpx').RouteTrack | null
   created_at: string
 }
 
