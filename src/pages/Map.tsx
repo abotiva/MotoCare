@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { Bike, Calendar, CheckCircle2, Clock, Edit3, Eye, EyeOff, Flag, Loader2, Lock, MapPin, Navigation, PackageCheck, PlayCircle, Plus, Route, Save, Trash2 } from 'lucide-react'
@@ -11,11 +11,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
-import { GpxMap } from '@/components/GpxMap'
 import { parseGpx, trackDistanceKm } from '@/lib/gpx'
 import type { RouteTrack } from '@/lib/gpx'
 import { premiumRouteSummaries, readOwnedRouteIds } from '@/lib/premiumRoutePurchases'
 import type { Motorcycle, RoutePlan } from '@/types/database'
+
+const GpxMap = lazy(() => import('@/components/GpxMap').then((module) => ({ default: module.GpxMap })))
 
 type RouteForm = {
   motorcycle_id: string
@@ -867,7 +868,9 @@ export function Map() {
               </label>
             </div>
             <div className="overflow-hidden rounded-xl border border-white/10 bg-moto-darker">
-              <GpxMap track={routeForm.track_geojson} />
+              <Suspense fallback={<div className="grid h-64 place-items-center text-sm text-gray-400">Cargando mapa...</div>}>
+                <GpxMap track={routeForm.track_geojson} />
+              </Suspense>
               <div className="grid gap-2 border-t border-white/10 p-3 sm:grid-cols-2">
                 {canUploadExternalGpx ? (
                   <label className="inline-flex min-h-9 cursor-pointer items-center justify-center rounded-md border border-white/10 px-3 text-sm font-medium hover:bg-white/5">Importar GPX propio<input type="file" accept=".gpx,application/gpx+xml" className="sr-only" onChange={(event) => void handleGpxFile(event.target.files?.[0])} /></label>
@@ -966,7 +969,9 @@ export function Map() {
                 <p className="mt-1 font-semibold">{formatRouteDates(selectedRoute)}</p>
               </div>
               <div className="overflow-hidden rounded-xl border border-white/10 bg-moto-darker">
-                <GpxMap track={selectedRoute.track_geojson} className="h-72" />
+                <Suspense fallback={<div className="grid h-72 place-items-center text-sm text-gray-400">Cargando mapa...</div>}>
+                  <GpxMap track={selectedRoute.track_geojson} className="h-72" />
+                </Suspense>
               </div>
               <div className="rounded-xl border border-white/10 bg-moto-darker p-4">
                 <p className="text-sm text-gray-400">Creada</p>

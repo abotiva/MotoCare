@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+﻿import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useEffect } from 'react'
 import type { FormEvent } from 'react'
@@ -78,6 +78,32 @@ const emptyListingForm: ListingForm = {
   mileage_km: '',
   city: '',
   department: '',
+}
+
+const MARKETPLACE_PAGE_SIZE = 24
+
+async function optimizeMarketplaceImage(file: File) {
+  const bitmap = await createImageBitmap(file)
+  const maxDimension = 1600
+  const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height))
+  const width = Math.max(1, Math.round(bitmap.width * scale))
+  const height = Math.max(1, Math.round(bitmap.height * scale))
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const context = canvas.getContext('2d')
+  if (!context) {
+    bitmap.close()
+    return file
+  }
+  context.drawImage(bitmap, 0, 0, width, height)
+  bitmap.close()
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/webp', 0.82))
+  if (!blob || blob.size >= file.size) return file
+  return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.webp', {
+    type: 'image/webp',
+    lastModified: file.lastModified,
+  })
 }
 
 const demoListings: StoreListing[] = [
@@ -262,6 +288,13 @@ export function Marketplace() {
   const [listingImagePreviews, setListingImagePreviews] = useState<string[]>([])
   const [imageInputKey, setImageInputKey] = useState(0)
   const [selectedListing, setSelectedListing] = useState<StoreListing | null>(null)
+  const [marketplacePage, setMarketplacePage] = useState(0)
+  const [hasMoreListings, setHasMoreListings] = useState(false)
+
+  useEffect(() => {
+    setMarketplacePage(0)
+    if (isSupabaseConfigured) setListings([])
+  }, [user?.id])
 
   useEffect(() => {
     if (!supabase) {
@@ -286,21 +319,29 @@ export function Marketplace() {
         .eq('status', 'active')
         .order('is_featured', { ascending: false })
         .order('published_at', { ascending: false })
+        .range(
+          marketplacePage * MARKETPLACE_PAGE_SIZE,
+          marketplacePage * MARKETPLACE_PAGE_SIZE + MARKETPLACE_PAGE_SIZE - 1
+        )
 
       const [listingsResult, quotaResult] = await Promise.all([
         listingsRequest,
-        user ? client.rpc('marketplace_publication_quota') : Promise.resolve({ data: null, error: null }),
+        user && marketplacePage === 0
+          ? client.rpc('marketplace_publication_quota')
+          : Promise.resolve({ data: null, error: null }),
       ])
       if (!isMounted) return
 
       if (listingsResult.error) {
         setLoadError(listingsResult.error.message)
-        setListings([])
+        if (marketplacePage === 0) setListings([])
       } else {
-        setListings(((listingsResult.data ?? []) as MarketplaceListingWithSeller[]).map(toStoreListing))
+        const nextListings = ((listingsResult.data ?? []) as MarketplaceListingWithSeller[]).map(toStoreListing)
+        setListings((current) => marketplacePage === 0 ? nextListings : [...current, ...nextListings])
+        setHasMoreListings(nextListings.length === MARKETPLACE_PAGE_SIZE)
       }
 
-      if (!quotaResult.error && quotaResult.data) {
+      if (marketplacePage === 0 && !quotaResult.error && quotaResult.data) {
         const row = Array.isArray(quotaResult.data) ? quotaResult.data[0] : quotaResult.data
         setQuota((row as MarketplacePublicationQuota | undefined) ?? null)
       } else {
@@ -313,7 +354,7 @@ export function Marketplace() {
     return () => {
       isMounted = false
     }
-  }, [user])
+  }, [marketplacePage, user])
 
   useEffect(() => {
     const objectUrls = listingImages.map((file) => URL.createObjectURL(file))
@@ -323,7 +364,7 @@ export function Marketplace() {
     }
   }, [listingImages])
 
-  const handleSelectListingImages = (files: FileList | null) => {
+  const handleSelectListingImages = async (files: FileList | null) => {
     const selectedFiles = Array.from(files ?? [])
     if (selectedFiles.length === 0) return
     if (listingImages.length + selectedFiles.length > 5) {
@@ -342,7 +383,14 @@ export function Marketplace() {
       setImageInputKey((current) => current + 1)
       return
     }
-    setListingImages((current) => [...current, ...selectedFiles])
+    const optimizedFiles = await Promise.all(selectedFiles.map(async (file) => {
+      try {
+        return await optimizeMarketplaceImage(file)
+      } catch {
+        return file
+      }
+    }))
+    setListingImages((current) => [...current, ...optimizedFiles])
     setImageInputKey((current) => current + 1)
   }
 
@@ -489,20 +537,24 @@ export function Marketplace() {
     void saveListing('pending_review')
   }
 
-  const filteredListings = listings.filter((listing) => {
-    const matchesCategory = selectedCategory === 'all' || listing.category === selectedCategory
+  const filteredListings = useMemo(() => {
     const searchTerm = searchQuery.trim().toLowerCase()
-    const matchesSearch = !searchTerm || [
-      listing.title,
-      listing.location,
-      listing.condition,
-      listing.seller.name,
-    ].some((value) => value.toLowerCase().includes(searchTerm))
+    return listings.filter((listing) => {
+      const matchesCategory = selectedCategory === 'all' || listing.category === selectedCategory
+      const matchesSearch = !searchTerm || [
+        listing.title,
+        listing.location,
+        listing.condition,
+        listing.seller.name,
+      ].some((value) => value.toLowerCase().includes(searchTerm))
+      return matchesCategory && matchesSearch
+    })
+  }, [listings, searchQuery, selectedCategory])
 
-    return matchesCategory && matchesSearch
-  })
-
-  const featuredListings = filteredListings.filter((listing) => listing.featured)
+  const featuredListings = useMemo(
+    () => filteredListings.filter((listing) => listing.featured),
+    [filteredListings]
+  )
 
   return (
     <div className="mx-auto max-w-7xl p-4 pb-24 lg:p-6">
@@ -710,6 +762,8 @@ export function Marketplace() {
                 <img 
                   src={listing.image} 
                   alt={listing.title}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover"
                 />
                 <Badge className="absolute top-3 left-3 bg-moto-orange">Destacado</Badge>
@@ -785,6 +839,8 @@ export function Marketplace() {
                 <img 
                   src={listing.image} 
                   alt={listing.title}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover"
                 />
                 <button className="absolute top-3 right-3 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center" disabled>
@@ -826,6 +882,20 @@ export function Marketplace() {
             </Card>
           ))}
         </div>
+        {hasMoreListings ? (
+          <div className="mt-6 text-center">
+            <Button
+              type="button"
+              variant="outline"
+              className="border-white/10"
+              disabled={isLoadingListings}
+              onClick={() => setMarketplacePage((current) => current + 1)}
+            >
+              {isLoadingListings ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Cargar más publicaciones
+            </Button>
+          </div>
+        ) : null}
       </div>
 
       {/* Sell Button */}
@@ -1071,7 +1141,7 @@ export function Marketplace() {
                     multiple
                     disabled={listingImages.length >= 5}
                     className="sr-only"
-                    onChange={(event) => handleSelectListingImages(event.target.files)}
+                    onChange={(event) => void handleSelectListingImages(event.target.files)}
                   />
                 </label>
 

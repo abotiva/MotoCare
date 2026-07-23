@@ -141,6 +141,7 @@ export function Community() {
   const [selectedClubRouteId, setSelectedClubRouteId] = useState('')
   const [likesByPost, setLikesByPost] = useState<LikeState>({})
   const [commentsByPost, setCommentsByPost] = useState<Record<string, PostCommentWithAuthor[]>>({})
+  const [commentCountsByPost, setCommentCountsByPost] = useState<Record<string, number>>({})
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({})
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({})
   const [newPost, setNewPost] = useState('')
@@ -212,47 +213,38 @@ export function Community() {
     if (!supabase || postIds.length === 0) {
       setLikesByPost({})
       setCommentsByPost({})
+      setCommentCountsByPost({})
       return
     }
 
-    const [likesResult, commentsResult] = await Promise.all([
-      supabase.from('post_likes').select('post_id, user_id').in('post_id', postIds),
-      supabase
-        .from('post_comments')
-        .select('*, profiles:author_id(full_name, username, avatar_url)')
-        .in('post_id', postIds)
-        .order('created_at', { ascending: true }),
-    ])
-
-    if (likesResult.error) {
-      toast.error('No pudimos cargar los likes', { description: likesResult.error.message })
-    } else {
-      const nextLikes: LikeState = {}
-      postIds.forEach((postId) => {
-        nextLikes[postId] = { count: 0, likedByMe: false }
-      })
-      ;(likesResult.data ?? []).forEach((like) => {
-        const current = nextLikes[like.post_id] ?? { count: 0, likedByMe: false }
-        nextLikes[like.post_id] = {
-          count: current.count + 1,
-          likedByMe: current.likedByMe || like.user_id === user?.id,
-        }
-      })
-      setLikesByPost(nextLikes)
+    const { data, error } = await supabase.rpc('post_interaction_summaries', { target_post_ids: postIds })
+    if (error) {
+      toast.error('No pudimos cargar las interacciones', { description: error.message })
+      return
     }
 
-    if (commentsResult.error) {
-      toast.error('No pudimos cargar los comentarios', { description: commentsResult.error.message })
-    } else {
-      const nextComments: Record<string, PostCommentWithAuthor[]> = {}
-      postIds.forEach((postId) => {
-        nextComments[postId] = []
-      })
-      ;((commentsResult.data ?? []) as PostCommentWithAuthor[]).forEach((comment) => {
-        nextComments[comment.post_id] = [...(nextComments[comment.post_id] ?? []), comment]
-      })
-      setCommentsByPost(nextComments)
-    }
+    const nextLikes: LikeState = {}
+    const nextComments: Record<string, PostCommentWithAuthor[]> = {}
+    const nextCommentCounts: Record<string, number> = {}
+    postIds.forEach((postId) => {
+      nextLikes[postId] = { count: 0, likedByMe: false }
+      nextComments[postId] = []
+      nextCommentCounts[postId] = 0
+    })
+    ;((data ?? []) as Array<{
+      post_id: string
+      likes_count: number
+      liked_by_me: boolean
+      comments_count: number
+      recent_comments: PostCommentWithAuthor[]
+    }>).forEach((summary) => {
+      nextLikes[summary.post_id] = { count: Number(summary.likes_count), likedByMe: summary.liked_by_me }
+      nextComments[summary.post_id] = summary.recent_comments ?? []
+      nextCommentCounts[summary.post_id] = Number(summary.comments_count)
+    })
+    setLikesByPost(nextLikes)
+    setCommentsByPost(nextComments)
+    setCommentCountsByPost(nextCommentCounts)
   }
 
   const loadMyRoutes = async () => {
@@ -645,6 +637,7 @@ export function Community() {
         ...current,
         [post.id]: [...(current[post.id] ?? []), comment],
       }))
+      setCommentCountsByPost((current) => ({ ...current, [post.id]: (current[post.id] ?? 0) + 1 }))
       setCommentDrafts((current) => ({ ...current, [post.id]: '' }))
       setExpandedComments((current) => ({ ...current, [post.id]: true }))
       toast.success('Comentario publicado')
@@ -850,6 +843,7 @@ export function Community() {
               const authorUsername = author?.username || 'motocare'
               const likeState = likesByPost[post.id] ?? { count: 0, likedByMe: false }
               const comments = commentsByPost[post.id] ?? []
+              const commentCount = commentCountsByPost[post.id] ?? comments.length
               const commentsExpanded = expandedComments[post.id] ?? false
               const isOwnPost = post.author_id === user?.id
               const postImages = post.post_images?.length
@@ -988,7 +982,7 @@ export function Community() {
                         onClick={() => setExpandedComments((current) => ({ ...current, [post.id]: !commentsExpanded }))}
                       >
                         <MessageCircle className="h-5 w-5" />
-                        {comments.length > 0 ? comments.length : 'Comentar'}
+                        {commentCount > 0 ? commentCount : 'Comentar'}
                       </button>
                     </div>
                     {commentsExpanded && (

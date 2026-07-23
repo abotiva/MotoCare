@@ -372,11 +372,8 @@ export function MyBikes() {
       setIsLoading(true)
       setError(null)
 
-      const [motorcyclesResult, recordsResult, remindersResult, documentsResult, suggestionsResult] = await Promise.all([
+      const [motorcyclesResult, suggestionsResult] = await Promise.all([
         client.from('motorcycles').select('*').eq('owner_id', user.id).order('created_at', { ascending: false }),
-        client.from('maintenance_records').select('*').eq('owner_id', user.id).order('service_date', { ascending: false }).limit(500),
-        client.from('reminders').select('*').eq('owner_id', user.id).order('due_date', { ascending: true, nullsFirst: false }).limit(500),
-        client.from('motorcycle_documents').select('*').eq('owner_id', user.id).order('created_at', { ascending: false }).limit(500),
         client
           .from('maintenance_suggestions')
           .select('*')
@@ -385,20 +382,11 @@ export function MyBikes() {
           .order('name', { ascending: true }),
       ])
 
-      if (motorcyclesResult.error || recordsResult.error || remindersResult.error || documentsResult.error) {
-        setError(
-          motorcyclesResult.error?.message ||
-            recordsResult.error?.message ||
-            remindersResult.error?.message ||
-            documentsResult.error?.message ||
-            'No pudimos cargar tu garaje.'
-        )
+      if (motorcyclesResult.error || suggestionsResult.error) {
+        setError(motorcyclesResult.error?.message || suggestionsResult.error?.message || 'No pudimos cargar tu garaje.')
       } else {
         const nextMotorcycles = (motorcyclesResult.data ?? []) as Motorcycle[]
         setMotorcycles(nextMotorcycles)
-        setRecords((recordsResult.data ?? []) as MaintenanceRecord[])
-        setReminders((remindersResult.data ?? []) as Reminder[])
-        setDocuments((documentsResult.data ?? []) as MotorcycleDocument[])
         setMaintenanceSuggestions((suggestionsResult.data ?? []) as MaintenanceSuggestion[])
         setSelectedId((current) => {
           const primaryMotorcycle = nextMotorcycles.find(
@@ -415,6 +403,39 @@ export function MyBikes() {
 
     loadGarage()
   }, [user, profile?.primary_motorcycle_id])
+
+  useEffect(() => {
+    if (!supabase || !user || !selectedBike?.id) {
+      setRecords([])
+      setReminders([])
+      setDocuments([])
+      return
+    }
+    const client = supabase
+    let isMounted = true
+
+    const loadSelectedBikeData = async () => {
+      const [recordsResult, remindersResult, documentsResult] = await Promise.all([
+        client.from('maintenance_records').select('*').eq('owner_id', user.id).eq('motorcycle_id', selectedBike.id).order('service_date', { ascending: false }).limit(100),
+        client.from('reminders').select('*').eq('owner_id', user.id).eq('motorcycle_id', selectedBike.id).order('due_date', { ascending: true, nullsFirst: false }).limit(100),
+        client.from('motorcycle_documents').select('*').eq('owner_id', user.id).eq('motorcycle_id', selectedBike.id).order('created_at', { ascending: false }).limit(100),
+      ])
+      if (!isMounted) return
+
+      if (recordsResult.error || remindersResult.error || documentsResult.error) {
+        setError(recordsResult.error?.message || remindersResult.error?.message || documentsResult.error?.message || 'No pudimos cargar el historial de la moto.')
+        return
+      }
+      setRecords((recordsResult.data ?? []) as MaintenanceRecord[])
+      setReminders((remindersResult.data ?? []) as Reminder[])
+      setDocuments((documentsResult.data ?? []) as MotorcycleDocument[])
+    }
+
+    void loadSelectedBikeData()
+    return () => {
+      isMounted = false
+    }
+  }, [selectedBike?.id, user])
 
   const handleCreateBike = async (event: FormEvent) => {
     event.preventDefault()

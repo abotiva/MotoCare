@@ -176,7 +176,19 @@ export function MainLayout() {
     }
 
     void loadUnreadNotifications()
-  }, [userId, location.pathname])
+    const channel = client
+      .channel(`notification-header-${userId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
+        () => void loadUnreadNotifications()
+      )
+      .subscribe()
+
+    return () => {
+      void client.removeChannel(channel)
+    }
+  }, [userId])
 
   useEffect(() => {
     setIsNotificationsOpen(false)
@@ -202,6 +214,7 @@ export function MainLayout() {
     const client = supabase
 
     const touchPresence = async () => {
+      if (document.visibilityState !== 'visible') return
       await client
         .from('profiles')
         .update({ last_seen_at: new Date().toISOString() })
@@ -211,9 +224,17 @@ export function MainLayout() {
     void touchPresence()
     const interval = window.setInterval(() => {
       void touchPresence()
-    }, 60_000)
+    }, 5 * 60_000)
 
-    return () => window.clearInterval(interval)
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') void touchPresence()
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      window.clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
   }, [userId])
 
   return (

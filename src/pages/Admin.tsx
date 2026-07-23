@@ -185,7 +185,11 @@ export function Admin() {
         supabase.rpc('admin_clubs'),
         supabase.rpc('admin_moderation_reports'),
         supabase.rpc('admin_maintenance_suggestions'),
-        supabase.rpc('admin_marketplace_listings'),
+        supabase.rpc('admin_marketplace_listings_page', {
+          page_limit: 50,
+          page_offset: 0,
+          pending_only: false,
+        }),
         supabase.rpc('admin_review_counts'),
       ])
 
@@ -325,7 +329,11 @@ export function Admin() {
       toast.error('No pudimos revisar la publicación', { description: error.message })
     } else {
       const [listingsResult, countsResult] = await Promise.all([
-        supabase.rpc('admin_marketplace_listings'),
+        supabase.rpc('admin_marketplace_listings_page', {
+          page_limit: 50,
+          page_offset: 0,
+          pending_only: false,
+        }),
         supabase.rpc('admin_review_counts'),
       ])
       if (!listingsResult.error) {
@@ -849,6 +857,8 @@ function MarketplaceReviewTable({
                       <img
                         src={listing.images[0].image_url}
                         alt={listing.title}
+                        loading="lazy"
+                        decoding="async"
                         className="col-span-5 aspect-video w-full rounded-xl object-cover"
                       />
                       {listing.images.slice(1).map((image) => (
@@ -856,6 +866,8 @@ function MarketplaceReviewTable({
                           key={image.id}
                           src={image.image_url}
                           alt=""
+                          loading="lazy"
+                          decoding="async"
                           className="aspect-square w-full rounded-lg object-cover"
                         />
                       ))}
