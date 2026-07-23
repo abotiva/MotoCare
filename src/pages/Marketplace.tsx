@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { 
   Search, Filter, Grid3X3, List, MapPin, Heart, MessageCircle, 
   Star, TrendingUp, Bike, Wrench, Shirt, Clock3, Lock, Store, MapPinned, PackageCheck, Sparkles,
-  AlertCircle, LoaderCircle
+  AlertCircle, LoaderCircle, ImagePlus, Trash2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -252,6 +252,9 @@ export function Marketplace() {
   const [showCreateListing, setShowCreateListing] = useState(false)
   const [listingForm, setListingForm] = useState<ListingForm>(emptyListingForm)
   const [isSavingListing, setIsSavingListing] = useState(false)
+  const [listingImages, setListingImages] = useState<File[]>([])
+  const [listingImagePreviews, setListingImagePreviews] = useState<string[]>([])
+  const [imageInputKey, setImageInputKey] = useState(0)
 
   useEffect(() => {
     if (!supabase) {
@@ -305,6 +308,37 @@ export function Marketplace() {
     }
   }, [user])
 
+  useEffect(() => {
+    const objectUrls = listingImages.map((file) => URL.createObjectURL(file))
+    setListingImagePreviews(objectUrls)
+    return () => {
+      objectUrls.forEach((url) => URL.revokeObjectURL(url))
+    }
+  }, [listingImages])
+
+  const handleSelectListingImages = (files: FileList | null) => {
+    const selectedFiles = Array.from(files ?? [])
+    if (selectedFiles.length === 0) return
+    if (listingImages.length + selectedFiles.length > 5) {
+      toast.error('Máximo 5 imágenes', { description: 'Elimina una imagen antes de agregar otra.' })
+      setImageInputKey((current) => current + 1)
+      return
+    }
+    const allowedTypes = new Set(['image/jpeg', 'image/png', 'image/webp'])
+    if (selectedFiles.some((file) => !allowedTypes.has(file.type))) {
+      toast.error('Formato no permitido', { description: 'Usa imágenes JPEG, PNG o WebP.' })
+      setImageInputKey((current) => current + 1)
+      return
+    }
+    if (selectedFiles.some((file) => file.size > 10 * 1024 * 1024)) {
+      toast.error('Imagen muy pesada', { description: 'Cada imagen puede pesar máximo 10 MB.' })
+      setImageInputKey((current) => current + 1)
+      return
+    }
+    setListingImages((current) => [...current, ...selectedFiles])
+    setImageInputKey((current) => current + 1)
+  }
+
   const canCreateListing = Boolean(
     supabase
     && user
@@ -336,24 +370,94 @@ export function Marketplace() {
     }
 
     setIsSavingListing(true)
-    const { error } = await supabase.from('marketplace_listings').insert({
-      seller_id: user.id,
-      seller_type: effectivePlan === 'business' ? 'business' : 'personal',
-      title: listingForm.title.trim(),
-      description: listingForm.description.trim(),
-      price,
-      category: listingForm.category,
-      condition: listingForm.condition,
-      mileage_km: mileage,
-      city: listingForm.city.trim() || null,
-      department: listingForm.department.trim() || null,
-      status,
-    })
+    const { data: insertedListing, error } = await supabase
+      .from('marketplace_listings')
+      .insert({
+        seller_id: user.id,
+        seller_type: effectivePlan === 'business' ? 'business' : 'personal',
+        title: listingForm.title.trim(),
+        description: listingForm.description.trim(),
+        price,
+        category: listingForm.category,
+        condition: listingForm.condition,
+        mileage_km: mileage,
+        city: listingForm.city.trim() || null,
+        department: listingForm.department.trim() || null,
+        status: 'draft',
+      })
+      .select('id')
+      .single()
 
     if (error) {
       toast.error('No pudimos crear la publicación', { description: error.message })
       setIsSavingListing(false)
       return
+    }
+
+    const listingId = insertedListing.id as string
+    const uploadedPaths: string[] = []
+    const imageRows: Array<{
+      listing_id: string
+      owner_id: string
+      image_url: string
+      storage_path: string
+      sort_order: number
+    }> = []
+
+    for (const [index, image] of listingImages.entries()) {
+      const extension = image.type === 'image/png' ? 'png' : image.type === 'image/webp' ? 'webp' : 'jpg'
+      const path = `${user.id}/${listingId}/${crypto.randomUUID()}.${extension}`
+      const { error: uploadError } = await supabase.storage
+        .from('marketplace-images')
+        .upload(path, image, { upsert: false, contentType: image.type })
+
+      if (uploadError) {
+        if (uploadedPaths.length > 0) {
+          await supabase.storage.from('marketplace-images').remove(uploadedPaths)
+        }
+        await supabase.from('marketplace_listings').delete().eq('id', listingId)
+        toast.error('No pudimos subir las imágenes', { description: uploadError.message })
+        setIsSavingListing(false)
+        return
+      }
+
+      uploadedPaths.push(path)
+      const { data: publicUrlData } = supabase.storage.from('marketplace-images').getPublicUrl(path)
+      imageRows.push({
+        listing_id: listingId,
+        owner_id: user.id,
+        image_url: publicUrlData.publicUrl,
+        storage_path: path,
+        sort_order: index,
+      })
+    }
+
+    if (imageRows.length > 0) {
+      const { error: imagesError } = await supabase.from('marketplace_listing_images').insert(imageRows)
+      if (imagesError) {
+        await supabase.storage.from('marketplace-images').remove(uploadedPaths)
+        await supabase.from('marketplace_listings').delete().eq('id', listingId)
+        toast.error('No pudimos registrar las imágenes', { description: imagesError.message })
+        setIsSavingListing(false)
+        return
+      }
+    }
+
+    if (status === 'pending_review') {
+      const { error: submitError } = await supabase
+        .from('marketplace_listings')
+        .update({ status: 'pending_review' })
+        .eq('id', listingId)
+
+      if (submitError) {
+        if (uploadedPaths.length > 0) {
+          await supabase.storage.from('marketplace-images').remove(uploadedPaths)
+        }
+        await supabase.from('marketplace_listings').delete().eq('id', listingId)
+        toast.error('No pudimos enviar la publicación', { description: submitError.message })
+        setIsSavingListing(false)
+        return
+      }
     }
 
     if (status === 'pending_review') {
@@ -362,6 +466,8 @@ export function Marketplace() {
       if (row) setQuota(row as MarketplacePublicationQuota)
     }
     setListingForm(emptyListingForm)
+    setListingImages([])
+    setImageInputKey((current) => current + 1)
     setShowCreateListing(false)
     setIsSavingListing(false)
     toast.success(status === 'draft' ? 'Borrador guardado' : 'Publicación enviada a revisión', {
@@ -854,6 +960,62 @@ export function Marketplace() {
                   placeholder="Describe el producto, su estado y la información importante para el comprador."
                 />
               </label>
+
+              <div className="sm:col-span-2">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm text-gray-300">Imágenes del producto</p>
+                    <p className="text-xs text-gray-500">Hasta 5 imágenes JPEG, PNG o WebP · máximo 10 MB cada una.</p>
+                  </div>
+                  <Badge variant="secondary">{listingImages.length}/5</Badge>
+                </div>
+
+                <label
+                  className={`flex min-h-24 cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-white/15 bg-moto-darker p-4 text-center transition hover:border-moto-orange/60 ${
+                    listingImages.length >= 5 ? 'pointer-events-none opacity-50' : ''
+                  }`}
+                >
+                  <ImagePlus className="mb-2 h-7 w-7 text-moto-orange" />
+                  <span className="text-sm font-medium">Seleccionar imágenes</span>
+                  <span className="mt-1 text-xs text-gray-500">Puedes seleccionar varias al mismo tiempo.</span>
+                  <input
+                    key={imageInputKey}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple
+                    disabled={listingImages.length >= 5}
+                    className="sr-only"
+                    onChange={(event) => handleSelectListingImages(event.target.files)}
+                  />
+                </label>
+
+                {listingImagePreviews.length > 0 ? (
+                  <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-5">
+                    {listingImagePreviews.map((preview, index) => (
+                      <div key={preview} className="group relative aspect-square overflow-hidden rounded-lg border border-white/10">
+                        <img
+                          src={preview}
+                          alt={`Vista previa ${index + 1}`}
+                          className="h-full w-full object-cover"
+                        />
+                        {index === 0 ? (
+                          <Badge className="absolute bottom-1 left-1 bg-moto-orange text-[10px] text-moto-darker">
+                            Principal
+                          </Badge>
+                        ) : null}
+                        <button
+                          type="button"
+                          aria-label={`Eliminar imagen ${index + 1}`}
+                          onClick={() => setListingImages((current) => current.filter((_, fileIndex) => fileIndex !== index))}
+                          className="absolute right-1 top-1 grid h-7 w-7 place-items-center rounded-full bg-black/70 text-white transition hover:bg-red-500"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
             </div>
 
             <DialogFooter>
