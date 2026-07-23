@@ -238,7 +238,7 @@ export type SavedRoute = {
 export type Notification = {
   id: string
   user_id: string
-  type: 'route_planned' | 'route_overdue' | 'club_invite' | 'moderation_notice' | 'admin_review'
+  type: 'route_planned' | 'route_overdue' | 'club_invite' | 'moderation_notice' | 'admin_review' | 'marketplace_message'
   title: string
   message: string
   route_id: string | null

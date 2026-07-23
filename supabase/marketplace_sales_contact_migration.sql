@@ -1,6 +1,20 @@
 -- Marketplace sales lifecycle and private buyer/seller contact.
 -- Run after marketplace_migration.sql and schema.sql.
 
+alter table public.notifications
+drop constraint if exists notifications_type_check;
+
+alter table public.notifications
+add constraint notifications_type_check
+check (type in (
+  'route_planned',
+  'route_overdue',
+  'club_invite',
+  'moderation_notice',
+  'admin_review',
+  'marketplace_message'
+));
+
 create table if not exists public.marketplace_messages (
   id uuid primary key default gen_random_uuid(),
   listing_id uuid not null references public.marketplace_listings(id) on delete cascade,
