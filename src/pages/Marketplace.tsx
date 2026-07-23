@@ -1,6 +1,8 @@
 ﻿import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useEffect } from 'react'
+import type { FormEvent } from 'react'
+import { toast } from 'sonner'
 import { 
   Search, Filter, Grid3X3, List, MapPin, Heart, MessageCircle, 
   Star, TrendingUp, Bike, Wrench, Shirt, Clock3, Lock, Store, MapPinned, PackageCheck, Sparkles,
@@ -10,6 +12,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
@@ -43,6 +54,28 @@ type StoreListing = {
   featured: boolean
   likes: number
   category: MarketplaceCategory
+}
+
+type ListingForm = {
+  title: string
+  description: string
+  price: string
+  category: MarketplaceCategory
+  condition: MarketplaceCondition
+  mileage_km: string
+  city: string
+  department: string
+}
+
+const emptyListingForm: ListingForm = {
+  title: '',
+  description: '',
+  price: '',
+  category: 'motorcycles',
+  condition: 'used_good',
+  mileage_km: '',
+  city: '',
+  department: '',
 }
 
 const demoListings: StoreListing[] = [
@@ -216,6 +249,9 @@ export function Marketplace() {
   const [quota, setQuota] = useState<MarketplacePublicationQuota | null>(null)
   const [isLoadingListings, setIsLoadingListings] = useState(isSupabaseConfigured)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [showCreateListing, setShowCreateListing] = useState(false)
+  const [listingForm, setListingForm] = useState<ListingForm>(emptyListingForm)
+  const [isSavingListing, setIsSavingListing] = useState(false)
 
   useEffect(() => {
     if (!supabase) {
@@ -268,6 +304,77 @@ export function Marketplace() {
       isMounted = false
     }
   }, [user])
+
+  const canCreateListing = Boolean(
+    supabase
+    && user
+    && !isLoadingSubscription
+    && effectivePlan !== 'free'
+    && (effectivePlan === 'business' || quota?.remaining_publications !== 0)
+  )
+
+  const saveListing = async (status: 'draft' | 'pending_review') => {
+    if (!supabase || !user || !canCreateListing) return
+
+    const price = Number(listingForm.price)
+    const mileage = listingForm.mileage_km.trim() ? Number(listingForm.mileage_km) : null
+    if (listingForm.title.trim().length < 5) {
+      toast.error('Título muy corto', { description: 'Escribe al menos 5 caracteres.' })
+      return
+    }
+    if (listingForm.description.trim().length < 20) {
+      toast.error('Descripción muy corta', { description: 'Escribe al menos 20 caracteres.' })
+      return
+    }
+    if (!Number.isFinite(price) || price < 0) {
+      toast.error('Precio inválido', { description: 'Ingresa un precio válido en pesos colombianos.' })
+      return
+    }
+    if (mileage !== null && (!Number.isInteger(mileage) || mileage < 0)) {
+      toast.error('Kilometraje inválido')
+      return
+    }
+
+    setIsSavingListing(true)
+    const { error } = await supabase.from('marketplace_listings').insert({
+      seller_id: user.id,
+      seller_type: effectivePlan === 'business' ? 'business' : 'personal',
+      title: listingForm.title.trim(),
+      description: listingForm.description.trim(),
+      price,
+      category: listingForm.category,
+      condition: listingForm.condition,
+      mileage_km: mileage,
+      city: listingForm.city.trim() || null,
+      department: listingForm.department.trim() || null,
+      status,
+    })
+
+    if (error) {
+      toast.error('No pudimos crear la publicación', { description: error.message })
+      setIsSavingListing(false)
+      return
+    }
+
+    if (status === 'pending_review') {
+      const { data } = await supabase.rpc('marketplace_publication_quota')
+      const row = Array.isArray(data) ? data[0] : data
+      if (row) setQuota(row as MarketplacePublicationQuota)
+    }
+    setListingForm(emptyListingForm)
+    setShowCreateListing(false)
+    setIsSavingListing(false)
+    toast.success(status === 'draft' ? 'Borrador guardado' : 'Publicación enviada a revisión', {
+      description: status === 'draft'
+        ? 'El borrador no consume tu cupo mensual.'
+        : 'MotoCare revisará la publicación antes de mostrarla.',
+    })
+  }
+
+  const handleSubmitListing = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    void saveListing('pending_review')
+  }
 
   const filteredListings = listings.filter((listing) => {
     const matchesCategory = selectedCategory === 'all' || listing.category === selectedCategory
@@ -615,7 +722,15 @@ export function Marketplace() {
       <div className="fixed bottom-20 lg:bottom-8 right-4 lg:right-8 z-40">
         <Button 
           size="lg" 
-          disabled
+          disabled={!canCreateListing}
+          onClick={() => setShowCreateListing(true)}
+          title={
+            effectivePlan === 'free'
+              ? 'Necesitas licencia Premium o Business'
+              : quota?.remaining_publications === 0
+                ? 'Ya usaste tus 5 publicaciones del mes'
+                : undefined
+          }
           className="bg-moto-orange hover:bg-moto-orange-dark shadow-lg shadow-moto-orange/30 rounded-full px-6"
         >
           <Lock className="w-5 h-5 mr-2" />
@@ -626,6 +741,143 @@ export function Marketplace() {
               : 'Vender con Premium'}
         </Button>
       </div>
+
+      <Dialog open={showCreateListing} onOpenChange={setShowCreateListing}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto border-white/10 bg-moto-gray text-white sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Crear publicación</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Guardar como borrador no consume cupo. El cupo se utiliza cuando la envías a revisión.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form className="space-y-4" onSubmit={handleSubmitListing}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="sm:col-span-2">
+                <span className="mb-1 block text-sm text-gray-300">Título</span>
+                <Input
+                  value={listingForm.title}
+                  maxLength={120}
+                  required
+                  onChange={(event) => setListingForm((current) => ({ ...current, title: event.target.value }))}
+                  className="border-white/10 bg-moto-darker"
+                  placeholder="Ej. Honda CB500F 2022"
+                />
+              </label>
+
+              <label>
+                <span className="mb-1 block text-sm text-gray-300">Categoría</span>
+                <select
+                  value={listingForm.category}
+                  onChange={(event) => setListingForm((current) => ({
+                    ...current,
+                    category: event.target.value as MarketplaceCategory,
+                  }))}
+                  className="h-9 w-full rounded-md border border-white/10 bg-moto-darker px-3 text-sm text-white"
+                >
+                  {categories.filter((category) => category.id !== 'all').map((category) => (
+                    <option key={category.id} value={category.id}>{category.name}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                <span className="mb-1 block text-sm text-gray-300">Estado</span>
+                <select
+                  value={listingForm.condition}
+                  onChange={(event) => setListingForm((current) => ({
+                    ...current,
+                    condition: event.target.value as MarketplaceCondition,
+                  }))}
+                  className="h-9 w-full rounded-md border border-white/10 bg-moto-darker px-3 text-sm text-white"
+                >
+                  {Object.entries(conditionLabels).map(([value, label]) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                <span className="mb-1 block text-sm text-gray-300">Precio COP</span>
+                <Input
+                  type="number"
+                  min="0"
+                  step="1"
+                  required
+                  value={listingForm.price}
+                  onChange={(event) => setListingForm((current) => ({ ...current, price: event.target.value }))}
+                  className="border-white/10 bg-moto-darker"
+                  placeholder="18500000"
+                />
+              </label>
+
+              <label>
+                <span className="mb-1 block text-sm text-gray-300">Kilometraje (opcional)</span>
+                <Input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={listingForm.mileage_km}
+                  onChange={(event) => setListingForm((current) => ({ ...current, mileage_km: event.target.value }))}
+                  className="border-white/10 bg-moto-darker"
+                />
+              </label>
+
+              <label>
+                <span className="mb-1 block text-sm text-gray-300">Ciudad</span>
+                <Input
+                  value={listingForm.city}
+                  onChange={(event) => setListingForm((current) => ({ ...current, city: event.target.value }))}
+                  className="border-white/10 bg-moto-darker"
+                  placeholder="Bogotá"
+                />
+              </label>
+
+              <label>
+                <span className="mb-1 block text-sm text-gray-300">Departamento</span>
+                <Input
+                  value={listingForm.department}
+                  onChange={(event) => setListingForm((current) => ({ ...current, department: event.target.value }))}
+                  className="border-white/10 bg-moto-darker"
+                  placeholder="Cundinamarca"
+                />
+              </label>
+
+              <label className="sm:col-span-2">
+                <span className="mb-1 block text-sm text-gray-300">Descripción</span>
+                <Textarea
+                  value={listingForm.description}
+                  maxLength={5000}
+                  required
+                  onChange={(event) => setListingForm((current) => ({ ...current, description: event.target.value }))}
+                  className="min-h-32 border-white/10 bg-moto-darker"
+                  placeholder="Describe el producto, su estado y la información importante para el comprador."
+                />
+              </label>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isSavingListing}
+                onClick={() => void saveListing('draft')}
+                className="border-white/10"
+              >
+                Guardar borrador
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSavingListing}
+                className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark"
+              >
+                {isSavingListing ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}
+                Enviar a revisión
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
