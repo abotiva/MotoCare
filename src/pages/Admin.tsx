@@ -1,6 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { AlertTriangle, Ban, Bike, ChevronDown, ChevronUp, CreditCard, Database, Edit3, Loader2, Lock, Plus, Route, Search, Shield, SlidersHorizontal, Trash2, Users } from 'lucide-react'
+import { AlertTriangle, Ban, Bike, CheckCircle2, ChevronDown, ChevronUp, CreditCard, Database, Edit3, Loader2, Lock, Plus, Route, Search, Shield, SlidersHorizontal, Store, Trash2, Users, XCircle } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
@@ -9,9 +9,9 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { appVersion, buildTime } from '@/lib/appVersion'
 import { supabase, supabaseUrl } from '@/lib/supabase'
-import type { AdminClubRow, AdminMaintenanceSuggestionRow, AdminModerationReportRow, AdminOverview, AdminUserRow, ModerationActionType } from '@/types/database'
+import type { AdminClubRow, AdminMaintenanceSuggestionRow, AdminMarketplaceListing, AdminModerationReportRow, AdminOverview, AdminReviewCounts, AdminUserRow, ModerationActionType } from '@/types/database'
 
-type AdminTab = 'usuarios' | 'clubes' | 'moderacion' | 'catalogos'
+type AdminTab = 'usuarios' | 'clubes' | 'tienda' | 'moderacion' | 'catalogos'
 type UserPlan = AdminUserRow['plan']
 type UserPlanStatus = AdminUserRow['plan_status']
 type SuggestionForm = {
@@ -90,12 +90,15 @@ export function Admin() {
   const [users, setUsers] = useState<AdminUserRow[]>([])
   const [clubs, setClubs] = useState<AdminClubRow[]>([])
   const [moderationReports, setModerationReports] = useState<AdminModerationReportRow[]>([])
+  const [marketplaceListings, setMarketplaceListings] = useState<AdminMarketplaceListing[]>([])
+  const [reviewCounts, setReviewCounts] = useState<AdminReviewCounts>({ marketplace_pending: 0, moderation_pending: 0 })
   const [suggestions, setSuggestions] = useState<AdminMaintenanceSuggestionRow[]>([])
   const [search, setSearch] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [hasAccess, setHasAccess] = useState(false)
   const [savingLicenseUserId, setSavingLicenseUserId] = useState<string | null>(null)
   const [savingModerationReportId, setSavingModerationReportId] = useState<string | null>(null)
+  const [savingMarketplaceListingId, setSavingMarketplaceListingId] = useState<string | null>(null)
   const [editingSuggestion, setEditingSuggestion] = useState<AdminMaintenanceSuggestionRow | null>(null)
   const [suggestionForm, setSuggestionForm] = useState<SuggestionForm>(emptySuggestionForm)
   const [showSuggestionForm, setShowSuggestionForm] = useState(false)
@@ -146,6 +149,23 @@ export function Admin() {
     )
   }, [moderationReports, search])
 
+  const filteredMarketplaceListings = useMemo(() => {
+    const term = search.trim().toLowerCase()
+    if (!term) return marketplaceListings
+    return marketplaceListings.filter((item) =>
+      [
+        item.title,
+        item.description,
+        item.seller_name,
+        item.seller_plan,
+        item.category,
+        item.status,
+        item.city,
+        item.department,
+      ].some((value) => value?.toLowerCase().includes(term))
+    )
+  }, [marketplaceListings, search])
+
   useEffect(() => {
     const loadAdminData = async () => {
       if (!supabase) return
@@ -159,12 +179,14 @@ export function Admin() {
       }
 
       setHasAccess(true)
-      const [overviewResult, usersResult, clubsResult, reportsResult, suggestionsResult] = await Promise.all([
+      const [overviewResult, usersResult, clubsResult, reportsResult, suggestionsResult, marketplaceResult, countsResult] = await Promise.all([
         supabase.rpc('admin_overview'),
         supabase.rpc('admin_users'),
         supabase.rpc('admin_clubs'),
         supabase.rpc('admin_moderation_reports'),
         supabase.rpc('admin_maintenance_suggestions'),
+        supabase.rpc('admin_marketplace_listings'),
+        supabase.rpc('admin_review_counts'),
       ])
 
       if (overviewResult.error) {
@@ -195,6 +217,16 @@ export function Admin() {
         toast.error('No pudimos cargar catálogos', { description: suggestionsResult.error.message })
       } else {
         setSuggestions((suggestionsResult.data ?? []) as AdminMaintenanceSuggestionRow[])
+      }
+
+      if (marketplaceResult.error) {
+        toast.error('No pudimos cargar la revisión de tienda', { description: marketplaceResult.error.message })
+      } else {
+        setMarketplaceListings((marketplaceResult.data ?? []) as AdminMarketplaceListing[])
+      }
+
+      if (!countsResult.error && countsResult.data) {
+        setReviewCounts(countsResult.data as unknown as AdminReviewCounts)
       }
 
       setIsLoading(false)
@@ -266,9 +298,47 @@ export function Admin() {
       toast.success('Acción aplicada', { description: 'Se registró la acción y se envió notificación interna.' })
       const { data } = await supabase.rpc('admin_moderation_reports')
       setModerationReports((data ?? []) as AdminModerationReportRow[])
+      setReviewCounts((current) => ({
+        ...current,
+        moderation_pending: Math.max(0, current.moderation_pending - (report.status === 'pending' ? 1 : 0)),
+      }))
     }
 
     setSavingModerationReportId(null)
+  }
+
+  const reviewMarketplaceListing = async (listing: AdminMarketplaceListing, decision: 'approve' | 'reject') => {
+    if (!supabase || savingMarketplaceListingId) return
+    const notes = decision === 'reject'
+      ? window.prompt('Motivo del rechazo que recibirá el vendedor:')
+      : null
+    if (decision === 'reject' && !notes?.trim()) return
+
+    setSavingMarketplaceListingId(listing.id)
+    const { error } = await supabase.rpc('admin_review_marketplace_listing', {
+      target_listing_id: listing.id,
+      decision,
+      review_notes: notes?.trim() || null,
+    })
+
+    if (error) {
+      toast.error('No pudimos revisar la publicación', { description: error.message })
+    } else {
+      const [listingsResult, countsResult] = await Promise.all([
+        supabase.rpc('admin_marketplace_listings'),
+        supabase.rpc('admin_review_counts'),
+      ])
+      if (!listingsResult.error) {
+        setMarketplaceListings((listingsResult.data ?? []) as AdminMarketplaceListing[])
+      }
+      if (!countsResult.error && countsResult.data) {
+        setReviewCounts(countsResult.data as unknown as AdminReviewCounts)
+      }
+      toast.success(decision === 'approve' ? 'Publicación aprobada' : 'Publicación rechazada', {
+        description: 'El vendedor recibió una notificación interna.',
+      })
+    }
+    setSavingMarketplaceListingId(null)
   }
 
   const openAdminDetail = (tab: AdminTab, filter = '') => {
@@ -388,13 +458,15 @@ export function Admin() {
         </Badge>
       </div>
 
-      <div className="mb-4 grid grid-cols-4 gap-2 sm:mb-5 sm:gap-4 xl:grid-cols-8">
+      <div className="mb-4 grid grid-cols-4 gap-2 sm:mb-5 sm:gap-4 xl:grid-cols-10">
         <MetricCard icon={Users} label="Usuarios" value={overview.users} detail={`${overview.private_users} privados`} onClick={() => openAdminDetail('usuarios')} />
         <MetricCard icon={CreditCard} label="Free" value={overview.free_users} detail="Usuarios base" onClick={() => openAdminDetail('usuarios', 'free')} />
         <MetricCard icon={CreditCard} label="Premium" value={overview.premium_users + overview.pro_users} detail="Incluye Pro legado" onClick={() => openAdminDetail('usuarios', 'premium')} />
         <MetricCard icon={Bike} label="Motos" value={overview.motorcycles} detail="Registradas" onClick={() => openAdminDetail('usuarios')} />
         <MetricCard icon={Route} label="Rutas" value={overview.routes} detail={`${overview.community_routes} comunidad`} onClick={() => openAdminDetail('usuarios')} />
         <MetricCard icon={Users} label="Clubes" value={overview.clubs} detail={`${overview.club_memberships} membresías`} onClick={() => openAdminDetail('clubes')} />
+        <MetricCard icon={Store} label="Tienda" value={reviewCounts.marketplace_pending} detail="Por revisar" onClick={() => openAdminDetail('tienda')} />
+        <MetricCard icon={AlertTriangle} label="Reportes" value={reviewCounts.moderation_pending} detail="Por revisar" onClick={() => openAdminDetail('moderacion')} />
         <MetricCard icon={AlertTriangle} label="Invitaciones" value={overview.pending_club_invitations} detail="Pendientes" onClick={() => openAdminDetail('clubes')} />
         <MetricCard icon={SlidersHorizontal} label="Catálogo" value={overview.active_maintenance_suggestions} detail={`${overview.maintenance_suggestions} totales`} onClick={() => openAdminDetail('catalogos')} />
       </div>
@@ -406,7 +478,8 @@ export function Admin() {
           <div className="flex flex-wrap gap-2">
             <TabButton label="Usuarios" active={activeTab === 'usuarios'} onClick={() => setActiveTab('usuarios')} />
             <TabButton label="Clubes" active={activeTab === 'clubes'} onClick={() => setActiveTab('clubes')} />
-            <TabButton label="Moderación" active={activeTab === 'moderacion'} onClick={() => setActiveTab('moderacion')} />
+            <TabButton label={`Tienda (${reviewCounts.marketplace_pending})`} active={activeTab === 'tienda'} onClick={() => setActiveTab('tienda')} />
+            <TabButton label={`Moderación (${reviewCounts.moderation_pending})`} active={activeTab === 'moderacion'} onClick={() => setActiveTab('moderacion')} />
             <TabButton label="Catálogos" active={activeTab === 'catalogos'} onClick={() => setActiveTab('catalogos')} />
           </div>
           <label className="flex min-w-0 items-center gap-2 rounded-xl border border-white/10 bg-moto-darker px-3 py-2 lg:w-80">
@@ -423,6 +496,13 @@ export function Admin() {
 
       {activeTab === 'usuarios' && <UsersTable users={filteredUsers} savingLicenseUserId={savingLicenseUserId} onUpdateLicense={updateUserLicense} />}
       {activeTab === 'clubes' && <ClubsTable clubs={filteredClubs} />}
+      {activeTab === 'tienda' && (
+        <MarketplaceReviewTable
+          listings={filteredMarketplaceListings}
+          savingListingId={savingMarketplaceListingId}
+          onReview={reviewMarketplaceListing}
+        />
+      )}
       {activeTab === 'moderacion' && (
         <ModerationTable
           reports={filteredModerationReports}
@@ -723,6 +803,144 @@ function ClubsTable({ clubs }: { clubs: AdminClubRow[] }) {
           <AdminValue label="Invitaciones" value={club.pending_invitations_count.toLocaleString()} />
         </div>
       ))}
+    </AdminTable>
+  )
+}
+
+const marketplaceStatusLabels: Record<AdminMarketplaceListing['status'], string> = {
+  draft: 'Borrador',
+  pending_review: 'Pendiente',
+  active: 'Aprobada',
+  paused: 'Pausada',
+  sold: 'Vendida',
+  rejected: 'Rechazada',
+  archived: 'Archivada',
+}
+
+function MarketplaceReviewTable({
+  listings,
+  savingListingId,
+  onReview,
+}: {
+  listings: AdminMarketplaceListing[]
+  savingListingId: string | null
+  onReview: (listing: AdminMarketplaceListing, decision: 'approve' | 'reject') => void
+}) {
+  return (
+    <AdminTable
+      title="Revisión de tienda"
+      description="Las publicaciones pendientes aparecen primero. Aprobar las hace visibles; rechazar exige un motivo y libera el cupo del vendedor."
+    >
+      {listings.length > 0 ? (
+        listings.map((listing) => {
+          const busy = savingListingId === listing.id
+          const price = new Intl.NumberFormat('es-CO', {
+            style: 'currency',
+            currency: listing.currency,
+            maximumFractionDigits: 0,
+          }).format(Number(listing.price))
+
+          return (
+            <article key={listing.id} className="border-t border-white/5 p-4">
+              <div className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)_210px]">
+                <div>
+                  {listing.images.length > 0 ? (
+                    <div className="grid grid-cols-5 gap-2">
+                      <img
+                        src={listing.images[0].image_url}
+                        alt={listing.title}
+                        className="col-span-5 aspect-video w-full rounded-xl object-cover"
+                      />
+                      {listing.images.slice(1).map((image) => (
+                        <img
+                          key={image.id}
+                          src={image.image_url}
+                          alt=""
+                          className="aspect-square w-full rounded-lg object-cover"
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="grid aspect-video place-items-center rounded-xl border border-dashed border-white/10 bg-moto-darker text-sm text-gray-500">
+                      Sin imágenes
+                    </div>
+                  )}
+                </div>
+
+                <div className="min-w-0">
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <Badge className={listing.status === 'pending_review'
+                      ? 'bg-yellow-500/15 text-yellow-300'
+                      : listing.status === 'active'
+                        ? 'bg-green-500/15 text-green-300'
+                        : listing.status === 'rejected'
+                          ? 'bg-red-500/15 text-red-300'
+                          : 'bg-white/10 text-gray-300'}
+                    >
+                      {marketplaceStatusLabels[listing.status]}
+                    </Badge>
+                    <Badge className="bg-white/10 text-gray-300">{listing.category}</Badge>
+                    <Badge className={listing.seller_plan === 'business'
+                      ? 'bg-violet-500/15 text-violet-200'
+                      : 'bg-moto-orange/15 text-moto-orange'}
+                    >
+                      {listing.seller_plan}
+                    </Badge>
+                  </div>
+                  <h3 className="text-lg font-semibold text-white">{listing.title}</h3>
+                  <p className="mt-1 text-xl font-bold text-moto-orange">{price}</p>
+                  <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-gray-300">{listing.description}</p>
+                  <div className="mt-4 grid gap-2 text-sm text-gray-400 sm:grid-cols-2">
+                    <p>Vendedor: <span className="text-gray-200">{listing.seller_name}</span></p>
+                    <p>Tipo: <span className="text-gray-200">{listing.seller_type}</span></p>
+                    <p>Ubicación: <span className="text-gray-200">{[listing.city, listing.department].filter(Boolean).join(', ') || 'Sin definir'}</span></p>
+                    <p>Enviada: <span className="text-gray-200">{formatDate(listing.submitted_at)}</span></p>
+                  </div>
+                  {listing.moderation_notes ? (
+                    <p className="mt-3 rounded-xl bg-red-500/10 p-3 text-sm text-red-200">
+                      Motivo: {listing.moderation_notes}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  {listing.status === 'pending_review' ? (
+                    <>
+                      <Button
+                        type="button"
+                        disabled={busy}
+                        className="bg-green-600 text-white hover:bg-green-500"
+                        onClick={() => onReview(listing, 'approve')}
+                      >
+                        {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
+                        Aprobar
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={busy}
+                        className="border-red-500/30 text-red-300 hover:text-red-200"
+                        onClick={() => onReview(listing, 'reject')}
+                      >
+                        <XCircle className="mr-2 h-4 w-4" />
+                        Rechazar
+                      </Button>
+                    </>
+                  ) : (
+                    <p className="rounded-xl border border-white/10 bg-moto-darker p-3 text-center text-sm text-gray-400">
+                      Revisión completada
+                    </p>
+                  )}
+                </div>
+              </div>
+            </article>
+          )
+        })
+      ) : (
+        <div className="border-t border-white/5 p-8 text-center text-sm text-gray-400">
+          No hay publicaciones para mostrar con el filtro actual.
+        </div>
+      )}
     </AdminTable>
   )
 }

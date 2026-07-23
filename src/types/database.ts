@@ -88,6 +88,36 @@ export type MarketplacePublicationQuota = {
   period_end: string
 }
 
+export type AdminReviewCounts = {
+  marketplace_pending: number
+  moderation_pending: number
+}
+
+export type AdminMarketplaceListing = {
+  id: string
+  seller_id: string
+  seller_name: string
+  seller_type: 'personal' | 'business'
+  seller_plan: 'free' | 'premium' | 'business'
+  category: MarketplaceCategory
+  title: string
+  description: string
+  price: number
+  currency: 'COP'
+  condition: MarketplaceCondition
+  mileage_km: number | null
+  city: string | null
+  department: string | null
+  status: MarketplaceListingStatus
+  moderation_notes: string | null
+  submitted_at: string
+  images: Array<{
+    id: string
+    image_url: string
+    sort_order: number
+  }>
+}
+
 export type Motorcycle = {
   id: string
   owner_id: string
@@ -184,7 +214,7 @@ export type SavedRoute = {
 export type Notification = {
   id: string
   user_id: string
-  type: 'route_planned' | 'route_overdue' | 'club_invite' | 'moderation_notice'
+  type: 'route_planned' | 'route_overdue' | 'club_invite' | 'moderation_notice' | 'admin_review'
   title: string
   message: string
   route_id: string | null
