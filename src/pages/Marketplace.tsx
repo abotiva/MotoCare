@@ -1042,7 +1042,7 @@ export function Marketplace() {
               setIsSellActionExpanded(false)
               setShowCreateListing(true)
             }}
-            className="rounded-full bg-moto-orange px-4 text-moto-darker shadow-lg shadow-black/30 hover:bg-moto-orange-dark sm:hidden"
+            className="rounded-full bg-moto-orange px-4 text-moto-darker shadow-lg shadow-black/30 hover:bg-moto-orange-dark lg:hidden"
           >
             <Lock className="mr-2 h-4 w-4" />
             {effectivePlan === 'business'
@@ -1058,7 +1058,7 @@ export function Marketplace() {
           aria-label={isSellActionExpanded ? 'Cerrar acciones de publicación' : 'Mostrar acciones de publicación'}
           aria-expanded={isSellActionExpanded}
           onClick={() => setIsSellActionExpanded((current) => !current)}
-          className="h-12 w-12 rounded-full bg-moto-orange text-moto-darker shadow-lg shadow-moto-orange/30 hover:bg-moto-orange-dark sm:hidden"
+          className="h-12 w-12 rounded-full bg-moto-orange text-moto-darker shadow-lg shadow-moto-orange/30 hover:bg-moto-orange-dark lg:hidden"
         >
           {isSellActionExpanded ? <X className="h-6 w-6" /> : <Plus className="h-6 w-6" />}
         </Button>
@@ -1073,7 +1073,7 @@ export function Marketplace() {
                 ? 'Ya usaste tus 5 publicaciones del mes'
                 : undefined
           }
-          className="hidden rounded-full bg-moto-orange px-6 text-moto-darker shadow-lg shadow-moto-orange/30 hover:bg-moto-orange-dark sm:inline-flex"
+          className="hidden rounded-full bg-moto-orange px-6 text-moto-darker shadow-lg shadow-moto-orange/30 hover:bg-moto-orange-dark lg:inline-flex"
         >
           <Lock className="mr-2 h-5 w-5" />
           {effectivePlan === 'business'
