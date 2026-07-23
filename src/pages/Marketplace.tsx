@@ -1,13 +1,24 @@
 ﻿import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useEffect } from 'react'
 import { 
   Search, Filter, Grid3X3, List, MapPin, Heart, MessageCircle, 
-  Star, TrendingUp, Bike, Wrench, Shirt, Clock3, Lock, Store, MapPinned, PackageCheck, Sparkles
+  Star, TrendingUp, Bike, Wrench, Shirt, Clock3, Lock, Store, MapPinned, PackageCheck, Sparkles,
+  AlertCircle, LoaderCircle
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { useAuth } from '@/contexts/AuthContext'
+import { useSubscription } from '@/hooks/useSubscription'
+import { isSupabaseConfigured, supabase } from '@/lib/supabase'
+import type {
+  MarketplaceCategory,
+  MarketplaceCondition,
+  MarketplaceListingWithSeller,
+  MarketplacePublicationQuota,
+} from '@/types/database'
 
 const categories = [
   { id: 'all', name: 'Todo', icon: Grid3X3 },
@@ -19,9 +30,24 @@ const categories = [
   { id: 'packs', name: 'Packs', icon: PackageCheck },
 ]
 
-const listings = [
+type StoreListing = {
+  id: string
+  title: string
+  price: number
+  originalPrice?: number
+  condition: string
+  mileage?: string
+  location: string
+  image: string
+  seller: { name: string; rating: number; verified: boolean }
+  featured: boolean
+  likes: number
+  category: MarketplaceCategory
+}
+
+const demoListings: StoreListing[] = [
   {
-    id: 1,
+    id: 'demo-1',
     title: 'Honda CB500F 2022',
     price: 18500000,
     originalPrice: 22000000,
@@ -35,7 +61,7 @@ const listings = [
     category: 'motorcycles'
   },
   {
-    id: 2,
+    id: 'demo-2',
     title: 'Yamaha MT-07 2023',
     price: 42000000,
     condition: 'Nuevo',
@@ -48,7 +74,7 @@ const listings = [
     category: 'motorcycles'
   },
   {
-    id: 3,
+    id: 'demo-3',
     title: 'Kit de frenos Brembo',
     price: 850000,
     originalPrice: 1200000,
@@ -61,7 +87,7 @@ const listings = [
     category: 'parts'
   },
   {
-    id: 4,
+    id: 'demo-4',
     title: 'Chamarra Alpinestars GP Plus',
     price: 1200000,
     condition: 'Usado - Como nuevo',
@@ -73,7 +99,7 @@ const listings = [
     category: 'gear'
   },
   {
-    id: 5,
+    id: 'demo-5',
     title: 'Kawasaki Ninja 400',
     price: 28000000,
     condition: 'Usado',
@@ -86,7 +112,7 @@ const listings = [
     category: 'motorcycles'
   },
   {
-    id: 6,
+    id: 'demo-6',
     title: 'Escape Akrapovič Slip-on',
     price: 2500000,
     condition: 'Nuevo',
@@ -98,7 +124,7 @@ const listings = [
     category: 'parts'
   },
   {
-    id: 7,
+    id: 'demo-7',
     title: 'Nevado del Ruiz Adventure',
     price: 24900,
     condition: 'Ruta Premium',
@@ -111,7 +137,7 @@ const listings = [
     category: 'premium-routes'
   },
   {
-    id: 8,
+    id: 'demo-8',
     title: 'Pack Eje Cafetero',
     price: 59900,
     condition: 'Pack Premium',
@@ -124,7 +150,7 @@ const listings = [
     category: 'packs'
   },
   {
-    id: 9,
+    id: 'demo-9',
     title: 'Revisión pre-viaje Adventure',
     price: 120000,
     condition: 'Servicio',
@@ -146,10 +172,102 @@ const formatPrice = (price: number) => {
   }).format(price)
 }
 
+const conditionLabels: Record<MarketplaceCondition, string> = {
+  new: 'Nuevo',
+  used_like_new: 'Usado - Como nuevo',
+  used_good: 'Usado - Buen estado',
+  used_fair: 'Usado - Estado aceptable',
+  service: 'Servicio',
+  digital: 'Producto digital',
+}
+
+function toStoreListing(listing: MarketplaceListingWithSeller): StoreListing {
+  const sellerName = listing.profiles?.full_name || listing.profiles?.username || 'Usuario MotoCare'
+  const image = [...(listing.marketplace_listing_images ?? [])]
+    .sort((a, b) => a.sort_order - b.sort_order)[0]?.image_url
+
+  return {
+    id: listing.id,
+    title: listing.title,
+    price: Number(listing.price),
+    originalPrice: listing.original_price === null ? undefined : Number(listing.original_price),
+    condition: conditionLabels[listing.condition],
+    mileage: listing.mileage_km === null ? undefined : `${listing.mileage_km.toLocaleString('es-CO')} km`,
+    location: [listing.city, listing.department].filter(Boolean).join(', ') || 'Colombia',
+    image: image || '/feature-marketplace.jpg',
+    seller: {
+      name: sellerName,
+      rating: 5,
+      verified: listing.seller_type === 'business',
+    },
+    featured: listing.is_featured,
+    likes: 0,
+    category: listing.category,
+  }
+}
+
 export function Marketplace() {
+  const { user } = useAuth()
+  const { effectivePlan, isLoadingSubscription } = useSubscription()
   const [searchQuery, setSearchQuery] = useState('')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [selectedCategory, setSelectedCategory] = useState('all')
+  const [listings, setListings] = useState<StoreListing[]>(isSupabaseConfigured ? [] : demoListings)
+  const [quota, setQuota] = useState<MarketplacePublicationQuota | null>(null)
+  const [isLoadingListings, setIsLoadingListings] = useState(isSupabaseConfigured)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!supabase) {
+      setListings(demoListings)
+      setIsLoadingListings(false)
+      return
+    }
+
+    const client = supabase
+    let isMounted = true
+
+    const loadMarketplace = async () => {
+      setIsLoadingListings(true)
+      setLoadError(null)
+      const listingsRequest = client
+        .from('marketplace_listings')
+        .select(`
+          *,
+          profiles:seller_id(full_name, username, city, avatar_url),
+          marketplace_listing_images(*)
+        `)
+        .eq('status', 'active')
+        .order('is_featured', { ascending: false })
+        .order('published_at', { ascending: false })
+
+      const [listingsResult, quotaResult] = await Promise.all([
+        listingsRequest,
+        user ? client.rpc('marketplace_publication_quota') : Promise.resolve({ data: null, error: null }),
+      ])
+      if (!isMounted) return
+
+      if (listingsResult.error) {
+        setLoadError(listingsResult.error.message)
+        setListings([])
+      } else {
+        setListings(((listingsResult.data ?? []) as MarketplaceListingWithSeller[]).map(toStoreListing))
+      }
+
+      if (!quotaResult.error && quotaResult.data) {
+        const row = Array.isArray(quotaResult.data) ? quotaResult.data[0] : quotaResult.data
+        setQuota((row as MarketplacePublicationQuota | undefined) ?? null)
+      } else {
+        setQuota(null)
+      }
+      setIsLoadingListings(false)
+    }
+
+    void loadMarketplace()
+    return () => {
+      isMounted = false
+    }
+  }, [user])
 
   const filteredListings = listings.filter((listing) => {
     const matchesCategory = selectedCategory === 'all' || listing.category === selectedCategory
@@ -174,11 +292,45 @@ export function Marketplace() {
           <h1 className="text-2xl font-bold mb-2">Marketplace</h1>
           <p className="text-gray-400">Compra motos, repuestos, equipamiento, servicios y rutas premium. Publicar exige una licencia activa.</p>
         </div>
-        <Badge className="w-fit bg-moto-orange text-moto-darker">
-          <Clock3 className="mr-2 h-4 w-4" />
-          Vista previa
-        </Badge>
+        {!isSupabaseConfigured ? (
+          <Badge className="w-fit bg-moto-orange text-moto-darker">
+            <Clock3 className="mr-2 h-4 w-4" />
+            Datos de demostración
+          </Badge>
+        ) : null}
       </div>
+
+      {user && !isLoadingSubscription && effectivePlan !== 'free' ? (
+        <Card className="mb-6 border-moto-orange/30 bg-moto-orange/10 py-0">
+          <CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-semibold">Licencia {effectivePlan === 'business' ? 'Business' : 'Premium'}</p>
+              <p className="text-sm text-gray-300">
+                {effectivePlan === 'business'
+                  ? 'Publicaciones nuevas mensuales ilimitadas.'
+                  : quota
+                    ? `${quota.used_publications} de 5 publicaciones usadas este mes · ${quota.remaining_publications} disponibles.`
+                    : 'Hasta 5 publicaciones nuevas por mes.'}
+              </p>
+            </div>
+            {effectivePlan !== 'business' && quota?.remaining_publications === 0 ? (
+              <Badge className="w-fit bg-violet-500 text-white">Actualiza a Business para continuar</Badge>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {loadError ? (
+        <Card className="mb-6 border-red-500/30 bg-red-500/10 py-0">
+          <CardContent className="flex gap-3 p-4 text-red-200">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+            <div>
+              <p className="font-semibold">No pudimos cargar la tienda</p>
+              <p className="text-sm text-red-200/80">{loadError}</p>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card className="mb-6 overflow-hidden border-white/5 bg-moto-gray py-0">
         <CardContent className="relative p-5">
@@ -300,6 +452,29 @@ export function Marketplace() {
       </div>
 
       {/* Featured Section */}
+      {isLoadingListings ? (
+        <div className="grid min-h-48 place-items-center">
+          <div className="text-center text-gray-400">
+            <LoaderCircle className="mx-auto mb-3 h-8 w-8 animate-spin text-moto-orange" />
+            Cargando publicaciones...
+          </div>
+        </div>
+      ) : null}
+
+      {!isLoadingListings && !loadError && filteredListings.length === 0 ? (
+        <Card className="mb-8 border-dashed border-white/10 bg-moto-gray/50 py-0">
+          <CardContent className="p-8 text-center">
+            <Store className="mx-auto mb-3 h-10 w-10 text-gray-500" />
+            <h2 className="font-semibold">No hay publicaciones para mostrar</h2>
+            <p className="mt-1 text-sm text-gray-400">
+              {searchQuery || selectedCategory !== 'all'
+                ? 'Prueba otra búsqueda o categoría.'
+                : 'Las publicaciones aprobadas aparecerán aquí.'}
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <div className="mb-8">
         <div className="mb-4 flex items-center justify-between gap-3">
           <h2 className="flex min-w-0 items-center gap-2 text-lg font-semibold">
@@ -444,7 +619,11 @@ export function Marketplace() {
           className="bg-moto-orange hover:bg-moto-orange-dark shadow-lg shadow-moto-orange/30 rounded-full px-6"
         >
           <Lock className="w-5 h-5 mr-2" />
-          Vender con Premium
+          {effectivePlan === 'business'
+            ? 'Publicar como negocio'
+            : effectivePlan === 'premium' || effectivePlan === 'pro'
+              ? 'Crear publicación'
+              : 'Vender con Premium'}
         </Button>
       </div>
     </div>

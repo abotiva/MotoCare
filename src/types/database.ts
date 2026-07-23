@@ -30,6 +30,64 @@ export type UserSubscription = {
   updated_at: string | null
 }
 
+export type MarketplaceCategory = 'motorcycles' | 'parts' | 'gear' | 'services' | 'premium-routes' | 'packs'
+
+export type MarketplaceCondition = 'new' | 'used_like_new' | 'used_good' | 'used_fair' | 'service' | 'digital'
+
+export type MarketplaceListingStatus = 'draft' | 'pending_review' | 'active' | 'paused' | 'sold' | 'rejected' | 'archived'
+
+export type MarketplaceListingImage = {
+  id: string
+  listing_id: string
+  owner_id: string
+  image_url: string
+  storage_path: string | null
+  sort_order: number
+  created_at: string
+}
+
+export type MarketplaceListing = {
+  id: string
+  seller_id: string
+  category: MarketplaceCategory
+  seller_type: 'personal' | 'business'
+  title: string
+  description: string
+  price: number
+  original_price: number | null
+  currency: 'COP'
+  condition: MarketplaceCondition
+  mileage_km: number | null
+  city: string | null
+  department: string | null
+  status: MarketplaceListingStatus
+  is_featured: boolean
+  published_at: string | null
+  sold_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type MarketplaceListingWithSeller = MarketplaceListing & {
+  profiles: {
+    full_name: string | null
+    username: string | null
+    city: string | null
+    avatar_url: string | null
+  } | null
+  marketplace_listing_images: MarketplaceListingImage[]
+}
+
+export type MarketplacePublicationQuota = {
+  plan: 'free' | 'premium' | 'business'
+  used_publications: number
+  monthly_limit: number | null
+  remaining_publications: number | null
+  can_publish: boolean
+  period_start: string
+  period_end: string
+}
+
 export type Motorcycle = {
   id: string
   owner_id: string
