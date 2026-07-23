@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { 
   Search, Filter, Grid3X3, List, MapPin, Heart, MessageCircle, 
   Star, TrendingUp, Bike, Wrench, Shirt, Clock3, Lock, Store, MapPinned, PackageCheck, Sparkles,
-  AlertCircle, LoaderCircle, ImagePlus, Trash2
+  AlertCircle, LoaderCircle, ImagePlus, Trash2, CheckCircle2, Inbox, Send
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,6 +28,7 @@ import type {
   MarketplaceCategory,
   MarketplaceCondition,
   MarketplaceListingWithSeller,
+  MarketplaceMessage,
   MarketplacePublicationQuota,
 } from '@/types/database'
 
@@ -56,6 +57,8 @@ type StoreListing = {
   category: MarketplaceCategory
   description?: string
   images?: string[]
+  sellerId?: string
+  status?: 'active' | 'sold'
 }
 
 type ListingForm = {
@@ -268,6 +271,8 @@ function toStoreListing(listing: MarketplaceListingWithSeller): StoreListing {
     category: listing.category,
     description: listing.description,
     images,
+    sellerId: listing.seller_id,
+    status: listing.status === 'sold' ? 'sold' : 'active',
   }
 }
 
@@ -290,6 +295,13 @@ export function Marketplace() {
   const [selectedListing, setSelectedListing] = useState<StoreListing | null>(null)
   const [marketplacePage, setMarketplacePage] = useState(0)
   const [hasMoreListings, setHasMoreListings] = useState(false)
+  const [contactMessage, setContactMessage] = useState('')
+  const [isSendingMessage, setIsSendingMessage] = useState(false)
+  const [isMarkingSold, setIsMarkingSold] = useState(false)
+  const [showInbox, setShowInbox] = useState(false)
+  const [marketplaceMessages, setMarketplaceMessages] = useState<MarketplaceMessage[]>([])
+  const [isLoadingInbox, setIsLoadingInbox] = useState(false)
+  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({})
 
   useEffect(() => {
     setMarketplacePage(0)
@@ -537,6 +549,93 @@ export function Marketplace() {
     void saveListing('pending_review')
   }
 
+  const sendMarketplaceMessage = async (
+    listing: StoreListing,
+    recipientId: string,
+    body: string,
+    onSuccess?: () => void
+  ) => {
+    if (!supabase || !user || !body.trim()) return
+    setIsSendingMessage(true)
+    const { error } = await supabase.from('marketplace_messages').insert({
+      listing_id: listing.id,
+      sender_id: user.id,
+      recipient_id: recipientId,
+      body: body.trim(),
+    })
+    setIsSendingMessage(false)
+    if (error) {
+      toast.error('No pudimos enviar el mensaje', { description: error.message })
+      return
+    }
+    toast.success('Mensaje enviado al vendedor')
+    onSuccess?.()
+  }
+
+  const markListingAsSold = async (listing: StoreListing) => {
+    if (!supabase || !user || listing.sellerId !== user.id) return
+    if (!window.confirm(`¿Confirmas que "${listing.title}" ya fue vendido?`)) return
+    setIsMarkingSold(true)
+    const { error } = await supabase.rpc('mark_marketplace_listing_sold', {
+      target_listing_id: listing.id,
+    })
+    setIsMarkingSold(false)
+    if (error) {
+      toast.error('No pudimos marcar el artículo como vendido', { description: error.message })
+      return
+    }
+    setListings((current) => current.filter((item) => item.id !== listing.id))
+    setSelectedListing(null)
+    toast.success('Artículo marcado como vendido', {
+      description: 'La publicación dejó de estar visible para nuevos compradores.',
+    })
+  }
+
+  const loadMarketplaceInbox = async () => {
+    if (!supabase || !user) return
+    setIsLoadingInbox(true)
+    const { data, error } = await supabase
+      .from('marketplace_messages')
+      .select(`
+        *,
+        marketplace_listings:listing_id(id, title, seller_id, status),
+        sender:sender_id(full_name, username),
+        recipient:recipient_id(full_name, username)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(100)
+    setIsLoadingInbox(false)
+    if (error) {
+      toast.error('No pudimos cargar los mensajes de la tienda', { description: error.message })
+      return
+    }
+    setMarketplaceMessages((data ?? []) as unknown as MarketplaceMessage[])
+    const unreadIds = (data ?? [])
+      .filter((message) => message.recipient_id === user.id && !message.read_at)
+      .map((message) => message.id)
+    if (unreadIds.length > 0) {
+      await supabase.from('marketplace_messages').update({ read_at: new Date().toISOString() }).in('id', unreadIds)
+    }
+  }
+
+  const inboxThreads = useMemo(() => {
+    const threads = new Map<string, MarketplaceMessage[]>()
+    marketplaceMessages.forEach((message) => {
+      const otherId = message.sender_id === user?.id ? message.recipient_id : message.sender_id
+      const key = `${message.listing_id}:${otherId}`
+      const current = threads.get(key) ?? []
+      current.push(message)
+      threads.set(key, current)
+    })
+    return [...threads.entries()].map(([key, messages]) => ({
+      key,
+      messages: [...messages].reverse(),
+      listing: messages[0].marketplace_listings,
+      otherId: messages[0].sender_id === user?.id ? messages[0].recipient_id : messages[0].sender_id,
+      other: messages[0].sender_id === user?.id ? messages[0].recipient : messages[0].sender,
+    }))
+  }, [marketplaceMessages, user?.id])
+
   const filteredListings = useMemo(() => {
     const searchTerm = searchQuery.trim().toLowerCase()
     return listings.filter((listing) => {
@@ -564,12 +663,28 @@ export function Marketplace() {
           <h1 className="text-2xl font-bold mb-2">Marketplace</h1>
           <p className="text-gray-400">Compra motos, repuestos, equipamiento, servicios y rutas premium. Publicar exige una licencia activa.</p>
         </div>
-        {!isSupabaseConfigured ? (
-          <Badge className="w-fit bg-moto-orange text-moto-darker">
-            <Clock3 className="mr-2 h-4 w-4" />
-            Datos de demostración
-          </Badge>
-        ) : null}
+        <div className="flex flex-wrap gap-2">
+          {user && supabase ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="border-white/10"
+              onClick={() => {
+                setShowInbox(true)
+                void loadMarketplaceInbox()
+              }}
+            >
+              <Inbox className="mr-2 h-4 w-4" />
+              Mensajes de la tienda
+            </Button>
+          ) : null}
+          {!isSupabaseConfigured ? (
+            <Badge className="w-fit bg-moto-orange text-moto-darker">
+              <Clock3 className="mr-2 h-4 w-4" />
+              Datos de demostración
+            </Badge>
+          ) : null}
+        </div>
       </div>
 
       {user && !isLoadingSubscription && effectivePlan !== 'free' ? (
@@ -806,7 +921,13 @@ export function Marketplace() {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2 sm:flex">
-                    <Button size="sm" variant="outline" className="border-white/10" disabled>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-white/10"
+                      onClick={() => setSelectedListing(listing)}
+                      aria-label={`Contactar a ${listing.seller.name}`}
+                    >
                       <MessageCircle className="w-4 h-4" />
                     </Button>
                     <Button
@@ -979,6 +1100,16 @@ export function Marketplace() {
                   </p>
                 </div>
 
+                <div className="flex gap-3 rounded-xl border border-amber-400/25 bg-amber-400/10 p-4 text-sm leading-6 text-amber-100">
+                  <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
+                  <p>
+                    MotoCare Co. funciona únicamente como medio de comunicación entre compradores y vendedores.
+                    No participa en la negociación, el pago, la entrega ni la garantía, y no es responsable por la
+                    venta o por los artículos publicados. Verifica el producto y la identidad de la contraparte antes
+                    de realizar cualquier pago.
+                  </p>
+                </div>
+
                 <div className="flex flex-col gap-3 rounded-xl border border-white/10 p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="font-medium">{selectedListing.seller.name}</p>
@@ -991,16 +1122,161 @@ export function Marketplace() {
                     <Button asChild className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
                       <Link to="/app/premium-routes" onClick={() => setSelectedListing(null)}>Explorar ruta</Link>
                     </Button>
-                  ) : (
-                    <Button variant="outline" className="border-white/10" disabled>
-                      <MessageCircle className="mr-2 h-4 w-4" />
-                      Contacto próximamente
+                  ) : selectedListing.sellerId === user?.id ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="border-green-500/40 text-green-300 hover:bg-green-500/10 hover:text-green-200"
+                      disabled={isMarkingSold}
+                      onClick={() => void markListingAsSold(selectedListing)}
+                    >
+                      {isMarkingSold
+                        ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                        : <CheckCircle2 className="mr-2 h-4 w-4" />}
+                      Marcar como vendido
                     </Button>
-                  )}
+                  ) : null}
                 </div>
+
+                {selectedListing.category !== 'premium-routes'
+                  && selectedListing.category !== 'packs'
+                  && selectedListing.sellerId !== user?.id ? (
+                    <div className="rounded-xl border border-moto-orange/30 bg-moto-orange/10 p-4">
+                      <h3 className="flex items-center gap-2 font-semibold">
+                        <MessageCircle className="h-5 w-5 text-moto-orange" />
+                        Contactar al vendedor
+                      </h3>
+                      <p className="mt-1 text-sm text-gray-300">
+                        El mensaje será privado y quedará asociado a esta publicación.
+                      </p>
+                      <Textarea
+                        value={contactMessage}
+                        maxLength={1000}
+                        className="mt-3 min-h-24 border-white/10 bg-moto-darker"
+                        placeholder="Hola, estoy interesado en este artículo..."
+                        onChange={(event) => setContactMessage(event.target.value)}
+                      />
+                      <Button
+                        type="button"
+                        className="mt-3 w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark sm:w-auto"
+                        disabled={!user || !selectedListing.sellerId || !contactMessage.trim() || isSendingMessage}
+                        onClick={() => {
+                          if (!selectedListing.sellerId) return
+                          void sendMarketplaceMessage(
+                            selectedListing,
+                            selectedListing.sellerId,
+                            contactMessage,
+                            () => setContactMessage('')
+                          )
+                        }}
+                      >
+                        {isSendingMessage
+                          ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                          : <Send className="mr-2 h-4 w-4" />}
+                        {user ? 'Enviar mensaje' : 'Inicia sesión para contactar'}
+                      </Button>
+                    </div>
+                  ) : null}
               </div>
             </>
           ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showInbox} onOpenChange={setShowInbox}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto border-white/10 bg-moto-gray text-white sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Mensajes de la tienda</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Conversaciones privadas asociadas a tus compras y publicaciones.
+            </DialogDescription>
+          </DialogHeader>
+          {isLoadingInbox ? (
+            <div className="grid min-h-40 place-items-center text-gray-400">
+              <LoaderCircle className="h-7 w-7 animate-spin text-moto-orange" />
+            </div>
+          ) : inboxThreads.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-white/10 p-8 text-center text-gray-400">
+              Todavía no tienes mensajes de la tienda.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {inboxThreads.map((thread) => {
+                const otherName = thread.other?.full_name || thread.other?.username || 'Usuario MotoCare'
+                const draft = replyDrafts[thread.key] ?? ''
+                return (
+                  <section key={thread.key} className="rounded-xl border border-white/10 bg-moto-darker p-4">
+                    <div className="mb-3">
+                      <p className="font-semibold">{thread.listing?.title || 'Publicación'}</p>
+                      <p className="text-sm text-gray-400">Conversación con {otherName}</p>
+                      {thread.listing?.status === 'sold' ? (
+                        <Badge className="mt-2 bg-green-500/15 text-green-300">Vendido</Badge>
+                      ) : null}
+                    </div>
+                    <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+                      {thread.messages.map((message) => (
+                        <div
+                          key={message.id}
+                          className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${
+                            message.sender_id === user?.id
+                              ? 'ml-auto bg-moto-orange text-moto-darker'
+                              : 'bg-white/10 text-gray-200'
+                          }`}
+                        >
+                          <p className="whitespace-pre-wrap break-words">{message.body}</p>
+                          <p className={`mt-1 text-[11px] ${message.sender_id === user?.id ? 'text-black/60' : 'text-gray-500'}`}>
+                            {new Date(message.created_at).toLocaleString('es-CO')}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 flex gap-2">
+                      <Input
+                        value={draft}
+                        maxLength={1000}
+                        className="border-white/10 bg-moto-gray"
+                        placeholder="Escribe una respuesta..."
+                        onChange={(event) => setReplyDrafts((current) => ({
+                          ...current,
+                          [thread.key]: event.target.value,
+                        }))}
+                      />
+                      <Button
+                        type="button"
+                        size="icon"
+                        className="shrink-0 bg-moto-orange text-moto-darker hover:bg-moto-orange-dark"
+                        disabled={!draft.trim() || isSendingMessage || !thread.listing}
+                        onClick={() => {
+                          if (!thread.listing) return
+                          const listing: StoreListing = {
+                            id: thread.listing.id,
+                            title: thread.listing.title,
+                            price: 0,
+                            condition: '',
+                            location: '',
+                            image: '',
+                            seller: { name: '', rating: 0, verified: false },
+                            featured: false,
+                            likes: 0,
+                            category: 'parts',
+                            sellerId: thread.listing.seller_id,
+                            status: thread.listing.status === 'sold' ? 'sold' : 'active',
+                          }
+                          void sendMarketplaceMessage(listing, thread.otherId, draft, () => {
+                            setReplyDrafts((current) => ({ ...current, [thread.key]: '' }))
+                            void loadMarketplaceInbox()
+                          })
+                        }}
+                        aria-label={`Responder a ${otherName}`}
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </section>
+                )
+              })}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

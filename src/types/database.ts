@@ -78,6 +78,30 @@ export type MarketplaceListingWithSeller = MarketplaceListing & {
   marketplace_listing_images: MarketplaceListingImage[]
 }
 
+export type MarketplaceMessage = {
+  id: string
+  listing_id: string
+  sender_id: string
+  recipient_id: string
+  body: string
+  read_at: string | null
+  created_at: string
+  marketplace_listings: {
+    id: string
+    title: string
+    seller_id: string
+    status: MarketplaceListingStatus
+  } | null
+  sender: {
+    full_name: string | null
+    username: string | null
+  } | null
+  recipient: {
+    full_name: string | null
+    username: string | null
+  } | null
+}
+
 export type MarketplacePublicationQuota = {
   plan: 'free' | 'premium' | 'business'
   used_publications: number
