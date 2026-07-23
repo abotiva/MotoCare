@@ -54,6 +54,8 @@ type StoreListing = {
   featured: boolean
   likes: number
   category: MarketplaceCategory
+  description?: string
+  images?: string[]
 }
 
 type ListingForm = {
@@ -216,8 +218,10 @@ const conditionLabels: Record<MarketplaceCondition, string> = {
 
 function toStoreListing(listing: MarketplaceListingWithSeller): StoreListing {
   const sellerName = listing.profiles?.full_name || listing.profiles?.username || 'Usuario MotoCare'
-  const image = [...(listing.marketplace_listing_images ?? [])]
-    .sort((a, b) => a.sort_order - b.sort_order)[0]?.image_url
+  const images = [...(listing.marketplace_listing_images ?? [])]
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((item) => item.image_url)
+  const image = images[0]
 
   return {
     id: listing.id,
@@ -236,6 +240,8 @@ function toStoreListing(listing: MarketplaceListingWithSeller): StoreListing {
     featured: listing.is_featured,
     likes: 0,
     category: listing.category,
+    description: listing.description,
+    images,
   }
 }
 
@@ -255,6 +261,7 @@ export function Marketplace() {
   const [listingImages, setListingImages] = useState<File[]>([])
   const [listingImagePreviews, setListingImagePreviews] = useState<string[]>([])
   const [imageInputKey, setImageInputKey] = useState(0)
+  const [selectedListing, setSelectedListing] = useState<StoreListing | null>(null)
 
   useEffect(() => {
     if (!supabase) {
@@ -748,15 +755,13 @@ export function Marketplace() {
                     <Button size="sm" variant="outline" className="border-white/10" disabled>
                       <MessageCircle className="w-4 h-4" />
                     </Button>
-                    {listing.category === 'premium-routes' || listing.category === 'packs' ? (
-                      <Button asChild size="sm" className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
-                        <Link to="/app/premium-routes">Ver más</Link>
-                      </Button>
-                    ) : (
-                      <Button size="sm" className="bg-moto-orange hover:bg-moto-orange-dark" disabled>
-                        Ver más
-                      </Button>
-                    )}
+                    <Button
+                      size="sm"
+                      className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark"
+                      onClick={() => setSelectedListing(listing)}
+                    >
+                      Ver detalle
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -808,15 +813,14 @@ export function Marketplace() {
                       <Badge variant="secondary" className="text-[10px]">Verificado</Badge>
                     )}
                   </div>
-                  {listing.category === 'premium-routes' || listing.category === 'packs' ? (
-                    <Button asChild size="sm" variant="ghost" className="text-moto-orange">
-                      <Link to="/app/premium-routes">Ver ruta</Link>
-                    </Button>
-                  ) : (
-                    <Button size="sm" variant="ghost" className="text-moto-orange" disabled>
-                      Contactar
-                    </Button>
-                  )}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-moto-orange"
+                    onClick={() => setSelectedListing(listing)}
+                  >
+                    Ver detalle
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -847,6 +851,88 @@ export function Marketplace() {
               : 'Vender con Premium'}
         </Button>
       </div>
+
+      <Dialog open={Boolean(selectedListing)} onOpenChange={(open) => !open && setSelectedListing(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto border-white/10 bg-moto-gray text-white sm:max-w-3xl">
+          {selectedListing ? (
+            <>
+              <DialogHeader>
+                <DialogTitle className="pr-8 text-xl">{selectedListing.title}</DialogTitle>
+                <DialogDescription className="text-gray-400">
+                  Publicado por {selectedListing.seller.name}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-5">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+                  {(selectedListing.images?.length ? selectedListing.images : [selectedListing.image]).map((image, index) => (
+                    <img
+                      key={`${image}-${index}`}
+                      src={image}
+                      alt={index === 0 ? selectedListing.title : `Imagen ${index + 1} de ${selectedListing.title}`}
+                      className={index === 0
+                        ? 'col-span-2 aspect-video h-full w-full rounded-xl object-cover sm:col-span-5'
+                        : 'aspect-square h-full w-full rounded-lg object-cover'}
+                    />
+                  ))}
+                </div>
+
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="secondary">{selectedListing.condition}</Badge>
+                      <Badge className="bg-white/10 text-gray-300">{selectedListing.category}</Badge>
+                      {selectedListing.seller.verified ? (
+                        <Badge className="bg-green-500/15 text-green-300">Vendedor verificado</Badge>
+                      ) : null}
+                    </div>
+                    <p className="mt-3 flex items-center gap-2 text-sm text-gray-400">
+                      <MapPin className="h-4 w-4 text-moto-orange" />
+                      {selectedListing.location}
+                    </p>
+                    {selectedListing.mileage ? (
+                      <p className="mt-1 text-sm text-gray-400">Kilometraje: {selectedListing.mileage}</p>
+                    ) : null}
+                  </div>
+                  <div className="shrink-0 sm:text-right">
+                    <p className="text-2xl font-bold text-moto-orange">{formatPrice(selectedListing.price)}</p>
+                    {selectedListing.originalPrice ? (
+                      <p className="text-sm text-gray-500 line-through">{formatPrice(selectedListing.originalPrice)}</p>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-white/10 bg-moto-darker p-4">
+                  <h3 className="font-semibold">Descripción</h3>
+                  <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-gray-300">
+                    {selectedListing.description || 'El vendedor no agregó una descripción adicional para esta publicación de demostración.'}
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-3 rounded-xl border border-white/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="font-medium">{selectedListing.seller.name}</p>
+                    <div className="mt-1 flex items-center gap-1 text-sm text-gray-400">
+                      <Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                      {selectedListing.seller.rating}
+                    </div>
+                  </div>
+                  {selectedListing.category === 'premium-routes' || selectedListing.category === 'packs' ? (
+                    <Button asChild className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
+                      <Link to="/app/premium-routes" onClick={() => setSelectedListing(null)}>Explorar ruta</Link>
+                    </Button>
+                  ) : (
+                    <Button variant="outline" className="border-white/10" disabled>
+                      <MessageCircle className="mr-2 h-4 w-4" />
+                      Contacto próximamente
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showCreateListing} onOpenChange={setShowCreateListing}>
         <DialogContent className="max-h-[90vh] overflow-y-auto border-white/10 bg-moto-gray text-white sm:max-w-2xl">
