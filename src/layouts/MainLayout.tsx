@@ -84,6 +84,12 @@ function initials(name: string | null | undefined, email: string | undefined) {
 }
 
 function notificationPreview(notification: Notification) {
+  if (notification.type === 'marketplace_message') {
+    return {
+      title: notification.title || 'Nuevo mensaje en la tienda',
+      message: notification.message,
+    }
+  }
   if (notification.type === 'moderation_notice') {
     return {
       title: notification.title || 'Aviso de moderación',
@@ -445,7 +451,9 @@ export function MainLayout() {
                           return (
                             <Link
                               key={notification.id}
-                              to="/app/notifications"
+                              to={notification.type === 'marketplace_message'
+                                ? '/app/marketplace?inbox=1'
+                                : '/app/notifications'}
                               className="block rounded-xl p-3 transition-colors hover:bg-white/5"
                             >
                               <p className="line-clamp-1 text-sm font-semibold">{preview.title}</p>

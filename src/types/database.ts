@@ -243,6 +243,7 @@ export type Notification = {
   message: string
   route_id: string | null
   club_invitation_id: string | null
+  marketplace_message_id: string | null
   scheduled_for: string
   read_at: string | null
   created_at: string

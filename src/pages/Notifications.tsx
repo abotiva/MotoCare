@@ -1,6 +1,6 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Bell, Calendar, Check, CheckCheck, Crown, Loader2, Route, Shield, ShieldAlert, Users, X } from 'lucide-react'
+import { Bell, Calendar, Check, CheckCheck, Crown, Loader2, Route, Shield, ShieldAlert, Store, Users, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
@@ -11,17 +11,19 @@ import { planLabels, useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
 import type { Notification } from '@/types/database'
 
-type NotificationFilter = 'all' | 'unread' | 'routes' | 'clubs' | 'moderation'
+type NotificationFilter = 'all' | 'unread' | 'routes' | 'clubs' | 'store' | 'moderation'
 
 const filters: Array<{ id: NotificationFilter; label: string }> = [
   { id: 'all', label: 'Todas' },
   { id: 'unread', label: 'Pendientes' },
   { id: 'routes', label: 'Rutas' },
   { id: 'clubs', label: 'Clubes' },
+  { id: 'store', label: 'Tienda' },
   { id: 'moderation', label: 'Moderación' },
 ]
 
 function typeLabel(type: Notification['type']) {
+  if (type === 'marketplace_message') return 'Tienda'
   if (type === 'moderation_notice') return 'Moderación'
   if (type === 'club_invite') return 'Club'
   if (type === 'route_overdue') return 'Ruta vencida'
@@ -29,6 +31,7 @@ function typeLabel(type: Notification['type']) {
 }
 
 function typeIcon(type: Notification['type']) {
+  if (type === 'marketplace_message') return Store
   if (type === 'moderation_notice') return ShieldAlert
   if (type === 'club_invite') return Users
   if (type === 'route_overdue') return Shield
@@ -65,12 +68,14 @@ export function Notifications() {
   const routeCount = useMemo(() => notifications.filter((item) => item.type === 'route_planned' || item.type === 'route_overdue').length, [notifications])
   const clubCount = useMemo(() => notifications.filter((item) => item.type === 'club_invite').length, [notifications])
   const moderationCount = useMemo(() => notifications.filter((item) => item.type === 'moderation_notice').length, [notifications])
+  const storeCount = useMemo(() => notifications.filter((item) => item.type === 'marketplace_message').length, [notifications])
   const canUseAdvancedNotifications = hasPlan('premium')
 
   const visibleNotifications = useMemo(() => {
     if (filter === 'unread') return notifications.filter((item) => !item.read_at)
     if (filter === 'routes') return notifications.filter((item) => item.type === 'route_planned' || item.type === 'route_overdue')
     if (filter === 'clubs') return notifications.filter((item) => item.type === 'club_invite')
+    if (filter === 'store') return notifications.filter((item) => item.type === 'marketplace_message')
     if (filter === 'moderation') return notifications.filter((item) => item.type === 'moderation_notice')
     return notifications
   }, [filter, notifications])
@@ -196,10 +201,11 @@ export function Notifications() {
         </Button>
       </div>
 
-      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
         <MetricCard icon={Bell} label="Pendientes" value={unreadCount} onClick={() => setFilter('unread')} />
         <MetricCard icon={Route} label="Rutas" value={routeCount} onClick={() => setFilter('routes')} />
         <MetricCard icon={Users} label="Clubes" value={clubCount} onClick={() => setFilter('clubs')} />
+        <MetricCard icon={Store} label="Tienda" value={storeCount} onClick={() => setFilter('store')} />
         <MetricCard icon={ShieldAlert} label="Moderación" value={moderationCount} onClick={() => setFilter('moderation')} />
       </div>
 
@@ -360,7 +366,18 @@ function NotificationCard({
               </Button>
             )}
 
-            {unread && notification.type !== 'club_invite' && (
+            {notification.type === 'marketplace_message' && (
+              <Button asChild size="sm" className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
+                <Link
+                  to="/app/marketplace?inbox=1"
+                  onClick={() => void onMarkAsRead(notification)}
+                >
+                  Ver conversación
+                </Link>
+              </Button>
+            )}
+
+            {unread && notification.type !== 'club_invite' && notification.type !== 'marketplace_message' && (
               <Button size="sm" variant="outline" disabled={busy} className="border-white/10" onClick={() => void onMarkAsRead(notification)}>
                 {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
                 Leida

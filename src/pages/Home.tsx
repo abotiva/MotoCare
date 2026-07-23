@@ -531,6 +531,15 @@ export function Home() {
                               Rechazar
                             </Button>
                           </div>
+                        ) : notification.type === 'marketplace_message' ? (
+                          <Button asChild size="sm" className="shrink-0 bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
+                            <Link
+                              to="/app/marketplace?inbox=1"
+                              onClick={() => void markNotificationAsRead(notification)}
+                            >
+                              Ver mensaje
+                            </Link>
+                          </Button>
                         ) : (
                           <Button size="sm" variant="outline" className="border-white/10" onClick={() => void markNotificationAsRead(notification)}>
                             Leida

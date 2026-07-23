@@ -1,12 +1,12 @@
 ﻿import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useEffect } from 'react'
 import type { FormEvent } from 'react'
 import { toast } from 'sonner'
 import { 
   Search, Filter, Grid3X3, List, MapPin, Heart, MessageCircle, 
   Star, TrendingUp, Bike, Wrench, Shirt, Clock3, Lock, Store, MapPinned, PackageCheck, Sparkles,
-  AlertCircle, LoaderCircle, ImagePlus, Trash2, CheckCircle2, Inbox, Send
+  AlertCircle, LoaderCircle, ImagePlus, Trash2, CheckCircle2, Inbox, Send, Plus, X
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -278,6 +278,7 @@ function toStoreListing(listing: MarketplaceListingWithSeller): StoreListing {
 
 export function Marketplace() {
   const { user } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { effectivePlan, isLoadingSubscription } = useSubscription()
   const [searchQuery, setSearchQuery] = useState('')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -287,6 +288,7 @@ export function Marketplace() {
   const [isLoadingListings, setIsLoadingListings] = useState(isSupabaseConfigured)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [showCreateListing, setShowCreateListing] = useState(false)
+  const [isSellActionExpanded, setIsSellActionExpanded] = useState(false)
   const [listingForm, setListingForm] = useState<ListingForm>(emptyListingForm)
   const [isSavingListing, setIsSavingListing] = useState(false)
   const [listingImages, setListingImages] = useState<File[]>([])
@@ -375,6 +377,17 @@ export function Marketplace() {
       objectUrls.forEach((url) => URL.revokeObjectURL(url))
     }
   }, [listingImages])
+
+  useEffect(() => {
+    if (searchParams.get('inbox') !== '1' || !user || !supabase) return
+    setShowInbox(true)
+    void loadMarketplaceInbox()
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.delete('inbox')
+    setSearchParams(nextParams, { replace: true })
+    // The inbox deep link should be consumed once after authentication is available.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, setSearchParams, user?.id])
 
   const handleSelectListingImages = async (files: FileList | null) => {
     const selectedFiles = Array.from(files ?? [])
@@ -1020,9 +1033,37 @@ export function Marketplace() {
       </div>
 
       {/* Sell Button */}
-      <div className="fixed bottom-20 lg:bottom-8 right-4 lg:right-8 z-40">
-        <Button 
-          size="lg" 
+      <div className="fixed bottom-20 right-4 z-40 flex items-center justify-end gap-2 lg:bottom-8 lg:right-8">
+        {isSellActionExpanded ? (
+          <Button
+            size="sm"
+            disabled={!canCreateListing}
+            onClick={() => {
+              setIsSellActionExpanded(false)
+              setShowCreateListing(true)
+            }}
+            className="rounded-full bg-moto-orange px-4 text-moto-darker shadow-lg shadow-black/30 hover:bg-moto-orange-dark sm:hidden"
+          >
+            <Lock className="mr-2 h-4 w-4" />
+            {effectivePlan === 'business'
+              ? 'Publicar como negocio'
+              : effectivePlan === 'premium' || effectivePlan === 'pro'
+                ? 'Crear publicación'
+                : 'Requiere Premium'}
+          </Button>
+        ) : null}
+        <Button
+          type="button"
+          size="icon"
+          aria-label={isSellActionExpanded ? 'Cerrar acciones de publicación' : 'Mostrar acciones de publicación'}
+          aria-expanded={isSellActionExpanded}
+          onClick={() => setIsSellActionExpanded((current) => !current)}
+          className="h-12 w-12 rounded-full bg-moto-orange text-moto-darker shadow-lg shadow-moto-orange/30 hover:bg-moto-orange-dark sm:hidden"
+        >
+          {isSellActionExpanded ? <X className="h-6 w-6" /> : <Plus className="h-6 w-6" />}
+        </Button>
+        <Button
+          size="lg"
           disabled={!canCreateListing}
           onClick={() => setShowCreateListing(true)}
           title={
@@ -1032,9 +1073,9 @@ export function Marketplace() {
                 ? 'Ya usaste tus 5 publicaciones del mes'
                 : undefined
           }
-          className="bg-moto-orange hover:bg-moto-orange-dark shadow-lg shadow-moto-orange/30 rounded-full px-6"
+          className="hidden rounded-full bg-moto-orange px-6 text-moto-darker shadow-lg shadow-moto-orange/30 hover:bg-moto-orange-dark sm:inline-flex"
         >
-          <Lock className="w-5 h-5 mr-2" />
+          <Lock className="mr-2 h-5 w-5" />
           {effectivePlan === 'business'
             ? 'Publicar como negocio'
             : effectivePlan === 'premium' || effectivePlan === 'pro'

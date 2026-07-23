@@ -32,6 +32,13 @@ create index if not exists marketplace_messages_recipient_unread_idx
   on public.marketplace_messages(recipient_id, created_at desc)
   where read_at is null;
 
+alter table public.notifications
+add column if not exists marketplace_message_id uuid
+references public.marketplace_messages(id) on delete cascade;
+
+create index if not exists notifications_marketplace_message_id_idx
+  on public.notifications(marketplace_message_id);
+
 alter table public.marketplace_messages enable row level security;
 
 drop policy if exists "marketplace_messages_read_participants" on public.marketplace_messages;
@@ -115,6 +122,7 @@ as $$
 declare
   listing_title text;
   sender_name text;
+  message_preview text;
 begin
   select title into listing_title
   from public.marketplace_listings
@@ -124,12 +132,17 @@ begin
   from public.profiles
   where id = new.sender_id;
 
-  insert into public.notifications (user_id, type, title, message, scheduled_for)
+  message_preview := left(regexp_replace(trim(new.body), '\s+', ' ', 'g'), 140);
+
+  insert into public.notifications (
+    user_id, type, title, message, marketplace_message_id, scheduled_for
+  )
   values (
     new.recipient_id,
     'marketplace_message',
-    'Nuevo mensaje en la tienda',
-    sender_name || ' escribió por "' || listing_title || '".',
+    sender_name || ' preguntó por "' || listing_title || '"',
+    message_preview,
+    new.id,
     now()
   );
 
