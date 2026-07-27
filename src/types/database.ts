@@ -62,6 +62,8 @@ export type MarketplaceListing = {
   department: string | null
   status: MarketplaceListingStatus
   is_featured: boolean
+  is_premium_monthly_free: boolean
+  premium_free_month: string | null
   published_at: string | null
   sold_at: string | null
   created_at: string

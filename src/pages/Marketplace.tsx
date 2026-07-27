@@ -59,6 +59,8 @@ type StoreListing = {
   images?: string[]
   sellerId?: string
   status?: 'active' | 'sold'
+  isPremiumMonthlyFree?: boolean
+  premiumFreeMonth?: string
 }
 
 type ListingForm = {
@@ -70,6 +72,7 @@ type ListingForm = {
   mileage_km: string
   city: string
   department: string
+  is_premium_monthly_free: boolean
 }
 
 const emptyListingForm: ListingForm = {
@@ -81,6 +84,7 @@ const emptyListingForm: ListingForm = {
   mileage_km: '',
   city: '',
   department: '',
+  is_premium_monthly_free: false,
 }
 
 const MARKETPLACE_PAGE_SIZE = 24
@@ -269,6 +273,8 @@ function toStoreListing(listing: MarketplaceListingWithSeller): StoreListing {
     featured: listing.is_featured,
     likes: 0,
     category: listing.category,
+    isPremiumMonthlyFree: listing.is_premium_monthly_free,
+    premiumFreeMonth: listing.premium_free_month ?? undefined,
     description: listing.description,
     images,
     sellerId: listing.seller_id,
@@ -285,6 +291,7 @@ export function Marketplace() {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [listings, setListings] = useState<StoreListing[]>(isSupabaseConfigured ? [] : demoListings)
   const [quota, setQuota] = useState<MarketplacePublicationQuota | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [isLoadingListings, setIsLoadingListings] = useState(isSupabaseConfigured)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [showCreateListing, setShowCreateListing] = useState(false)
@@ -300,6 +307,7 @@ export function Marketplace() {
   const [contactMessage, setContactMessage] = useState('')
   const [isSendingMessage, setIsSendingMessage] = useState(false)
   const [isMarkingSold, setIsMarkingSold] = useState(false)
+  const [isClaimingPremiumRoute, setIsClaimingPremiumRoute] = useState(false)
   const [showInbox, setShowInbox] = useState(false)
   const [marketplaceMessages, setMarketplaceMessages] = useState<MarketplaceMessage[]>([])
   const [isLoadingInbox, setIsLoadingInbox] = useState(false)
@@ -309,6 +317,21 @@ export function Marketplace() {
     setMarketplacePage(0)
     if (isSupabaseConfigured) setListings([])
   }, [user?.id])
+
+  useEffect(() => {
+    if (!supabase || !user) {
+      setIsAdmin(false)
+      return
+    }
+    const client = supabase
+    let isMounted = true
+    void client.rpc('is_current_user_admin').then(({ data, error }) => {
+      if (isMounted) setIsAdmin(!error && data === true)
+    })
+    return () => {
+      isMounted = false
+    }
+  }, [user])
 
   useEffect(() => {
     if (!supabase) {
@@ -423,8 +446,13 @@ export function Marketplace() {
     supabase
     && user
     && !isLoadingSubscription
-    && effectivePlan !== 'free'
-    && (effectivePlan === 'business' || quota?.remaining_publications !== 0)
+    && (
+      isAdmin
+      || (
+        effectivePlan !== 'free'
+        && (effectivePlan === 'business' || quota?.remaining_publications !== 0)
+      )
+    )
   )
 
   const saveListing = async (status: 'draft' | 'pending_review') => {
@@ -444,6 +472,11 @@ export function Marketplace() {
       toast.error('Precio inválido', { description: 'Ingresa un precio válido en pesos colombianos.' })
       return
     }
+    const isPremiumRoute = listingForm.category === 'premium-routes' || listingForm.category === 'packs'
+    if (listingForm.is_premium_monthly_free && !isPremiumRoute) {
+      toast.error('Categoría inválida', { description: 'La opción gratuita solo aplica a rutas Premium y packs.' })
+      return
+    }
     if (mileage !== null && (!Number.isInteger(mileage) || mileage < 0)) {
       toast.error('Kilometraje inválido')
       return
@@ -457,8 +490,12 @@ export function Marketplace() {
         seller_type: effectivePlan === 'business' ? 'business' : 'personal',
         title: listingForm.title.trim(),
         description: listingForm.description.trim(),
-        price,
+        price: listingForm.is_premium_monthly_free ? 0 : price,
         category: listingForm.category,
+        is_premium_monthly_free: listingForm.is_premium_monthly_free,
+        premium_free_month: listingForm.is_premium_monthly_free
+          ? new Date().toISOString().slice(0, 7) + '-01'
+          : null,
         condition: listingForm.condition,
         mileage_km: mileage,
         city: listingForm.city.trim() || null,
@@ -602,6 +639,33 @@ export function Marketplace() {
     toast.success('Artículo marcado como vendido', {
       description: 'La publicación dejó de estar visible para nuevos compradores.',
     })
+  }
+
+  const claimPremiumRoute = async (listing: StoreListing) => {
+    if (!supabase || !user) {
+      toast.error('Inicia sesión para agregar esta ruta')
+      return
+    }
+    if (effectivePlan !== 'premium' && effectivePlan !== 'pro' && effectivePlan !== 'business') {
+      toast.error('Esta ruta requiere una licencia Premium activa')
+      return
+    }
+
+    setIsClaimingPremiumRoute(true)
+    const { error } = await supabase.rpc('claim_premium_monthly_route', {
+      target_listing_id: listing.id,
+    })
+    setIsClaimingPremiumRoute(false)
+
+    if (error) {
+      toast.error('No pudimos agregar la ruta', { description: error.message })
+      return
+    }
+
+    toast.success('Ruta agregada a tu cuenta', {
+      description: 'Ya tienes acceso a la ruta gratuita Premium de este mes.',
+    })
+    setSelectedListing(null)
   }
 
   const loadMarketplaceInbox = async () => {
@@ -895,6 +959,11 @@ export function Marketplace() {
                   className="w-full h-full object-cover"
                 />
                 <Badge className="absolute top-3 left-3 bg-moto-orange">Destacado</Badge>
+                {listing.isPremiumMonthlyFree ? (
+                  <Badge className="absolute bottom-3 left-3 bg-green-500 text-moto-darker">
+                    Gratis con Premium
+                  </Badge>
+                ) : null}
                 <button className="absolute top-3 right-3 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center" disabled>
                   <Heart className="w-4 h-4" />
                 </button>
@@ -909,7 +978,9 @@ export function Marketplace() {
                     </p>
                   </div>
                   <div className="shrink-0 sm:text-right">
-                    <p className="text-xl font-bold text-moto-orange">{formatPrice(listing.price)}</p>
+                    <p className="text-xl font-bold text-moto-orange">
+                      {listing.isPremiumMonthlyFree ? 'Gratis con Premium' : formatPrice(listing.price)}
+                    </p>
                     {listing.originalPrice && (
                       <p className="text-sm text-gray-500 line-through">{formatPrice(listing.originalPrice)}</p>
                     )}
@@ -980,6 +1051,11 @@ export function Marketplace() {
                 <button className="absolute top-3 right-3 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center" disabled>
                   <Heart className="w-4 h-4" />
                 </button>
+                {listing.isPremiumMonthlyFree ? (
+                  <Badge className="absolute bottom-3 left-3 bg-green-500 text-moto-darker">
+                    Gratis con Premium
+                  </Badge>
+                ) : null}
               </div>
               <CardContent className={`p-4 ${viewMode === 'list' ? 'flex-1' : ''}`}>
                 <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -990,7 +1066,9 @@ export function Marketplace() {
                       {listing.location}
                     </p>
                   </div>
-                  <p className="shrink-0 text-lg font-bold text-moto-orange">{formatPrice(listing.price)}</p>
+                  <p className="shrink-0 text-lg font-bold text-moto-orange">
+                    {listing.isPremiumMonthlyFree ? 'Gratis con Premium' : formatPrice(listing.price)}
+                  </p>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-400 mb-3">
                   <Badge variant="secondary" className="text-xs">{listing.condition}</Badge>
@@ -1114,6 +1192,9 @@ export function Marketplace() {
                     <div className="flex flex-wrap gap-2">
                       <Badge variant="secondary">{selectedListing.condition}</Badge>
                       <Badge className="bg-white/10 text-gray-300">{selectedListing.category}</Badge>
+                      {selectedListing.isPremiumMonthlyFree ? (
+                        <Badge className="bg-green-500/15 text-green-300">Selección gratis del mes</Badge>
+                      ) : null}
                       {selectedListing.seller.verified ? (
                         <Badge className="bg-green-500/15 text-green-300">Vendedor verificado</Badge>
                       ) : null}
@@ -1127,7 +1208,9 @@ export function Marketplace() {
                     ) : null}
                   </div>
                   <div className="shrink-0 sm:text-right">
-                    <p className="text-2xl font-bold text-moto-orange">{formatPrice(selectedListing.price)}</p>
+                    <p className="text-2xl font-bold text-moto-orange">
+                      {selectedListing.isPremiumMonthlyFree ? 'Gratis con Premium' : formatPrice(selectedListing.price)}
+                    </p>
                     {selectedListing.originalPrice ? (
                       <p className="text-sm text-gray-500 line-through">{formatPrice(selectedListing.originalPrice)}</p>
                     ) : null}
@@ -1159,7 +1242,19 @@ export function Marketplace() {
                       {selectedListing.seller.rating}
                     </div>
                   </div>
-                  {selectedListing.category === 'premium-routes' || selectedListing.category === 'packs' ? (
+                  {selectedListing.isPremiumMonthlyFree ? (
+                    <Button
+                      type="button"
+                      className="bg-green-500 text-moto-darker hover:bg-green-400"
+                      disabled={isClaimingPremiumRoute}
+                      onClick={() => void claimPremiumRoute(selectedListing)}
+                    >
+                      {isClaimingPremiumRoute
+                        ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                        : <PackageCheck className="mr-2 h-4 w-4" />}
+                      Agregar gratis
+                    </Button>
+                  ) : selectedListing.category === 'premium-routes' || selectedListing.category === 'packs' ? (
                     <Button asChild className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
                       <Link to="/app/premium-routes" onClick={() => setSelectedListing(null)}>Explorar ruta</Link>
                     </Button>
@@ -1382,13 +1477,35 @@ export function Marketplace() {
                   type="number"
                   min="0"
                   step="1"
-                  required
+                  required={!listingForm.is_premium_monthly_free}
+                  disabled={listingForm.is_premium_monthly_free}
                   value={listingForm.price}
                   onChange={(event) => setListingForm((current) => ({ ...current, price: event.target.value }))}
                   className="border-white/10 bg-moto-darker"
                   placeholder="18500000"
                 />
               </label>
+
+              {(listingForm.category === 'premium-routes' || listingForm.category === 'packs') && (
+                <label className="flex items-start gap-3 rounded-lg border border-moto-orange/20 bg-moto-orange/5 p-3 sm:col-span-2">
+                  <input
+                    type="checkbox"
+                    checked={listingForm.is_premium_monthly_free}
+                    onChange={(event) => setListingForm((current) => ({
+                      ...current,
+                      is_premium_monthly_free: event.target.checked,
+                      price: event.target.checked ? '0' : current.price,
+                    }))}
+                    className="mt-1 h-4 w-4 accent-orange-500"
+                  />
+                  <span>
+                    <span className="block text-sm font-semibold text-white">Gratis para usuarios Premium este mes</span>
+                    <span className="mt-1 block text-xs leading-5 text-gray-400">
+                      MotoCare permite máximo 5 rutas gratuitas por mes. La base de datos valida el límite al enviarla a revisión.
+                    </span>
+                  </span>
+                </label>
+              )}
 
               <label>
                 <span className="mb-1 block text-sm text-gray-300">Kilometraje (opcional)</span>
