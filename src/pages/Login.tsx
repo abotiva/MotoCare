@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowRight, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { MotoCareLogo } from '@/components/MotoCareLogo'
@@ -10,7 +10,8 @@ export function Login() {
   const { signIn, signUp, user, isConfigured } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [mode, setMode] = useState<'login' | 'signup'>('login')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [mode, setMode] = useState<'login' | 'signup'>(() => searchParams.get('mode') === 'signup' ? 'signup' : 'login')
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -45,7 +46,7 @@ export function Login() {
   return (
     <div className="grid min-h-screen bg-moto-dark text-white lg:grid-cols-[1.05fr_0.95fr]">
       <section className="relative hidden overflow-hidden lg:block">
-        <img src="/hero-motorcycle.jpg" alt="Ruta MotoCare Co" className="h-full w-full object-cover" />
+        <img src="/hero-motorcycle.jpg" alt="Motociclista recorriendo una ruta" className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-r from-moto-darker via-moto-dark/80 to-transparent" />
         <div className="absolute bottom-12 left-12 max-w-xl">
           <MotoCareLogo />
@@ -136,7 +137,9 @@ export function Login() {
               className="mt-5 w-full rounded-lg px-3 py-2 text-center text-sm text-gray-400 transition-colors hover:bg-white/5 hover:text-moto-orange"
               onClick={() => {
                 setError(null)
-                setMode(mode === 'login' ? 'signup' : 'login')
+                const nextMode = mode === 'login' ? 'signup' : 'login'
+                setMode(nextMode)
+                setSearchParams(nextMode === 'signup' ? { mode: 'signup' } : {}, { replace: true })
               }}
             >
               {mode === 'login' ? 'No tengo cuenta, quiero registrarme' : 'Ya tengo cuenta, quiero entrar'}

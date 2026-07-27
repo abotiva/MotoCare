@@ -1,82 +1,86 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import {
-  ArrowRight,
-  CalendarClock,
-  Clock3,
-  FileText,
-  Menu,
-  ShieldCheck,
-  ShoppingBag,
-  Wrench,
-  X,
-} from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Link } from 'react-router-dom'
+import { ArrowRight, Menu, X } from 'lucide-react'
 import { MotoCareLogo } from '@/components/MotoCareLogo'
+import { Button } from '@/components/ui/button'
+import {
+  BenefitsSection,
+  FaqSection,
+  FeaturesSection,
+  FinalCta,
+  HeroSection,
+  HowItWorksSection,
+  PricingSection,
+  ProblemSection,
+  SecuritySection,
+} from '@/components/landing/LandingSections'
 
-const featureCards = [
-  { icon: ShieldCheck, title: 'Hoja de vida', desc: 'La historia técnica de tu moto en un solo lugar.', path: '/app/my-bikes' },
-  { icon: Wrench, title: 'Servicios', desc: 'Registra mantenimientos realizados con fecha, km y costo.', path: '/app/my-bikes#history' },
-  { icon: CalendarClock, title: 'Programados', desc: 'Pendientes por fecha o kilometraje para anticiparte.', path: '/app/my-bikes#reminders' },
-  { icon: FileText, title: 'Documentos', desc: 'SOAT, tecnomecánica y soportes en un solo lugar.', path: '/app/my-bikes#documents' },
-  { icon: Clock3, title: 'Informes', desc: 'Gastos y promedios de mantenimiento para usuarios Premium.', path: '/app/my-bikes#reports' },
-  { icon: ShoppingBag, title: 'Premium', desc: 'Rutas, comunidad, clubes y tienda quedaran como funciones avanzadas.', path: '/app/map' },
-]
+const navItems = [
+  ['Funcionalidades', 'funcionalidades'],
+  ['Cómo funciona', 'como-funciona'],
+  ['Planes', 'planes'],
+  ['Preguntas frecuentes', 'preguntas'],
+] as const
 
 export function LandingPage() {
-  const navigate = useNavigate()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 50)
-    window.addEventListener('scroll', handleScroll)
+    const handleScroll = () => setIsScrolled(window.scrollY > 32)
+    window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const enterApp = () => {
-    setIsMenuOpen(false)
-    navigate('/app/home')
-  }
+  useEffect(() => {
+    if (!isMenuOpen) return
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsMenuOpen(false)
+    }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [isMenuOpen])
 
   const scrollToSection = (id: string) => {
-    const element = document.getElementById(id)
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' })
-      setIsMenuOpen(false)
-    }
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+    setIsMenuOpen(false)
   }
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-moto-dark text-white">
-      <nav
-        className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-          isScrolled ? 'border-b border-white/5 bg-moto-dark/90 backdrop-blur-xl' : 'bg-transparent'
-        }`}
-      >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between lg:h-20">
-            <MotoCareLogo />
+      <header>
+        <nav
+          aria-label="Navegación principal"
+          className={`fixed inset-x-0 top-0 z-50 border-b transition-all ${
+            isScrolled || isMenuOpen
+              ? 'border-white/10 bg-moto-darker/95 shadow-xl backdrop-blur-xl'
+              : 'border-transparent bg-moto-darker/45 backdrop-blur-sm'
+          }`}
+        >
+          <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:h-20 lg:px-8">
+            <button type="button" aria-label="Ir al inicio" onClick={() => scrollToSection('inicio')}>
+              <MotoCareLogo />
+            </button>
 
-            <div className="hidden items-center gap-8 lg:flex">
-              <button onClick={() => scrollToSection('features')} className="text-sm text-gray-300 transition-colors hover:text-white">
-                Esencia
-              </button>
-              <button onClick={() => scrollToSection('product')} className="text-sm text-gray-300 transition-colors hover:text-white">
-                App
-              </button>
-              <button onClick={() => scrollToSection('community')} className="text-sm text-gray-300 transition-colors hover:text-white">
-                Premium
-              </button>
+            <div className="hidden items-center gap-6 lg:flex">
+              {navItems.map(([label, id]) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => scrollToSection(id)}
+                  className="rounded-md px-1 py-2 text-sm text-gray-300 transition hover:text-moto-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-moto-orange"
+                >
+                  {label}
+                </button>
+              ))}
             </div>
 
-            <div className="hidden items-center gap-4 lg:flex">
-              <Button variant="ghost" className="text-sm" onClick={enterApp}>
-                Ver mi moto
+            <div className="hidden items-center gap-3 lg:flex">
+              <Button asChild variant="ghost" className="text-white hover:bg-white/10 hover:text-white">
+                <Link to="/login">Iniciar sesión</Link>
               </Button>
-              <Button className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={enterApp}>
-                Entrar a la App
-                <ArrowRight className="ml-2 h-4 w-4" />
+              <Button asChild className="bg-moto-orange font-semibold text-moto-darker hover:bg-moto-orange-dark">
+                <Link to="/login?mode=signup">Crear cuenta gratis</Link>
               </Button>
             </div>
 
@@ -84,156 +88,69 @@ export function LandingPage() {
               type="button"
               aria-label={isMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
               aria-expanded={isMenuOpen}
-              className="rounded-lg p-2 transition-colors hover:bg-white/5 lg:hidden"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-controls="mobile-navigation"
+              onClick={() => setIsMenuOpen((open) => !open)}
+              className="rounded-lg p-2 text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-moto-orange lg:hidden"
             >
-              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {isMenuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
             </button>
           </div>
-        </div>
 
-        {isMenuOpen && (
-          <div className="border-t border-white/5 bg-moto-dark/95 backdrop-blur-xl lg:hidden">
-            <div className="space-y-4 px-4 py-6">
-              <button onClick={() => scrollToSection('features')} className="block w-full rounded-xl px-3 py-3 text-left text-gray-300 transition-colors hover:bg-white/5 hover:text-white">
-                Esencia
-              </button>
-              <button onClick={() => scrollToSection('product')} className="block w-full rounded-xl px-3 py-3 text-left text-gray-300 transition-colors hover:bg-white/5 hover:text-white">
-                App
-              </button>
-              <button onClick={() => scrollToSection('community')} className="block w-full rounded-xl px-3 py-3 text-left text-gray-300 transition-colors hover:bg-white/5 hover:text-white">
-                Premium
-              </button>
-              <Button className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={enterApp}>
-                Entrar a la App
-              </Button>
-            </div>
-          </div>
-        )}
-      </nav>
-
-      <section className="relative flex min-h-dvh items-center overflow-hidden pb-10 pt-24 sm:min-h-[92vh] sm:pb-16">
-        <div className="absolute inset-0">
-          <img src="/hero-motorcycle.jpg" alt="Motociclista en ruta de montana" className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-r from-moto-darker via-moto-dark/85 to-moto-dark/20" />
-          <div className="absolute inset-0 bg-gradient-to-t from-moto-dark via-transparent to-moto-darker/40" />
-        </div>
-
-        <div className="relative z-10 mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
-          <div className="max-w-2xl space-y-6 sm:space-y-8">
-            <div className="inline-flex items-center gap-2 rounded-full border border-moto-orange/30 bg-moto-orange/15 px-4 py-2">
-              <span className="h-2 w-2 rounded-full bg-moto-orange" />
-              <span className="text-sm font-medium text-moto-orange-light">Tu moto. Tu historia. Tu mantenimiento.</span>
-            </div>
-
-            <div className="space-y-5">
-              <h1 className="text-3xl font-bold leading-tight sm:text-5xl lg:text-7xl">
-                La hoja de vida de tu <span className="text-gradient">moto</span>.
-              </h1>
-              <p className="max-w-xl text-base leading-7 text-gray-300 sm:text-lg sm:leading-8">
-                MotoCare Co te ayuda a registrar mantenimientos realizados, programar pendientes,
-                guardar documentos y entender el estado real de tu moto.
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-4 sm:flex-row">
-              <Button size="lg" className="bg-moto-orange px-8 text-moto-darker hover:bg-moto-orange-dark animate-pulse-glow" onClick={enterApp}>
-                <ArrowRight className="mr-2 h-5 w-5" />
-                Comenzar
-              </Button>
-              <Button size="lg" variant="outline" className="border-white/20 hover:bg-white/10" onClick={() => scrollToSection('features')}>
-                Ver esencia
-              </Button>
-            </div>
-
-            <div className="grid max-w-xl grid-cols-3 gap-4 border-t border-white/10 pt-6">
-              {[
-                ['Cuida', 'Mantenimiento claro'],
-                ['Registra', 'Historial completo'],
-                ['Programa', 'Alertas y documentos'],
-              ].map(([value, label]) => (
-                <div key={value}>
-                  <div className="text-xl font-bold text-moto-orange sm:text-2xl">{value}</div>
-                  <div className="mt-1 text-xs text-gray-400 sm:text-sm">{label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div id="product" className="hidden items-center justify-center lg:flex">
-            <div className="relative animate-float">
-              <img src="/app-mockup.jpg" alt="MotoCare Co App" className="max-h-[680px] rounded-[2rem] shadow-2xl shadow-moto-orange/20" />
-              <div className="glass absolute -bottom-6 -left-6 rounded-2xl p-4">
-                <div className="flex items-center gap-3">
-                  <div className="grid h-12 w-12 place-items-center rounded-full bg-moto-orange">
-                    <ShieldCheck className="h-6 w-6 text-moto-darker" />
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold">Moto bajo control</div>
-                    <div className="text-xs text-gray-400">recordatorios activos</div>
-                  </div>
+          {isMenuOpen && (
+            <div id="mobile-navigation" className="border-t border-white/10 bg-moto-darker px-4 py-5 lg:hidden">
+              <div className="mx-auto flex max-w-7xl flex-col gap-2">
+                {navItems.map(([label, id]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => scrollToSection(id)}
+                    className="rounded-lg px-3 py-3 text-left text-gray-200 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-moto-orange"
+                  >
+                    {label}
+                  </button>
+                ))}
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <Button asChild variant="outline" className="border-white/20 bg-transparent text-white hover:bg-white/10">
+                    <Link to="/login" onClick={() => setIsMenuOpen(false)}>Iniciar sesión</Link>
+                  </Button>
+                  <Button asChild className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
+                    <Link to="/login?mode=signup" onClick={() => setIsMenuOpen(false)}>Crear cuenta gratis</Link>
+                  </Button>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
+          )}
+        </nav>
+      </header>
 
-      <section id="features" className="py-16 sm:py-24">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-10 max-w-3xl sm:mb-16">
-            <span className="text-sm font-semibold uppercase tracking-wider text-moto-orange">Esencia de marca</span>
-            <h2 className="mt-4 text-3xl font-bold sm:text-4xl lg:text-5xl">
-              Historial, mantenimiento y <span className="text-gradient">control</span>.
-            </h2>
-          </div>
+      <main>
+        <HeroSection />
+        <ProblemSection />
+        <HowItWorksSection />
+        <FeaturesSection />
+        <BenefitsSection />
+        <PricingSection />
+        <SecuritySection />
+        <FaqSection />
+        <FinalCta />
+      </main>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-8">
-            {featureCards.map((feature) => (
-              <button
-                key={feature.title}
-                onClick={() => navigate(feature.path)}
-                className="group rounded-2xl border border-white/5 bg-moto-gray p-5 text-left transition-all duration-300 hover:border-moto-orange/50 sm:p-6"
-              >
-                <div className="mb-4 grid h-12 w-12 place-items-center rounded-xl bg-moto-orange/20 transition-colors group-hover:bg-moto-orange/30 sm:h-14 sm:w-14">
-                  <feature.icon className="h-6 w-6 text-moto-orange sm:h-7 sm:w-7" />
-                </div>
-                <h3 className="mb-2 text-lg font-bold sm:text-xl">{feature.title}</h3>
-                <p className="text-sm leading-6 text-gray-400 sm:text-base">{feature.desc}</p>
-                <div className="mt-4 flex items-center text-sm text-moto-orange opacity-0 transition-opacity group-hover:opacity-100">
-                  <span>Abrir</span>
-                  <ArrowRight className="ml-1 h-4 w-4" />
-                </div>
+      <footer className="border-t border-white/10 bg-moto-darker py-10">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 md:grid-cols-[1fr_auto] md:items-end lg:px-8">
+          <div>
+            <MotoCareLogo />
+            <p className="mt-3 text-sm text-gray-400">Tu moto. Tu historia. Tu ruta.</p>
+          </div>
+          <div className="flex flex-wrap gap-x-5 gap-y-3 text-sm text-gray-400 md:justify-end">
+            {navItems.map(([label, id]) => (
+              <button key={id} type="button" onClick={() => scrollToSection(id)} className="hover:text-moto-orange">
+                {label}
               </button>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section id="community" className="relative overflow-hidden py-24">
-        <div className="absolute inset-0 bg-gradient-to-r from-moto-orange/20 to-moto-orange-dark/20" />
-        <div className="absolute inset-0 bg-moto-dark/80" />
-
-        <div className="relative z-10 mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
-          <h2 className="mb-6 text-3xl font-bold sm:text-4xl lg:text-5xl">
-            Free para empezar, Premium para crecer.
-          </h2>
-          <p className="mx-auto mb-10 max-w-2xl text-lg text-gray-300">
-            El MVP queda centrado en hoja de vida, mantenimientos y documentos. Rutas, comunidad, clubes y tienda se preparan como experiencia Premium.
+          <p className="text-sm text-gray-500 md:col-span-2 md:text-right">
+            © {new Date().getFullYear()} MotoCare. Todos los derechos reservados.
           </p>
-
-          <Button size="lg" className="bg-moto-orange px-10 py-6 text-lg text-moto-darker hover:bg-moto-orange-dark" onClick={enterApp}>
-            <ArrowRight className="mr-2 h-6 w-6" />
-            Entrar a la App
-          </Button>
-        </div>
-      </section>
-
-      <footer className="border-t border-white/5 bg-moto-darker py-16">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 sm:px-6 md:flex-row lg:px-8">
-          <MotoCareLogo />
-          <p className="text-sm text-gray-500">(c) 2026 MotoCare Co. Todos los derechos reservados.</p>
-          <p className="text-sm text-gray-500">Tu moto. Tu historia. Tu mantenimiento.</p>
         </div>
       </footer>
     </div>

@@ -13,7 +13,7 @@ export function MotoCareLogo({ compact = false, className = '' }: MotoCareLogoPr
       </div>
       {!compact && (
         <span className="text-xl font-bold tracking-tight text-white">
-          Moto<span className="text-moto-orange">Care</span> Co
+          Moto<span className="text-moto-orange">Care</span>
         </span>
       )}
     </div>
