@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import './App.css'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { AdminRoute } from './components/AdminRoute'
 import { InstallPrompt } from './components/InstallPrompt'
 import { Toaster } from './components/ui/sonner'
 
@@ -55,7 +56,7 @@ function App() {
             <Route path="my-bikes" element={<MyBikes />} />
             <Route path="settings" element={<Settings />} />
             <Route path="notifications" element={<Notifications />} />
-            <Route path="admin" element={<Admin />} />
+            <Route path="admin" element={<AdminRoute><Admin /></AdminRoute>} />
             <Route path="*" element={<Navigate to="/app/home" replace />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

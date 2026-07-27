@@ -2,9 +2,10 @@ import { Navigate, useLocation } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { Loader2 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { Button } from '@/components/ui/button'
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { user, isLoading, isConfigured } = useAuth()
+  const { user, isLoading, isConfigured, authError, retryAuth } = useAuth()
   const location = useLocation()
 
   if (!isConfigured) {
@@ -29,6 +30,25 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     return (
       <div className="grid min-h-screen place-items-center bg-moto-dark text-moto-orange">
         <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
+  if (authError) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-moto-dark p-6 text-white">
+        <div className="w-full max-w-lg rounded-2xl border border-red-500/30 bg-moto-gray p-6 text-center shadow-xl">
+          <p className="text-sm font-semibold uppercase tracking-wider text-red-300">Problema de autenticación</p>
+          <h1 className="mt-3 text-2xl font-bold">No pudimos cargar tu sesión</h1>
+          <p role="alert" className="mt-3 text-sm leading-6 text-gray-300">{authError}</p>
+          <Button
+            type="button"
+            className="mt-6 bg-moto-orange text-moto-darker hover:bg-moto-orange-dark"
+            onClick={() => void retryAuth()}
+          >
+            Reintentar
+          </Button>
+        </div>
       </div>
     )
   }
