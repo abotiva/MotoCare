@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
   Bike,
   CheckCircle2,
   ChevronLeft,
   CreditCard,
+  Download,
   Filter,
   Gauge,
   MapPin,
@@ -14,6 +15,7 @@ import {
   ShieldCheck,
   ShoppingCart,
   Trophy,
+  AlertTriangle,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
@@ -30,6 +32,25 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/contexts/AuthContext'
 import { readOwnedRouteIds, writeOwnedRouteIds } from '@/lib/premiumRoutePurchases'
+import { supabase } from '@/lib/supabase'
+
+type AccountRoute = {
+  listing_id: string
+  source: 'monthly-premium' | 'purchase' | 'admin'
+  expires_at: string | null
+  marketplace_listings: {
+    id: string
+    title: string
+    description: string
+    price: number
+    city: string | null
+    department: string | null
+    marketplace_route_files: Array<{
+      storage_path: string
+      original_name: string
+    }>
+  } | null
+}
 
 type PremiumRoute = {
   id: string
@@ -153,6 +174,8 @@ export function PremiumRoutes() {
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') === 'detail' ? 'detail' : 'catalog')
   const [ownedRouteIds, setOwnedRouteIds] = useState(() => readOwnedRouteIds(user?.id))
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
+  const [accountRoutes, setAccountRoutes] = useState<AccountRoute[]>([])
+  const [isDownloading, setIsDownloading] = useState<string | null>(null)
 
   const filteredRoutes = useMemo(() => {
     return premiumRoutes.filter((routeItem) => {
@@ -170,6 +193,72 @@ export function PremiumRoutes() {
   useEffect(() => {
     setOwnedRouteIds(readOwnedRouteIds(user?.id))
   }, [user?.id])
+
+  useEffect(() => {
+    if (!supabase || !user) {
+      setAccountRoutes([])
+      return
+    }
+    const client = supabase
+    let isMounted = true
+    void client
+      .from('premium_route_entitlements')
+      .select(`
+        listing_id,
+        source,
+        expires_at,
+        marketplace_listings:listing_id(
+          id,
+          title,
+          description,
+          price,
+          city,
+          department,
+          marketplace_route_files(storage_path, original_name)
+        )
+      `)
+      .eq('user_id', user.id)
+      .order('granted_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (!isMounted) return
+        if (error) {
+          toast.error('No pudimos cargar tus rutas Premium', { description: error.message })
+          return
+        }
+        setAccountRoutes((data ?? []) as unknown as AccountRoute[])
+      })
+    return () => {
+      isMounted = false
+    }
+  }, [user])
+
+  const now = Date.now()
+  const activeAccountRoutes = accountRoutes.filter((routeItem) => (
+    !routeItem.expires_at || new Date(routeItem.expires_at).getTime() > now
+  ))
+  const expiredAccountRoutes = accountRoutes.filter((routeItem) => (
+    routeItem.expires_at && new Date(routeItem.expires_at).getTime() <= now
+  ))
+
+  const downloadGpx = async (routeItem: AccountRoute) => {
+    const routeFile = routeItem.marketplace_listings?.marketplace_route_files[0]
+    if (!supabase || !routeFile) {
+      toast.error('Esta ruta todavía no tiene un archivo GPX disponible')
+      return
+    }
+    setIsDownloading(routeItem.listing_id)
+    const { data, error } = await supabase.storage
+      .from('premium-route-files')
+      .createSignedUrl(routeFile.storage_path, 60, {
+        download: routeFile.original_name,
+      })
+    setIsDownloading(null)
+    if (error) {
+      toast.error('El acceso al GPX ya no está disponible', { description: error.message })
+      return
+    }
+    window.location.assign(data.signedUrl)
+  }
 
   const openCheckout = (routeItem: PremiumRoute) => {
     setSelectedRoute(routeItem)
@@ -287,6 +376,60 @@ export function PremiumRoutes() {
 
         <TabsContent value="owned">
           <div className="grid gap-4">
+            {expiredAccountRoutes.length > 0 ? (
+              <Card className="border-amber-400/30 bg-amber-400/10 py-0">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
+                    <div>
+                      <h3 className="font-semibold text-amber-100">Tu acceso mensual terminó</h3>
+                      <p className="mt-1 text-sm leading-6 text-amber-100/80">
+                        {expiredAccountRoutes.length === 1
+                          ? 'Una ruta fue retirada de tu listado activo. Puedes comprarla para conservarla.'
+                          : `${expiredAccountRoutes.length} rutas fueron retiradas de tu listado activo. Puedes comprarlas para conservarlas.`}
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {expiredAccountRoutes.map((routeItem) => (
+                          <Button key={routeItem.listing_id} asChild size="sm" variant="outline" className="border-amber-300/30">
+                            <Link to="/app/marketplace">
+                              Comprar {routeItem.marketplace_listings?.title ?? 'ruta'}
+                            </Link>
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : null}
+
+            {activeAccountRoutes.map((routeItem) => (
+              <Card key={routeItem.listing_id} className="border-green-500/20 bg-moto-gray py-0">
+                <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <Badge className="mb-2 bg-green-500/15 text-green-300">
+                      {routeItem.source === 'monthly-premium' ? 'Beneficio Premium mensual' : 'Acceso permanente'}
+                    </Badge>
+                    <h3 className="text-lg font-bold">{routeItem.marketplace_listings?.title ?? 'Ruta Premium'}</h3>
+                    <p className="mt-1 text-sm text-gray-400">
+                      {routeItem.expires_at
+                        ? `Disponible hasta ${new Date(routeItem.expires_at).toLocaleDateString('es-CO')}`
+                        : 'Disponible sin vencimiento'}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark"
+                    disabled={isDownloading === routeItem.listing_id}
+                    onClick={() => void downloadGpx(routeItem)}
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    {isDownloading === routeItem.listing_id ? 'Preparando...' : 'Descargar GPX'}
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+
             {ownedRoutes.map((routeItem) => (
               <Card key={routeItem.id} className="border-white/5 bg-moto-gray py-0">
                 <CardContent className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-center">

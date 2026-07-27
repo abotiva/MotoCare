@@ -299,6 +299,7 @@ export function Marketplace() {
   const [listingForm, setListingForm] = useState<ListingForm>(emptyListingForm)
   const [isSavingListing, setIsSavingListing] = useState(false)
   const [listingImages, setListingImages] = useState<File[]>([])
+  const [routeGpxFile, setRouteGpxFile] = useState<File | null>(null)
   const [listingImagePreviews, setListingImagePreviews] = useState<string[]>([])
   const [imageInputKey, setImageInputKey] = useState(0)
   const [selectedListing, setSelectedListing] = useState<StoreListing | null>(null)
@@ -477,6 +478,10 @@ export function Marketplace() {
       toast.error('Categoría inválida', { description: 'La opción gratuita solo aplica a rutas Premium y packs.' })
       return
     }
+    if (isPremiumRoute && !routeGpxFile) {
+      toast.error('Archivo GPX requerido', { description: 'Adjunta el recorrido antes de publicar la ruta.' })
+      return
+    }
     if (mileage !== null && (!Number.isInteger(mileage) || mileage < 0)) {
       toast.error('Kilometraje inválido')
       return
@@ -560,6 +565,44 @@ export function Marketplace() {
       }
     }
 
+    if (isPremiumRoute && routeGpxFile) {
+      const routePath = `${listingId}/${crypto.randomUUID()}.gpx`
+      const { error: routeUploadError } = await supabase.storage
+        .from('premium-route-files')
+        .upload(routePath, routeGpxFile, {
+          upsert: false,
+          contentType: routeGpxFile.type || 'application/gpx+xml',
+        })
+
+      if (routeUploadError) {
+        if (uploadedPaths.length > 0) {
+          await supabase.storage.from('marketplace-images').remove(uploadedPaths)
+        }
+        await supabase.from('marketplace_listings').delete().eq('id', listingId)
+        toast.error('No pudimos subir el archivo GPX', { description: routeUploadError.message })
+        setIsSavingListing(false)
+        return
+      }
+
+      const { error: routeFileError } = await supabase.from('marketplace_route_files').insert({
+        listing_id: listingId,
+        storage_path: routePath,
+        original_name: routeGpxFile.name,
+        size_bytes: routeGpxFile.size,
+      })
+
+      if (routeFileError) {
+        await supabase.storage.from('premium-route-files').remove([routePath])
+        if (uploadedPaths.length > 0) {
+          await supabase.storage.from('marketplace-images').remove(uploadedPaths)
+        }
+        await supabase.from('marketplace_listings').delete().eq('id', listingId)
+        toast.error('No pudimos registrar el archivo GPX', { description: routeFileError.message })
+        setIsSavingListing(false)
+        return
+      }
+    }
+
     if (status === 'pending_review') {
       const { error: submitError } = await supabase
         .from('marketplace_listings')
@@ -584,6 +627,7 @@ export function Marketplace() {
     }
     setListingForm(emptyListingForm)
     setListingImages([])
+    setRouteGpxFile(null)
     setImageInputKey((current) => current + 1)
     setShowCreateListing(false)
     setIsSavingListing(false)
@@ -1443,10 +1487,19 @@ export function Marketplace() {
                 <span className="mb-1 block text-sm text-gray-300">Categoría</span>
                 <select
                   value={listingForm.category}
-                  onChange={(event) => setListingForm((current) => ({
-                    ...current,
-                    category: event.target.value as MarketplaceCategory,
-                  }))}
+                  onChange={(event) => {
+                    const category = event.target.value as MarketplaceCategory
+                    setListingForm((current) => ({
+                      ...current,
+                      category,
+                      is_premium_monthly_free: (
+                        category === 'premium-routes' || category === 'packs'
+                      ) ? current.is_premium_monthly_free : false,
+                    }))
+                    if (category !== 'premium-routes' && category !== 'packs') {
+                      setRouteGpxFile(null)
+                    }
+                  }}
                   className="h-9 w-full rounded-md border border-white/10 bg-moto-darker px-3 text-sm text-white"
                 >
                   {categories.filter((category) => category.id !== 'all').map((category) => (
@@ -1503,6 +1556,31 @@ export function Marketplace() {
                     <span className="mt-1 block text-xs leading-5 text-gray-400">
                       MotoCare permite máximo 5 rutas gratuitas por mes. La base de datos valida el límite al enviarla a revisión.
                     </span>
+                  </span>
+                </label>
+              )}
+
+              {(listingForm.category === 'premium-routes' || listingForm.category === 'packs') && (
+                <label className="sm:col-span-2">
+                  <span className="mb-1 block text-sm text-gray-300">Archivo GPX de la ruta</span>
+                  <Input
+                    type="file"
+                    accept=".gpx,application/gpx+xml,application/xml,text/xml"
+                    required
+                    onChange={(event) => {
+                      const file = event.target.files?.[0] ?? null
+                      if (file && (!file.name.toLowerCase().endsWith('.gpx') || file.size > 10 * 1024 * 1024)) {
+                        toast.error('GPX inválido', { description: 'Selecciona un archivo .gpx de máximo 10 MB.' })
+                        event.target.value = ''
+                        setRouteGpxFile(null)
+                        return
+                      }
+                      setRouteGpxFile(file)
+                    }}
+                    className="border-white/10 bg-moto-darker file:text-gray-300"
+                  />
+                  <span className="mt-1 block text-xs text-gray-500">
+                    El archivo es privado y solo podrá descargarse con una compra o acceso Premium vigente.
                   </span>
                 </label>
               )}

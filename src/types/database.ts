@@ -80,6 +80,22 @@ export type MarketplaceListingWithSeller = MarketplaceListing & {
   marketplace_listing_images: MarketplaceListingImage[]
 }
 
+export type PremiumRouteEntitlement = {
+  user_id: string
+  listing_id: string
+  source: 'monthly-premium' | 'purchase' | 'admin'
+  granted_at: string
+  expires_at: string | null
+}
+
+export type MarketplaceRouteFile = {
+  listing_id: string
+  storage_path: string
+  original_name: string
+  size_bytes: number
+  uploaded_at: string
+}
+
 export type MarketplaceMessage = {
   id: string
   listing_id: string
