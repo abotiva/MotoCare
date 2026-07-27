@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { AlertTriangle, Bell, Bike, Calendar, CheckCircle2, FileText, Loader2, MapPinned, Plus, Settings, Star, Store, UserPlus, Wrench, X } from 'lucide-react'
+import { AlertTriangle, ArrowRight, Bell, Bike, Calendar, CheckCircle2, FileText, Loader2, MapPinned, MessageCircle, Plus, Settings, ShoppingBag, Star, Store, UserPlus, Wrench, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -370,6 +370,69 @@ export function Home() {
           </Button>
         </div>
       </div>
+
+      <section aria-labelledby="home-sections-title" className="mb-6">
+        <div className="mb-4">
+          <h2 id="home-sections-title" className="text-xl font-bold">Explora MotoCare</h2>
+          <p className="mt-1 text-sm text-gray-400">Todo lo que necesitas para tu moto y tu comunidad.</p>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {[
+            {
+              title: 'Mi Moto',
+              description: primaryMotorcycle
+                ? `${primaryMotorcycle.brand} ${primaryMotorcycle.model} · ${stats.pendingReminders} pendiente${stats.pendingReminders === 1 ? '' : 's'}`
+                : 'Registra tu moto y construye su hoja de vida digital.',
+              to: '/app/my-bikes',
+              icon: Bike,
+              accent: 'from-moto-orange/25 to-moto-orange/5',
+              iconClass: 'bg-moto-orange text-moto-darker',
+            },
+            {
+              title: 'Rutas',
+              description: 'Planea recorridos, explora destinos y guarda tus próximas aventuras.',
+              to: '/app/map',
+              icon: MapPinned,
+              accent: 'from-sky-500/20 to-sky-500/5',
+              iconClass: 'bg-sky-400 text-sky-950',
+            },
+            {
+              title: 'Comunidad',
+              description: notifications.length > 0
+                ? `${notifications.length} novedad${notifications.length === 1 ? '' : 'es'} pendiente${notifications.length === 1 ? '' : 's'} en tu comunidad.`
+                : 'Conversa con otros moteros y mantente cerca de tus clubes.',
+              to: '/app/messages',
+              icon: MessageCircle,
+              accent: 'from-violet-500/20 to-violet-500/5',
+              iconClass: 'bg-violet-400 text-violet-950',
+            },
+            {
+              title: 'Tienda',
+              description: 'Descubre motos, accesorios y publicaciones de la comunidad.',
+              to: '/app/marketplace',
+              icon: ShoppingBag,
+              accent: 'from-emerald-500/20 to-emerald-500/5',
+              iconClass: 'bg-emerald-400 text-emerald-950',
+            },
+          ].map((section) => (
+            <Link
+              key={section.title}
+              to={section.to}
+              className={`group relative min-h-44 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br ${section.accent} p-5 transition duration-200 hover:-translate-y-0.5 hover:border-white/20 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-moto-orange focus:ring-offset-2 focus:ring-offset-moto-dark`}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className={`grid h-12 w-12 place-items-center rounded-xl ${section.iconClass}`}>
+                  <section.icon className="h-6 w-6" aria-hidden="true" />
+                </div>
+                <ArrowRight className="h-5 w-5 text-gray-500 transition group-hover:translate-x-1 group-hover:text-white" aria-hidden="true" />
+              </div>
+              <h3 className="mt-5 text-xl font-bold">{section.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-gray-300">{section.description}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
 
       <div className="mb-4 grid grid-cols-4 gap-2 sm:mb-5 sm:gap-4">
         <MetricCard icon={Bike} label="Motos" value={stats.motorcycles} tone="orange" to="/app/my-bikes" />
