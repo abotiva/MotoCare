@@ -21,6 +21,7 @@ const MyBikes = lazy(() => import('./pages/MyBikes').then((module) => ({ default
 const Settings = lazy(() => import('./pages/Settings').then((module) => ({ default: module.Settings })))
 const Admin = lazy(() => import('./pages/Admin').then((module) => ({ default: module.Admin })))
 const Notifications = lazy(() => import('./pages/Notifications').then((module) => ({ default: module.Notifications })))
+const Terms = lazy(() => import('./pages/Terms').then((module) => ({ default: module.Terms })))
 
 function PageLoader() {
   return (
@@ -37,6 +38,7 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/terms" element={<Terms />} />
 
           <Route path="/app" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
             <Route index element={<Navigate to="/app/home" replace />} />
