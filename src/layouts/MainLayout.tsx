@@ -5,7 +5,6 @@ import {
   Bike,
   CalendarClock,
   CircleDollarSign,
-  Compass,
   Crown,
   FileText,
   Gauge,
@@ -53,10 +52,17 @@ const motorcycleItems: NavigationItem[] = [
   { path: '/app/garage/expenses', label: 'Gastos', icon: CircleDollarSign },
 ]
 
-const exploreItems: NavigationItem[] = [
-  { path: '/app/map', label: 'Rutas', icon: MapIcon },
+const routeItems: NavigationItem[] = [
+  { path: '/app/explore', label: 'Descubrir rutas', icon: MapIcon },
+  { path: '/app/map', label: 'Mis rutas', icon: MapIcon },
+]
+
+const communityItems: NavigationItem[] = [
+  { path: '/app/messages', label: 'Actividad', icon: MessageCircle },
   { path: '/app/clubs', label: 'Clubes', icon: Users },
-  { path: '/app/messages', label: 'Comunidad', icon: MessageCircle },
+]
+
+const marketplaceItems: NavigationItem[] = [
   { path: '/app/marketplace', label: 'Marketplace', icon: ShoppingBag },
 ]
 
@@ -67,12 +73,17 @@ const accountItems: NavigationItem[] = [
   { path: '/app/settings', label: 'Configuración', icon: Settings },
 ]
 
-const quickActions = [
+const garageQuickActions = [
   { label: 'Registrar mantenimiento', path: '/app/garage?action=service', icon: Wrench },
   { label: 'Actualizar kilometraje', path: '/app/garage?action=mileage', icon: Gauge },
   { label: 'Agregar gasto', path: '/app/garage/expenses', icon: CircleDollarSign },
   { label: 'Cargar documento', path: '/app/garage/documents', icon: FileText },
   { label: 'Crear recordatorio', path: '/app/garage?action=reminder', icon: CalendarClock },
+] satisfies Array<NavigationItem>
+
+const activityQuickActions = [
+  { label: 'Crear ruta', path: '/app/map?action=create', icon: MapIcon },
+  { label: 'Publicar experiencia', path: '/app/messages?action=post', icon: MessageCircle },
 ] satisfies Array<NavigationItem>
 
 function initials(name: string | null | undefined, email: string | undefined) {
@@ -96,7 +107,7 @@ function navigationTitle(pathname: string) {
     }[section ?? ''] ?? 'Mi Garage'
   }
   if (pathname.startsWith('/app/routes/')) return 'Detalle de ruta'
-  return [...motorcycleItems, ...exploreItems, ...accountItems].find((item) => item.path === pathname)?.label
+  return [...motorcycleItems, ...routeItems, ...communityItems, ...marketplaceItems, ...accountItems].find((item) => item.path === pathname)?.label
     ?? (pathname === '/app/admin' ? 'Administración' : 'MotoCare')
 }
 
@@ -107,7 +118,6 @@ export function MainLayout() {
   const navigate = useNavigate()
   const [isAdmin, setIsAdmin] = useState(false)
   const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false)
-  const [isExploreOpen, setIsExploreOpen] = useState(false)
   const [unreadNotifications, setUnreadNotifications] = useState(0)
   const [notificationItems, setNotificationItems] = useState<Notification[]>([])
   const [quickActionBike, setQuickActionBike] = useState<Motorcycle | null>(null)
@@ -167,7 +177,6 @@ export function MainLayout() {
 
   useEffect(() => {
     setIsQuickActionsOpen(false)
-    setIsExploreOpen(false)
   }, [location.pathname])
 
   const isItemActive = (path: string) => {
@@ -181,6 +190,7 @@ export function MainLayout() {
       return location.pathname.endsWith(`/${section}`)
     }
     if (path === '/app/map') return location.pathname === path || location.pathname.startsWith('/app/routes/')
+    if (path === '/app/explore') return location.pathname === path
     return location.pathname === path
   }
 
@@ -209,12 +219,20 @@ export function MainLayout() {
             <h2 id="nav-motorcycle" className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Mi Garage</h2>
             <div className="space-y-1">{motorcycleItems.map(sidebarLink)}</div>
           </section>
-          <section aria-labelledby="nav-explore">
+          <section aria-labelledby="nav-routes">
             <div className="mb-2 flex items-center justify-between px-3">
-              <h2 id="nav-explore" className="text-xs font-semibold uppercase tracking-wider text-gray-500">Explorar</h2>
+              <h2 id="nav-routes" className="text-xs font-semibold uppercase tracking-wider text-gray-500">Rutas</h2>
               {!isPaidPlan && <Crown className="h-3.5 w-3.5 text-moto-orange" aria-label="Algunas experiencias ofrecen contenido Premium" />}
             </div>
-            <div className="space-y-1">{exploreItems.map(sidebarLink)}</div>
+            <div className="space-y-1">{routeItems.map(sidebarLink)}</div>
+          </section>
+          <section aria-labelledby="nav-community">
+            <h2 id="nav-community" className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Comunidad</h2>
+            <div className="space-y-1">{communityItems.map(sidebarLink)}</div>
+          </section>
+          <section aria-labelledby="nav-marketplace">
+            <h2 id="nav-marketplace" className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Marketplace</h2>
+            <div className="space-y-1">{marketplaceItems.map(sidebarLink)}</div>
           </section>
           <section aria-labelledby="nav-account">
             <h2 id="nav-account" className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Cuenta</h2>
@@ -298,8 +316,8 @@ export function MainLayout() {
               <span className="-mt-7 grid h-14 w-14 place-items-center rounded-full border-4 border-moto-darker bg-moto-orange text-moto-darker shadow-lg shadow-moto-orange/20"><Plus className="h-7 w-7" /></span>
               <span>Registrar</span>
             </button>
-            <NavLink to="/app/garage/schedule" className={`flex min-h-11 flex-col items-center justify-center gap-1 text-[10px] font-medium ${location.pathname.endsWith('/schedule') ? 'text-moto-orange' : 'text-gray-400'}`}><CalendarClock className="h-5 w-5" />Agenda</NavLink>
-            <button type="button" onClick={() => setIsExploreOpen(true)} aria-label="Abrir Explorar" aria-expanded={isExploreOpen} className={`flex min-h-11 flex-col items-center justify-center gap-1 text-[10px] font-medium ${exploreItems.some((item) => isItemActive(item.path)) ? 'text-moto-orange' : 'text-gray-400'}`}><Compass className="h-5 w-5" />Explorar</button>
+            <NavLink to="/app/explore" className={`flex min-h-11 flex-col items-center justify-center gap-1 text-[10px] font-medium ${location.pathname === '/app/explore' || location.pathname === '/app/map' || location.pathname.startsWith('/app/routes/') ? 'text-moto-orange' : 'text-gray-400'}`}><MapIcon className="h-5 w-5" />Rutas</NavLink>
+            <NavLink to="/app/messages" className={`flex min-h-11 flex-col items-center justify-center gap-1 text-[10px] font-medium ${location.pathname === '/app/messages' || location.pathname === '/app/clubs' ? 'text-moto-orange' : 'text-gray-400'}`}><MessageCircle className="h-5 w-5" />Comunidad</NavLink>
           </div>
         </nav>
       </main>
@@ -315,7 +333,8 @@ export function MainLayout() {
             </SheetDescription>
           </SheetHeader>
           <div className="mt-5 grid gap-2">
-            {quickActions.map((action) => (
+            <p className="px-1 pt-1 text-xs font-semibold uppercase tracking-wider text-gray-500">Mi moto</p>
+            {garageQuickActions.map((action) => (
               <button key={action.path} type="button" onClick={() => {
                 setIsQuickActionsOpen(false)
                 const path = quickActionBike
@@ -326,25 +345,16 @@ export function MainLayout() {
                 <action.icon className="h-5 w-5 text-moto-orange" /><span>{action.label}</span>
               </button>
             ))}
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      <Sheet open={isExploreOpen} onOpenChange={setIsExploreOpen}>
-        <SheetContent side="bottom" className="rounded-t-3xl border-white/10 bg-moto-darker text-white">
-          <SheetHeader className="text-left">
-            <SheetTitle className="text-white">Explorar MotoCare</SheetTitle>
-            <SheetDescription>Rutas, clubes y experiencias de la comunidad.</SheetDescription>
-          </SheetHeader>
-          <div className="mt-5 grid grid-cols-2 gap-3">
-            {exploreItems.map((item) => (
-              <button key={item.path} type="button" onClick={() => { setIsExploreOpen(false); navigate(item.path) }} className="flex min-h-24 flex-col items-start justify-between rounded-2xl bg-white/5 p-4 text-left hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-moto-orange">
-                <item.icon className="h-6 w-6 text-moto-orange" /><span className="font-semibold">{item.label}</span>
+            <p className="px-1 pt-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Actividad</p>
+            {activityQuickActions.map((action) => (
+              <button key={action.path} type="button" onClick={() => { setIsQuickActionsOpen(false); navigate(action.path) }} className="flex min-h-12 items-center gap-3 rounded-xl bg-white/5 px-4 text-left hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-moto-orange">
+                <action.icon className="h-5 w-5 text-moto-orange" /><span>{action.label}</span>
               </button>
             ))}
           </div>
         </SheetContent>
       </Sheet>
+
       <AppUpdatePrompt />
     </div>
   )

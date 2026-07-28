@@ -53,8 +53,8 @@ const plans = [
   },
   {
     name: 'Premium',
-    description: 'Para moteros que quieren más control y experiencias.',
-    features: ['Varias motos en Mi Garage', 'Elige tu moto principal', 'Todo lo incluido en Free', 'Carga privada de documentos', 'Informes de mantenimiento y gastos', 'Carga de archivos GPX', 'Creación de clubes y publicaciones'],
+    description: 'Más control sobre tus motos y más herramientas para vivir la comunidad.',
+    features: ['Varias motos en Mi Garage', 'Elige tu moto principal', 'Informes de mantenimiento y gastos', 'Carga de archivos GPX', 'Creación de clubes y publicaciones', 'Acceso a experiencias y rutas Premium disponibles'],
     featured: true,
   },
   {
@@ -119,12 +119,12 @@ export function LandingPage() {
           <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
             <div>
               <p className="font-semibold text-moto-orange">Tu moto. Tu historia. Tu ruta.</p>
-              <h1 className="mt-4 text-4xl font-bold leading-tight sm:text-5xl lg:text-7xl">Toda la historia de tu moto, siempre contigo.</h1>
-              <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-300">Registra mantenimientos, controla documentos, anticipa vencimientos y conserva la hoja de vida de tu moto desde un solo lugar.</p>
-              <p className="mt-3 max-w-2xl text-sm font-medium text-gray-400">Empieza con una moto en Free. Administra varias y define tu principal con Premium.</p>
+              <h1 className="mt-4 text-4xl font-bold leading-tight sm:text-5xl lg:text-7xl">Todo lo que vive un motero, en un solo lugar.</h1>
+              <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-300">Cuida tus motos, descubre nuevas rutas y comparte experiencias con clubes y moteros que viven la misma pasión.</p>
+              <p className="mt-3 max-w-2xl text-sm font-medium text-gray-400">MotoCare conecta tu moto, tus rutas y tu comunidad.</p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Button size="lg" className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => navigate('/login?mode=signup')}>Crear cuenta gratis <ArrowRight className="ml-2 h-5 w-5" /></Button>
-                <Button size="lg" variant="outline" className="border-white/20" onClick={() => scrollTo('como-funciona')}>Ver cómo funciona</Button>
+                <Button size="lg" variant="outline" className="border-white/20" onClick={() => scrollTo('pilares')}>Descubrir MotoCare</Button>
               </div>
             </div>
             <div className="relative mx-auto w-full max-w-xl">
@@ -134,6 +134,19 @@ export function LandingPage() {
               <div className="absolute -bottom-5 left-4 rounded-2xl border border-white/10 bg-moto-darker/95 p-4 shadow-xl sm:-left-5">
                 <p className="flex items-center gap-2 font-semibold"><ShieldCheck className="h-5 w-5 text-moto-orange" />Moto al día</p><p className="mt-1 text-xs text-gray-400">Próximo servicio programado</p>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="pilares" className="border-y border-white/5 bg-moto-darker py-16">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="text-center"><p className="text-sm font-semibold uppercase tracking-wider text-moto-orange">Un ecosistema para moteros</p><h2 className="mt-3 text-3xl font-bold sm:text-4xl">Tu moto, tus rutas y tu comunidad conectadas.</h2></div>
+            <div className="mt-10 grid gap-5 md:grid-cols-3">
+              {[
+                { icon: Bike, title: 'Mi Garage', description: 'Lleva el historial, los mantenimientos, documentos y gastos de tus motos.' },
+                { icon: MapPinned, title: 'Rutas', description: 'Descubre recorridos, crea tus propias rutas y compártelas con otros moteros.' },
+                { icon: Users, title: 'Comunidad', description: 'Únete a clubes, comparte experiencias y conecta con personas que viven la moto como tú.' },
+              ].map((pillar) => <article key={pillar.title} className="rounded-3xl border border-white/5 bg-moto-dark p-6"><pillar.icon className="h-8 w-8 text-moto-orange" /><h3 className="mt-8 text-2xl font-bold">{pillar.title}</h3><p className="mt-3 leading-7 text-gray-400">{pillar.description}</p></article>)}
             </div>
           </div>
         </section>
@@ -181,6 +194,23 @@ export function LandingPage() {
             <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {ecosystem.map((item) => <article key={item.title} className="rounded-2xl border border-white/5 bg-moto-darker p-5"><item.icon className="h-6 w-6 text-gray-400" /><h3 className="mt-6 font-bold">{item.title}</h3><p className="mt-2 text-sm text-gray-500">{item.description}</p></article>)}
             </div>
+          </div>
+        </section>
+
+        <section className="py-20">
+          <div className="mx-auto grid max-w-7xl gap-5 px-4 sm:px-6 lg:grid-cols-3 lg:px-8">
+            {[
+              { icon: Users, title: 'Tu club, siempre conectado.', description: 'Administra miembros, comparte rutas, publica avisos y mantén a tu comunidad informada.', cta: 'Explorar clubes' },
+              { icon: MapPinned, title: 'La próxima ruta empieza aquí.', description: 'Encuentra recorridos recomendados, conoce sus detalles y guarda tus favoritos.', cta: 'Descubrir rutas' },
+              { icon: MessageCircle, title: 'Rodar es mejor cuando se comparte.', description: 'Publica experiencias, comparte fotografías y conoce moteros cerca de ti.', cta: 'Conocer la comunidad' },
+            ].map((item) => (
+              <article key={item.title} className="flex flex-col rounded-3xl border border-white/5 bg-moto-darker p-6">
+                <item.icon className="h-8 w-8 text-moto-orange" />
+                <h2 className="mt-7 text-2xl font-bold">{item.title}</h2>
+                <p className="mt-3 flex-1 leading-7 text-gray-400">{item.description}</p>
+                <Button variant="outline" className="mt-7 w-full border-white/15" onClick={() => navigate('/login')}>{item.cta}</Button>
+              </article>
+            ))}
           </div>
         </section>
 

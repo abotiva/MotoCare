@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Bike, Calendar, CheckCircle2, Clock, Edit3, Eye, EyeOff, Flag, Loader2, Lock, MapPin, Navigation, PackageCheck, PlayCircle, Plus, Route, Save, Trash2 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { toast } from 'sonner'
@@ -293,6 +293,7 @@ export function Map() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [ownedPremiumRouteIds, setOwnedPremiumRouteIds] = useState(() => readOwnedRouteIds(user?.id))
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const purchasedRoutes = useMemo(
     () => premiumRouteSummaries.filter((route) => ownedPremiumRouteIds.includes(route.id)),
@@ -404,6 +405,17 @@ export function Map() {
     setRouteForm({ ...emptyRouteForm, motorcycle_id: motorcycles[0]?.id ?? '' })
     setShowCreateRoute(true)
   }
+
+  useEffect(() => {
+    if (isLoading || searchParams.get('action') !== 'create') return
+    openCreateRoute()
+    setSearchParams((current) => {
+      current.delete('action')
+      return current
+    }, { replace: true })
+    // openCreateRoute uses the plan and motorcycles loaded above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, searchParams, setSearchParams])
 
   const openEditRoute = (route: RoutePlan) => {
     if (!canUseRoutes) {

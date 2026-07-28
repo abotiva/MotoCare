@@ -17,7 +17,7 @@ import {
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
-import type { MaintenanceRecord, Motorcycle, Reminder } from '@/types/database'
+import type { Club, MaintenanceRecord, Motorcycle, PostWithAuthor, Reminder, RoutePlan } from '@/types/database'
 import { formatCurrency, formatShortDate, getMotorcycleHealth } from '@/features/motorcycles/utils/motorcycleHealth'
 
 const exploreItems = [
@@ -33,6 +33,9 @@ export function Home() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [records, setRecords] = useState<MaintenanceRecord[]>([])
   const [reminders, setReminders] = useState<Reminder[]>([])
+  const [recommendedRoutes, setRecommendedRoutes] = useState<RoutePlan[]>([])
+  const [communityPosts, setCommunityPosts] = useState<PostWithAuthor[]>([])
+  const [myClubs, setMyClubs] = useState<Club[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -40,9 +43,17 @@ export function Home() {
     const client = supabase
     const loadDashboard = async () => {
       setIsLoading(true)
-      const motorcyclesResult = await client.from('motorcycles').select('*').eq('owner_id', user.id).order('created_at', { ascending: false })
+      const [motorcyclesResult, routesResult, postsResult, clubsResult] = await Promise.all([
+        client.from('motorcycles').select('*').eq('owner_id', user.id).order('created_at', { ascending: false }),
+        client.from('routes').select('*').eq('visibility', 'community').order('created_at', { ascending: false }).limit(3),
+        client.from('posts').select('*, profiles:author_id(full_name, username, city, avatar_url), routes:route_id(*)').order('created_at', { ascending: false }).limit(3),
+        client.from('club_members').select('clubs:club_id(*)').eq('user_id', user.id).limit(3),
+      ])
       const nextMotorcycles = (motorcyclesResult.data ?? []) as Motorcycle[]
       setMotorcycles(nextMotorcycles)
+      setRecommendedRoutes((routesResult.data ?? []) as RoutePlan[])
+      setCommunityPosts((postsResult.data ?? []) as PostWithAuthor[])
+      setMyClubs((clubsResult.data ?? []).flatMap((row) => row.clubs ? [row.clubs as unknown as Club] : []))
       const preferred = nextMotorcycles.find((motorcycle) => motorcycle.id === profile?.primary_motorcycle_id) ?? nextMotorcycles[0]
       setSelectedId(preferred?.id ?? null)
       setIsLoading(false)
@@ -92,6 +103,8 @@ export function Home() {
       return days <= 30
     })
   ).length
+  const firstName = profile?.full_name?.trim().split(/\s+/)[0] ?? 'motero'
+  const nextPlannedRoute = recommendedRoutes.find((route) => route.status === 'planned') ?? recommendedRoutes[0] ?? null
   const statusStyles = health?.level === 'urgent'
     ? 'border-red-500/30 bg-red-500/10 text-red-300'
     : health?.level === 'attention'
@@ -104,12 +117,17 @@ export function Home() {
 
   if (!selectedBike) {
     return (
-      <div className="mx-auto grid min-h-[70vh] max-w-3xl place-items-center p-6 text-center">
-        <div>
+      <div className="mx-auto max-w-6xl space-y-6 p-6 pb-24">
+        <div><p className="text-sm font-medium text-moto-orange">MotoCare conecta tu moto, tus rutas y tu comunidad.</p><h1 className="mt-1 text-3xl font-bold">Hola, {firstName}</h1></div>
+        <section className="rounded-3xl border border-white/5 bg-moto-darker p-8 text-center">
           <div className="mx-auto grid h-20 w-20 place-items-center rounded-3xl bg-moto-orange/15"><Bike className="h-10 w-10 text-moto-orange" /></div>
-          <h1 className="mt-6 text-3xl font-bold">Empieza la historia de tu moto</h1>
+          <h2 className="mt-6 text-3xl font-bold">Agrega tu primera moto a Mi Garage</h2>
           <p className="mx-auto mt-3 max-w-lg text-gray-400">Registra tu moto para controlar mantenimientos, documentos y próximos servicios desde un solo lugar.</p>
           <Link to="/app/garage" className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-xl bg-moto-orange px-5 font-semibold text-moto-darker"><Plus className="h-5 w-5" />Agregar mi moto</Link>
+        </section>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Link to="/app/explore" className="rounded-3xl border border-white/5 bg-moto-darker p-6 hover:border-moto-orange/40"><MapPinned className="h-7 w-7 text-moto-orange" /><h2 className="mt-5 text-xl font-bold">Tu próxima aventura está por comenzar</h2><p className="mt-2 text-sm text-gray-400">Descubre rutas creadas por la comunidad o diseña tu propio recorrido.</p><span className="mt-5 inline-flex items-center gap-2 font-semibold text-moto-orange">Explorar rutas <ArrowRight className="h-4 w-4" /></span></Link>
+          <Link to="/app/clubs" className="rounded-3xl border border-white/5 bg-moto-darker p-6 hover:border-moto-orange/40"><MessageCircle className="h-7 w-7 text-moto-orange" /><h2 className="mt-5 text-xl font-bold">Encuentra tu comunidad</h2><p className="mt-2 text-sm text-gray-400">Descubre clubes, conoce otros moteros y participa en sus experiencias.</p><span className="mt-5 inline-flex items-center gap-2 font-semibold text-moto-orange">Explorar clubes <ArrowRight className="h-4 w-4" /></span></Link>
         </div>
       </div>
     )
@@ -117,6 +135,10 @@ export function Home() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-4 pb-24 sm:p-6 lg:pb-8">
+      <header>
+        <p className="text-sm font-medium text-moto-orange">MotoCare conecta tu moto, tus rutas y tu comunidad.</p>
+        <h1 className="mt-1 text-3xl font-bold">Hola, {firstName}</h1>
+      </header>
       <section aria-labelledby="bike-selector-title">
         <div>
           <p className="text-sm font-medium text-moto-orange">Tu moto. Tu historia. Tu ruta.</p>
@@ -191,6 +213,26 @@ export function Home() {
             { label: 'Gastos del mes', value: monthExpenses.length ? formatCurrency(monthExpenseTotal) : 'Sin gastos registrados', icon: CircleDollarSign },
           ].map((metric) => <div key={metric.label} className="rounded-2xl border border-white/5 bg-moto-darker p-4"><metric.icon className="h-5 w-5 text-moto-orange" /><p className="mt-4 text-sm text-gray-400">{metric.label}</p><p className="mt-1 font-bold">{metric.value}</p></div>)}
         </div>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-3" aria-label="Rutas y comunidad">
+        <article className="rounded-3xl border border-white/5 bg-moto-darker p-5 lg:col-span-2">
+          <div className="flex items-start justify-between gap-4">
+            <div><p className="text-xs font-semibold uppercase tracking-wider text-moto-orange">Próxima ruta</p><h2 className="mt-2 text-xl font-bold">{nextPlannedRoute?.title ?? 'Tu próxima aventura está por comenzar'}</h2></div>
+            <MapPinned className="h-6 w-6 text-moto-orange" />
+          </div>
+          {nextPlannedRoute ? (
+            <p className="mt-3 text-sm text-gray-400">{nextPlannedRoute.origin ?? 'Origen por definir'} → {nextPlannedRoute.destination ?? 'Destino por definir'}{nextPlannedRoute.distance_km ? ` · ${nextPlannedRoute.distance_km} km` : ''}</p>
+          ) : (
+            <p className="mt-3 text-sm text-gray-400">Descubre recorridos compartidos por otros moteros o crea el tuyo.</p>
+          )}
+          <div className="mt-5 flex flex-wrap gap-4"><Link to="/app/explore" className="font-semibold text-moto-orange">Descubrir rutas</Link><Link to="/app/map?action=create" className="font-semibold text-gray-300">Crear ruta</Link></div>
+        </article>
+        <article className="rounded-3xl border border-white/5 bg-moto-darker p-5">
+          <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-wider text-moto-orange">Mi comunidad</p><h2 className="mt-2 text-xl font-bold">{myClubs.length ? `${myClubs.length} club${myClubs.length === 1 ? '' : 'es'}` : 'Encuentra tu comunidad'}</h2></div><MessageCircle className="h-6 w-6 text-moto-orange" /></div>
+          <p className="mt-3 text-sm text-gray-400">{myClubs.length ? `${communityPosts.length} publicaciones recientes para descubrir.` : 'Descubre clubes, conoce moteros y participa en próximas salidas.'}</p>
+          <Link to={myClubs.length ? '/app/messages' : '/app/clubs'} className="mt-5 inline-flex font-semibold text-moto-orange">{myClubs.length ? 'Ver actividad' : 'Explorar clubes'}</Link>
+        </article>
       </section>
 
       <section aria-labelledby="quick-actions-title">

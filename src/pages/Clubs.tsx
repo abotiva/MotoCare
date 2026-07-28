@@ -63,6 +63,7 @@ export function Clubs() {
   const userId = user?.id
   const { effectivePlan, isLoadingSubscription } = useSubscription()
   const [clubs, setClubs] = useState<Club[]>([])
+  const [discoveredClubs, setDiscoveredClubs] = useState<Club[]>([])
   const [members, setMembers] = useState<ClubMemberWithProfile[]>([])
   const [pendingInvitations, setPendingInvitations] = useState<ClubInvitationWithProfile[]>([])
   const [selectedClubId, setSelectedClubId] = useState('')
@@ -180,6 +181,17 @@ export function Clubs() {
   useEffect(() => {
     void loadClubs()
   }, [loadClubs])
+
+  useEffect(() => {
+    if (!supabase) return
+    void supabase
+      .from('clubs')
+      .select('*')
+      .eq('moderation_status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(12)
+      .then(({ data }) => setDiscoveredClubs((data ?? []) as Club[]))
+  }, [])
 
   useEffect(() => {
     if (hasManualSelection || clubs.length === 0) return
@@ -596,6 +608,21 @@ export function Clubs() {
         </div>
       </div>
 
+      <section className="mb-6" aria-labelledby="discover-clubs-title">
+        <div className="mb-3"><h2 id="discover-clubs-title" className="text-lg font-bold">Descubre clubes</h2><p className="text-sm text-gray-400">Conoce comunidades activas y sus ciudades. El ingreso se gestiona mediante invitación según las reglas actuales.</p></div>
+        {discoveredClubs.length ? (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {discoveredClubs.map((club) => (
+              <article key={club.id} className="rounded-2xl border border-white/5 bg-moto-gray p-4">
+                <div className="flex items-center gap-3"><Avatar className="h-11 w-11"><AvatarImage src={club.image_url ?? undefined} /><AvatarFallback>{initials(club.name)}</AvatarFallback></Avatar><div className="min-w-0"><h3 className="truncate font-semibold">{club.name}</h3><p className="truncate text-sm text-gray-500">{club.city || 'Ciudad sin definir'}</p></div></div>
+                <p className="mt-3 line-clamp-2 text-sm text-gray-400">{club.description || 'Comunidad motera en MotoCare.'}</p>
+                <Badge className="mt-4 bg-white/10 text-gray-300">Ingreso por invitación</Badge>
+              </article>
+            ))}
+          </div>
+        ) : <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-gray-400">Aún no hay clubes públicos para descubrir.</div>}
+      </section>
+
       <div className="grid gap-5 lg:grid-cols-[320px_minmax(0,1fr)]">
         <div className="order-2 space-y-4 lg:order-1">
           <Card className="border-white/5 bg-moto-gray py-0">
@@ -630,7 +657,7 @@ export function Clubs() {
                   ))}
                 </div>
               ) : (
-                <div className="rounded-xl bg-moto-darker p-4 text-sm text-gray-400">Aun no perteneces a ningun club.</div>
+                <div className="rounded-xl bg-moto-darker p-4 text-sm text-gray-400"><p className="font-semibold text-white">Encuentra tu comunidad</p><p className="mt-1">Descubre clubes, conoce otros moteros y participa en próximas salidas.</p></div>
               )}
             </CardContent>
           </Card>

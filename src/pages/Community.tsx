@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Calendar, Edit3, Flag, Heart, Image as ImageIcon, Loader2, MapPin, MessageCircle, Plus, Route as RouteIcon, Send, Trash2, Users, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { toast } from 'sonner'
@@ -159,6 +159,19 @@ export function Community() {
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null)
   const [viewerImage, setViewerImage] = useState<{ src: string; alt: string } | null>(null)
   const [selectedMetric, setSelectedMetric] = useState<CommunityMetric | null>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  useEffect(() => {
+    if (isLoading || searchParams.get('action') !== 'post') return
+    window.requestAnimationFrame(() => {
+      document.getElementById('community-post-composer')?.focus()
+      document.getElementById('community-post-composer')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    })
+    setSearchParams((current) => {
+      current.delete('action')
+      return current
+    }, { replace: true })
+  }, [isLoading, searchParams, setSearchParams])
 
   const myPostsCount = useMemo(() => posts.filter((post) => post.author_id === user?.id).length, [posts, user?.id])
   const routePostsCount = useMemo(() => posts.filter((post) => post.route_id).length, [posts])
@@ -769,6 +782,7 @@ export function Community() {
                 </Avatar>
                 <div className="min-w-0 flex-1">
                   <textarea
+                    id="community-post-composer"
                     className="h-24 w-full resize-none rounded-xl border border-white/10 bg-moto-darker p-3 text-sm text-white placeholder:text-gray-500"
                     value={newPost}
                     onChange={(event) => setNewPost(event.target.value)}

@@ -171,8 +171,8 @@ export function Explore() {
   return (
     <div className="mx-auto max-w-7xl p-4 pb-24 lg:p-6">
       <div className="mb-6">
-        <h1 className="mb-2 text-2xl font-bold">Explorar</h1>
-        <p className="text-gray-400">Descubre rutas y actividad compartida por la comunidad MotoCare Co.</p>
+        <h1 className="mb-2 text-2xl font-bold">Descubrir rutas</h1>
+        <p className="text-gray-400">Encuentra recorridos compartidos por la comunidad MotoCare.</p>
       </div>
 
       <div className="mb-5 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
@@ -378,7 +378,8 @@ export function Explore() {
             <Card className="border-white/5 bg-moto-gray py-0">
               <CardContent className="p-8 text-center text-gray-400">
                 <Bookmark className="mx-auto mb-3 h-12 w-12 text-gray-600" />
-                Aun no tienes rutas guardadas.
+                <p className="font-semibold text-white">Tu próxima aventura está por comenzar</p>
+                <p className="mt-2">Guarda rutas creadas por la comunidad para encontrarlas aquí.</p>
               </CardContent>
             </Card>
           )}

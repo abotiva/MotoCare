@@ -10,6 +10,7 @@ const MainLayout = lazy(() => import('./layouts/MainLayout').then((module) => ({
 const LandingPage = lazy(() => import('./pages/LandingPage').then((module) => ({ default: module.LandingPage })))
 const Login = lazy(() => import('./pages/Login').then((module) => ({ default: module.Login })))
 const Home = lazy(() => import('./pages/Home').then((module) => ({ default: module.Home })))
+const Explore = lazy(() => import('./pages/Explore').then((module) => ({ default: module.Explore })))
 const Map = lazy(() => import('./pages/Map').then((module) => ({ default: module.Map })))
 const RouteDetail = lazy(() => import('./pages/RouteDetail').then((module) => ({ default: module.RouteDetail })))
 const Marketplace = lazy(() => import('./pages/Marketplace').then((module) => ({ default: module.Marketplace })))
@@ -41,7 +42,7 @@ function App() {
           <Route path="/app" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
             <Route index element={<Navigate to="/app/home" replace />} />
             <Route path="home" element={<Home />} />
-            <Route path="explore" element={<Navigate to="/app/home" replace />} />
+            <Route path="explore" element={<Explore />} />
             <Route path="map" element={<Map />} />
             <Route path="routes/:routeId" element={<RouteDetail />} />
             <Route path="premium-routes" element={<PremiumRoutes />} />
