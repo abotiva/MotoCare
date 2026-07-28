@@ -50,8 +50,12 @@ function App() {
             <Route path="community" element={<Navigate to="/app/messages" replace />} />
             <Route path="clubs" element={<Clubs />} />
             <Route path="profile" element={<Profile />} />
+            <Route path="bikes" element={<MyBikes />} />
+            <Route path="bikes/:section" element={<MyBikes />} />
+            <Route path="bikes/:bikeId/:section" element={<MyBikes />} />
             <Route path="my-bikes" element={<MyBikes />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="plan" element={<Navigate to="/app/settings?section=plan" replace />} />
             <Route path="notifications" element={<Notifications />} />
             <Route path="admin" element={<Admin />} />
             <Route path="*" element={<Navigate to="/app/home" replace />} />

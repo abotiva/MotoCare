@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
   BarChart3,
@@ -173,6 +173,21 @@ function defaultIntervalForReminder(title: string) {
 
 type BikeTab = 'reminders' | 'history' | 'reports' | 'documents'
 
+const sectionToTab = {
+  overview: 'history',
+  history: 'history',
+  schedule: 'reminders',
+  documents: 'documents',
+  expenses: 'reports',
+} as const satisfies Record<string, BikeTab>
+
+const tabToSection: Record<BikeTab, keyof typeof sectionToTab> = {
+  history: 'history',
+  reminders: 'schedule',
+  documents: 'documents',
+  reports: 'expenses',
+}
+
 function tabFromHash(hash: string): BikeTab {
   const value = hash.replace('#', '')
   if (value === 'reminders' || value === 'history' || value === 'reports' || value === 'documents') return value
@@ -207,7 +222,11 @@ export function MyBikes() {
   const { user, profile } = useAuth()
   const { hasPlan, effectivePlan, isLoadingSubscription } = useSubscription()
   const location = useLocation()
-  const [activeTab, setActiveTab] = useState<BikeTab>(() => tabFromHash(location.hash))
+  const navigate = useNavigate()
+  const { bikeId, section } = useParams<{ bikeId?: string; section?: string }>()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const routeTab = section ? sectionToTab[section as keyof typeof sectionToTab] : undefined
+  const [activeTab, setActiveTab] = useState<BikeTab>(() => routeTab ?? tabFromHash(location.hash))
   const [motorcycles, setMotorcycles] = useState<Motorcycle[]>([])
   const [records, setRecords] = useState<MaintenanceRecord[]>([])
   const [reminders, setReminders] = useState<Reminder[]>([])
@@ -249,13 +268,13 @@ export function MyBikes() {
   const isBusinessAccount = effectivePlan === 'business'
 
   useEffect(() => {
-    setActiveTab(tabFromHash(location.hash))
-    if (location.hash) {
+    setActiveTab(routeTab ?? tabFromHash(location.hash))
+    if (location.hash || section) {
       window.requestAnimationFrame(() => {
         document.getElementById('bike-sections')?.scrollIntoView({ block: 'start', behavior: 'smooth' })
       })
     }
-  }, [location.hash])
+  }, [location.hash, routeTab, section])
 
   const orderedMotorcycles = useMemo(() => {
     return [...motorcycles].sort((a, b) => {
@@ -269,6 +288,25 @@ export function MyBikes() {
     () => motorcycles.find((motorcycle) => motorcycle.id === selectedId) ?? orderedMotorcycles[0] ?? null,
     [motorcycles, orderedMotorcycles, selectedId]
   )
+
+  useEffect(() => {
+    if (isLoading || orderedMotorcycles.length === 0) return
+
+    const requestedBike = bikeId ? orderedMotorcycles.find((motorcycle) => motorcycle.id === bikeId) : null
+    const nextBike = requestedBike ?? selectedBike ?? orderedMotorcycles[0]
+    if (!nextBike) return
+
+    if (selectedId !== nextBike.id) setSelectedId(nextBike.id)
+
+    const requestedSection = section && section in sectionToTab ? section : null
+    const legacySection = location.hash ? tabToSection[tabFromHash(location.hash)] : null
+    const nextSection = requestedSection ?? legacySection ?? 'overview'
+    const canonicalPath = `/app/bikes/${nextBike.id}/${nextSection}`
+
+    if (location.pathname !== canonicalPath) {
+      navigate({ pathname: canonicalPath, search: location.search }, { replace: true })
+    }
+  }, [bikeId, isLoading, location.hash, location.pathname, location.search, navigate, orderedMotorcycles, section, selectedBike, selectedId])
 
   const selectedRecords = useMemo(
     () => records.filter((record) => record.motorcycle_id === selectedBike?.id),
@@ -629,7 +667,7 @@ export function MyBikes() {
     setIsSaving(false)
   }
 
-  const openCreateService = () => {
+  const openCreateService = useCallback(() => {
     if (!selectedBike) return
     const firstSuggestion = maintenanceSuggestions[0]
     setServiceForm({
@@ -643,7 +681,7 @@ export function MyBikes() {
       next_due_date: firstSuggestion?.recommended_interval_days ? dateAfterDays(firstSuggestion.recommended_interval_days) : '',
     })
     setShowAddService(true)
-  }
+  }, [maintenanceSuggestions, selectedBike])
 
   const applyServiceSuggestion = (suggestionId: string) => {
     const suggestion = maintenanceSuggestions.find((item) => item.id === suggestionId)
@@ -745,7 +783,7 @@ export function MyBikes() {
     setIsSaving(false)
   }
 
-  const openMileageReminder = () => {
+  const openMileageReminder = useCallback(() => {
     if (!selectedBike) return
     const firstSuggestion = maintenanceSuggestions[0]
     setReminderForm({
@@ -756,7 +794,7 @@ export function MyBikes() {
       due_date: firstSuggestion?.recommended_interval_days ? dateAfterDays(firstSuggestion.recommended_interval_days) : '',
     })
     setShowAddReminder(true)
-  }
+  }, [maintenanceSuggestions, selectedBike])
 
   const applyReminderSuggestion = (suggestionId: string) => {
     const suggestion = maintenanceSuggestions.find((item) => item.id === suggestionId)
@@ -805,11 +843,11 @@ export function MyBikes() {
     })
   }
 
-  const openUpdateMileage = () => {
+  const openUpdateMileage = useCallback(() => {
     if (!selectedBike) return
     setMileageForm({ mileage: selectedBike.mileage.toString() })
     setShowUpdateMileage(true)
-  }
+  }, [selectedBike])
 
   const handleUpdateMileage = async (event: FormEvent) => {
     event.preventDefault()
@@ -1203,6 +1241,18 @@ export function MyBikes() {
     window.open(data.signedUrl, '_blank', 'noopener,noreferrer')
   }
 
+  useEffect(() => {
+    const action = searchParams.get('action')
+    if (!selectedBike || !action) return
+    if (action === 'service') openCreateService()
+    if (action === 'mileage') openUpdateMileage()
+    if (action === 'reminder') openMileageReminder()
+    setSearchParams((current) => {
+      current.delete('action')
+      return current
+    }, { replace: true })
+  }, [openCreateService, openMileageReminder, openUpdateMileage, searchParams, selectedBike, setSearchParams])
+
   if (isLoading) {
     return (
       <div className="grid min-h-[70vh] place-items-center text-moto-orange">
@@ -1266,7 +1316,7 @@ export function MyBikes() {
               <div className="mx-auto grid h-20 w-20 place-items-center rounded-2xl bg-moto-orange/20">
                 <Bike className="h-10 w-10 text-moto-orange" />
               </div>
-              <h2 className="mt-6 text-2xl font-bold">Crea tu primer garaje MotoCare Co</h2>
+              <h2 className="mt-6 text-2xl font-bold">Crea tu primer garaje MotoCare</h2>
               <p className="mx-auto mt-2 max-w-md text-gray-400">
                 Registra tu moto para empezar a controlar SOAT, tecnomecánica, kilometraje y mantenimientos.
               </p>
@@ -1283,7 +1333,10 @@ export function MyBikes() {
             {orderedMotorcycles.map((motorcycle) => (
               <button
                 key={motorcycle.id}
-                onClick={() => setSelectedId(motorcycle.id)}
+                onClick={() => {
+                  setSelectedId(motorcycle.id)
+                  navigate(`/app/bikes/${motorcycle.id}/${section && section in sectionToTab ? section : 'overview'}`)
+                }}
                 className={`flex min-w-0 items-center gap-3 rounded-xl border p-3 transition-all ${
                   selectedBike?.id === motorcycle.id ? 'border-moto-orange bg-moto-orange/20' : 'border-white/5 bg-moto-gray hover:border-white/20'
                 }`}
@@ -1376,7 +1429,7 @@ export function MyBikes() {
                     onValueChange={(value) => {
                       const nextTab = value as BikeTab
                       setActiveTab(nextTab)
-                      window.history.replaceState(null, '', '#' + nextTab)
+                      if (selectedBike) navigate(`/app/bikes/${selectedBike.id}/${tabToSection[nextTab]}`)
                     }}
                     className="w-full scroll-mt-24"
                   >
