@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
+import type { ZodType } from 'zod'
 import {
   BarChart3,
   Bike,
@@ -26,6 +27,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ImageViewer } from '@/components/ImageViewer'
+import { ConfirmActionDialog } from '@/features/motorcycles/components/ConfirmActionDialog'
 import { DocumentCard } from '@/features/motorcycles/components/DocumentCard'
 import { MaintenanceTimeline } from '@/features/motorcycles/components/MaintenanceTimeline'
 import { MotorcycleHealthCard } from '@/features/motorcycles/components/MotorcycleHealthCard'
@@ -33,6 +35,13 @@ import { MotorcycleSelector } from '@/features/motorcycles/components/Motorcycle
 import { ReminderList } from '@/features/motorcycles/components/ReminderList'
 import { dateDistanceInDays, daysUntil } from '@/features/motorcycles/utils/dateStatus'
 import { defaultIntervalForMaintenance } from '@/features/motorcycles/utils/maintenanceIntervals'
+import {
+  completionFormSchema,
+  mileageFormSchema,
+  motorcycleFormSchema,
+  reminderFormSchema,
+  serviceFormSchema,
+} from '@/features/motorcycles/utils/formSchemas'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
@@ -218,6 +227,8 @@ export function MyBikes() {
   const [showCompleteReminder, setShowCompleteReminder] = useState(false)
   const [showUpdateMileage, setShowUpdateMileage] = useState(false)
   const [showRecordDetail, setShowRecordDetail] = useState(false)
+  const [reminderToCancel, setReminderToCancel] = useState<Reminder | null>(null)
+  const [documentToDelete, setDocumentToDelete] = useState<MotorcycleDocument | null>(null)
   const [editingBike, setEditingBike] = useState<Motorcycle | null>(null)
   const [editingReminder, setEditingReminder] = useState<Reminder | null>(null)
   const [completingReminder, setCompletingReminder] = useState<Reminder | null>(null)
@@ -234,6 +245,13 @@ export function MyBikes() {
   const notifyError = (title: string, message: string) => {
     setError(message)
     toast.error(title, { description: message })
+  }
+
+  const validateForm = (schema: ZodType, value: unknown) => {
+    const result = schema.safeParse(value)
+    if (result.success) return true
+    notifyError('Revisa el formulario', result.error?.issues[0]?.message ?? 'Hay datos inválidos.')
+    return false
   }
 
   const isNegativeNumber = (value: string) => value.trim() !== '' && Number(value) < 0
@@ -452,6 +470,7 @@ export function MyBikes() {
   const handleCreateBike = async (event: FormEvent) => {
     event.preventDefault()
     if (!supabase || !user) return
+    if (!validateForm(motorcycleFormSchema, bikeForm)) return
     if (isBusinessAccount) {
       notifyError('Garaje no disponible', 'La licencia Business es para negocios y no permite registrar motos.')
       return
@@ -588,6 +607,7 @@ export function MyBikes() {
   const handleUpdateBike = async (event: FormEvent) => {
     event.preventDefault()
     if (!supabase || !user || !editingBike) return
+    if (!validateForm(motorcycleFormSchema, bikeForm)) return
     if (isNegativeNumber(bikeForm.mileage)) {
       notifyError('Kilometraje inválido', 'El kilometraje de la moto no puede ser negativo.')
       return
@@ -683,6 +703,7 @@ export function MyBikes() {
   const handleCreateService = async (event: FormEvent) => {
     event.preventDefault()
     if (!supabase || !user || !selectedBike) return
+    if (!validateForm(serviceFormSchema, serviceForm)) return
     if (isNegativeNumber(serviceForm.mileage) || isNegativeNumber(serviceForm.cost) || isNegativeNumber(serviceForm.next_due_mileage)) {
       notifyError('Datos inválidos', 'El kilometraje, costo y próximo kilometraje no pueden ser negativos.')
       return
@@ -826,6 +847,7 @@ export function MyBikes() {
   const handleUpdateMileage = async (event: FormEvent) => {
     event.preventDefault()
     if (!supabase || !selectedBike) return
+    if (!validateForm(mileageFormSchema, mileageForm)) return
 
     const mileage = Number(mileageForm.mileage)
     if (Number.isNaN(mileage) || mileage < selectedBike.mileage) {
@@ -864,6 +886,7 @@ export function MyBikes() {
   const handleCreateReminder = async (event: FormEvent) => {
     event.preventDefault()
     if (!supabase || !user || !selectedBike) return
+    if (!validateForm(reminderFormSchema, reminderForm)) return
     if (isNegativeNumber(reminderForm.due_mileage)) {
       notifyError('Kilometraje inválido', 'El kilometraje objetivo no puede ser negativo.')
       return
@@ -898,6 +921,7 @@ export function MyBikes() {
   const handleUpdateReminder = async (event: FormEvent) => {
     event.preventDefault()
     if (!supabase || !user || !editingReminder) return
+    if (!validateForm(reminderFormSchema, editReminderForm)) return
     if (isNegativeNumber(editReminderForm.due_mileage)) {
       notifyError('Kilometraje inválido', 'El kilometraje objetivo no puede ser negativo.')
       return
@@ -932,9 +956,6 @@ export function MyBikes() {
 
   const dismissReminder = async (reminder: Reminder) => {
     if (!supabase || !user) return
-    const confirmed = window.confirm(`Cancelar el pendiente "${reminder.title}"?`)
-    if (!confirmed) return
-
     setIsSaving(true)
     setError(null)
 
@@ -950,6 +971,7 @@ export function MyBikes() {
       notifyError('No pudimos cancelar el pendiente', updateError.message)
     } else if (data) {
       setReminders((current) => current.map((item) => (item.id === reminder.id ? (data as Reminder) : item)))
+      setReminderToCancel(null)
       toast.success('Pendiente cancelado', { description: 'Ya no aparecerá en la lista de pendientes.' })
     }
 
@@ -974,6 +996,7 @@ export function MyBikes() {
   const handleCompleteReminder = async (event: FormEvent) => {
     event.preventDefault()
     if (!supabase || !user || !selectedBike || !completingReminder) return
+    if (!validateForm(completionFormSchema, completionForm)) return
     setIsSaving(true)
     setError(null)
 
@@ -1172,9 +1195,6 @@ export function MyBikes() {
 
   const deleteMotorcycleDocument = async (document: MotorcycleDocument) => {
     if (!supabase || !user) return
-    const confirmed = window.confirm(`Eliminar el documento "${document.file_name}"?`)
-    if (!confirmed) return
-
     setUploadingKey(document.document_type)
     setError(null)
 
@@ -1195,6 +1215,7 @@ export function MyBikes() {
       notifyError('El archivo se elimino, pero no pudimos quitar el registro', deleteError.message)
     } else {
       setDocuments((current) => current.filter((item) => item.id !== document.id))
+      setDocumentToDelete(null)
       toast.success('Documento eliminado', { description: `${document.file_name} se quito de la moto.` })
     }
 
@@ -1407,7 +1428,7 @@ export function MyBikes() {
                         reminders={selectedReminders}
                         motorcycle={selectedBike}
                         onEdit={openEditReminder}
-                        onCancel={(reminder) => void dismissReminder(reminder)}
+                        onCancel={setReminderToCancel}
                         onComplete={openCompleteReminder}
                       />
                     </TabsContent>
@@ -1505,7 +1526,7 @@ export function MyBikes() {
                             uploadsDisabled={uploadingKey !== null}
                             onUpload={(file, type) => void uploadMotorcycleDocument(file, type)}
                             onOpen={(document) => void openPrivateDocument(document)}
-                            onDelete={(document) => void deleteMotorcycleDocument(document)}
+                            onDelete={setDocumentToDelete}
                           />
                         ))}
                       </div>
@@ -1525,7 +1546,7 @@ export function MyBikes() {
                                     <ExternalLink className="mr-2 h-4 w-4" />
                                     Ver
                                   </Button>
-                                  <Button size="sm" variant="outline" className="border-white/10" onClick={() => deleteMotorcycleDocument(document)}>
+                                  <Button size="sm" variant="outline" className="border-white/10" onClick={() => setDocumentToDelete(document)}>
                                     <Trash2 className="mr-2 h-4 w-4" />
                                     Eliminar
                                   </Button>
@@ -1606,7 +1627,7 @@ export function MyBikes() {
       )}
 
       <Dialog open={showAddBike} onOpenChange={(open) => { setShowAddBike(open); if (!open) { setEditingBike(null); setBikeForm(emptyBikeForm); setBikePhotoFile(null) } }}>
-        <DialogContent className="max-w-md border-white/10 bg-moto-gray text-white">
+        <DialogContent className="inset-0 h-dvh w-screen max-w-none translate-x-0 translate-y-0 overflow-y-auto rounded-none border-white/10 bg-moto-gray text-white sm:left-1/2 sm:top-1/2 sm:h-auto sm:max-h-[90dvh] sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-lg">
           <DialogHeader>
             <DialogTitle>{editingBike ? 'Editar moto' : 'Agregar moto'}</DialogTitle>
             <DialogDescription className="text-gray-400">{editingBike ? 'Actualiza la hoja de vida y vencimientos.' : 'Crea la hoja de vida inicial de tu moto.'}</DialogDescription>
@@ -1711,7 +1732,7 @@ export function MyBikes() {
           if (!open) setMileageForm(emptyMileageForm)
         }}
       >
-        <DialogContent className="max-w-md border-white/10 bg-moto-gray text-white">
+        <DialogContent className="bottom-0 left-0 top-auto w-full max-w-none translate-x-0 translate-y-0 rounded-t-3xl border-white/10 bg-moto-gray text-white sm:left-1/2 sm:top-1/2 sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-lg">
           <DialogHeader>
             <DialogTitle>Actualizar kilometraje</DialogTitle>
             <DialogDescription className="text-gray-400">
@@ -1809,7 +1830,7 @@ export function MyBikes() {
       </Dialog>
 
       <Dialog open={showAddService} onOpenChange={setShowAddService}>
-        <DialogContent className="max-w-md border-white/10 bg-moto-gray text-white">
+        <DialogContent className="inset-0 h-dvh w-screen max-w-none translate-x-0 translate-y-0 overflow-y-auto rounded-none border-white/10 bg-moto-gray text-white sm:left-1/2 sm:top-1/2 sm:h-auto sm:max-h-[90dvh] sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-lg">
           <DialogHeader>
             <DialogTitle>Registrar servicio</DialogTitle>
             <DialogDescription className="text-gray-400">Guarda un mantenimiento en la hoja de vida.</DialogDescription>
@@ -1926,7 +1947,7 @@ export function MyBikes() {
           }
         }}
       >
-        <DialogContent className="max-w-lg border-white/10 bg-moto-gray text-white">
+        <DialogContent className="inset-0 h-dvh w-screen max-w-none translate-x-0 translate-y-0 overflow-y-auto rounded-none border-white/10 bg-moto-gray text-white sm:left-1/2 sm:top-1/2 sm:h-auto sm:max-h-[90dvh] sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-lg">
           <DialogHeader>
             <DialogTitle>Completar pendiente</DialogTitle>
             <DialogDescription className="text-gray-400">
@@ -2034,7 +2055,7 @@ export function MyBikes() {
           }
         }}
       >
-        <DialogContent className="max-w-md border-white/10 bg-moto-gray text-white">
+        <DialogContent className="bottom-0 left-0 top-auto w-full max-w-none translate-x-0 translate-y-0 rounded-t-3xl border-white/10 bg-moto-gray text-white sm:left-1/2 sm:top-1/2 sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-lg">
           <DialogHeader>
             <DialogTitle>Editar recordatorio</DialogTitle>
             <DialogDescription className="text-gray-400">
@@ -2119,7 +2140,7 @@ export function MyBikes() {
       </Dialog>
 
       <Dialog open={showAddReminder} onOpenChange={setShowAddReminder}>
-        <DialogContent className="max-w-md border-white/10 bg-moto-gray text-white">
+        <DialogContent className="bottom-0 left-0 top-auto w-full max-w-none translate-x-0 translate-y-0 rounded-t-3xl border-white/10 bg-moto-gray text-white sm:left-1/2 sm:top-1/2 sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-lg">
           <DialogHeader>
             <DialogTitle>Nuevo recordatorio por kilometraje</DialogTitle>
             <DialogDescription className="text-gray-400">
@@ -2202,6 +2223,28 @@ export function MyBikes() {
           </form>
         </DialogContent>
       </Dialog>
+      <ConfirmActionDialog
+        open={Boolean(reminderToCancel)}
+        title="Cancelar recordatorio"
+        description={reminderToCancel ? `El recordatorio “${reminderToCancel.title}” dejará de aparecer entre los pendientes.` : ''}
+        confirmLabel="Cancelar recordatorio"
+        isProcessing={isSaving}
+        onOpenChange={(open) => !open && setReminderToCancel(null)}
+        onConfirm={() => {
+          if (reminderToCancel) void dismissReminder(reminderToCancel)
+        }}
+      />
+      <ConfirmActionDialog
+        open={Boolean(documentToDelete)}
+        title="Eliminar documento"
+        description={documentToDelete ? `Se eliminará “${documentToDelete.file_name}” de forma permanente.` : ''}
+        confirmLabel="Eliminar documento"
+        isProcessing={uploadingKey !== null}
+        onOpenChange={(open) => !open && setDocumentToDelete(null)}
+        onConfirm={() => {
+          if (documentToDelete) void deleteMotorcycleDocument(documentToDelete)
+        }}
+      />
       <ImageViewer
         src={viewerImage?.src ?? null}
         alt={viewerImage?.alt}
