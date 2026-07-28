@@ -31,6 +31,7 @@ const navItems = [
 ] as const
 
 const coreFeatures = [
+  { icon: Bike, title: 'Mi Garage', description: 'Organiza cada moto con una hoja de vida independiente y mantén siempre una principal en foco.' },
   { icon: Wrench, title: 'Historial de mantenimiento', description: 'Registra servicios, kilometraje, costos y soportes.' },
   { icon: CalendarClock, title: 'Próximos servicios', description: 'Anticipa mantenimientos por fecha o kilometraje.' },
   { icon: FileCheck2, title: 'Documentos y vencimientos', description: 'Controla SOAT, tecnomecánica y documentos de la moto.' },
@@ -48,12 +49,12 @@ const plans = [
   {
     name: 'Free',
     description: 'Para iniciar la hoja de vida de tu moto.',
-    features: ['Registro de motos', 'Historial de mantenimiento', 'Recordatorios por fecha y kilometraje', 'Control básico de documentos'],
+    features: ['1 moto en Mi Garage', 'Historial de mantenimiento', 'Recordatorios por fecha y kilometraje', 'Control básico de documentos'],
   },
   {
     name: 'Premium',
     description: 'Para moteros que quieren más control y experiencias.',
-    features: ['Todo lo incluido en Free', 'Carga privada de documentos', 'Informes de mantenimiento y gastos', 'Carga de archivos GPX', 'Creación de clubes y publicaciones'],
+    features: ['Varias motos en Mi Garage', 'Elige tu moto principal', 'Todo lo incluido en Free', 'Carga privada de documentos', 'Informes de mantenimiento y gastos', 'Carga de archivos GPX', 'Creación de clubes y publicaciones'],
     featured: true,
   },
   {
@@ -65,7 +66,7 @@ const plans = [
 
 const faqs = [
   ['¿MotoCare es gratis?', 'Sí. El plan Free permite empezar la hoja de vida, registrar mantenimientos y crear recordatorios.'],
-  ['¿Puedo registrar más de una moto?', 'MotoCare contempla garajes con varias motos y permite seleccionar una moto predeterminada.'],
+  ['¿Puedo registrar más de una moto?', 'El plan Free incluye una moto. Con Premium puedes administrar varias motos y elegir cuál será la principal.'],
   ['¿Qué documentos puedo guardar?', 'Puedes controlar SOAT, revisión tecnomecánica y otros documentos. La carga de archivos privados requiere Premium.'],
   ['¿Cómo funcionan los recordatorios?', 'Puedes programarlos por fecha, kilometraje o ambos. MotoCare compara esos datos con el estado actual de la moto.'],
   ['¿Mis documentos son privados?', 'Sí. Los archivos se consultan mediante acceso autenticado y enlaces temporales, no mediante URLs públicas permanentes.'],
@@ -120,6 +121,7 @@ export function LandingPage() {
               <p className="font-semibold text-moto-orange">Tu moto. Tu historia. Tu ruta.</p>
               <h1 className="mt-4 text-4xl font-bold leading-tight sm:text-5xl lg:text-7xl">Toda la historia de tu moto, siempre contigo.</h1>
               <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-300">Registra mantenimientos, controla documentos, anticipa vencimientos y conserva la hoja de vida de tu moto desde un solo lugar.</p>
+              <p className="mt-3 max-w-2xl text-sm font-medium text-gray-400">Empieza con una moto en Free. Administra varias y define tu principal con Premium.</p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Button size="lg" className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => navigate('/login?mode=signup')}>Crear cuenta gratis <ArrowRight className="ml-2 h-5 w-5" /></Button>
                 <Button size="lg" variant="outline" className="border-white/20" onClick={() => scrollTo('como-funciona')}>Ver cómo funciona</Button>
@@ -163,7 +165,7 @@ export function LandingPage() {
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <p className="text-sm font-semibold uppercase tracking-wider text-moto-orange">Funcionalidades principales</p>
             <h2 className="mt-3 text-3xl font-bold sm:text-4xl">Todo lo importante para cuidar tu moto.</h2>
-            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
               {coreFeatures.map((feature) => <article key={feature.title} className="rounded-3xl border border-white/5 bg-moto-darker p-6"><feature.icon className="h-7 w-7 text-moto-orange" /><h3 className="mt-8 text-lg font-bold">{feature.title}</h3><p className="mt-2 text-sm leading-6 text-gray-400">{feature.description}</p></article>)}
             </div>
             <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -187,6 +189,15 @@ export function LandingPage() {
             <div className="text-center"><p className="text-sm font-semibold uppercase tracking-wider text-moto-orange">Planes</p><h2 className="mt-3 text-3xl font-bold sm:text-4xl">Elige cómo vivir MotoCare.</h2></div>
             <div className="mt-10 grid gap-5 lg:grid-cols-3">
               {plans.map((plan) => <article key={plan.name} className={`rounded-3xl border p-6 ${plan.featured ? 'border-moto-orange bg-moto-orange/10' : 'border-white/5 bg-moto-darker'}`}><div className="flex items-center justify-between"><h3 className="text-2xl font-bold">{plan.name}</h3>{plan.featured && <span className="rounded-full bg-moto-orange px-3 py-1 text-xs font-bold text-moto-darker">Más control</span>}</div><p className="mt-3 text-sm text-gray-400">{plan.description}</p><ul className="mt-8 space-y-3">{plan.features.map((feature) => <li key={feature} className="flex gap-2 text-sm"><Check className="h-5 w-5 shrink-0 text-moto-orange" />{feature}</li>)}</ul></article>)}
+            </div>
+            <div className="mt-8 overflow-x-auto rounded-2xl border border-white/10">
+              <table className="w-full min-w-[36rem] text-left text-sm">
+                <thead className="bg-moto-darker text-gray-300"><tr><th className="p-4">Mi Garage</th><th className="p-4">Free</th><th className="p-4">Premium</th><th className="p-4">Business</th></tr></thead>
+                <tbody className="divide-y divide-white/10">
+                  <tr><th className="p-4 font-medium">Motos registradas</th><td className="p-4">1 moto</td><td className="p-4">Varias motos</td><td className="p-4">No disponible</td></tr>
+                  <tr><th className="p-4 font-medium">Moto principal</th><td className="p-4">La única registrada</td><td className="p-4">Selección manual</td><td className="p-4">No aplica</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </section>

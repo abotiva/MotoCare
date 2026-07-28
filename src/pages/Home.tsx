@@ -84,7 +84,14 @@ export function Home() {
     return record.cost !== null && date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()
   })
   const monthExpenseTotal = monthExpenses.reduce((sum, record) => sum + Number(record.cost ?? 0), 0)
-  const bikeBasePath = selectedBike ? `/app/bikes/${selectedBike.id}` : '/app/bikes'
+  const bikeBasePath = selectedBike ? `/app/garage/${selectedBike.id}` : '/app/garage'
+  const motorcyclesNeedingAttention = motorcycles.filter((motorcycle) =>
+    [motorcycle.soat_expires_on, motorcycle.technical_review_expires_on].some((date) => {
+      if (!date) return false
+      const days = Math.ceil((new Date(`${date}T23:59:59`).getTime() - Date.now()) / 86_400_000)
+      return days <= 30
+    })
+  ).length
   const statusStyles = health?.level === 'urgent'
     ? 'border-red-500/30 bg-red-500/10 text-red-300'
     : health?.level === 'attention'
@@ -102,7 +109,7 @@ export function Home() {
           <div className="mx-auto grid h-20 w-20 place-items-center rounded-3xl bg-moto-orange/15"><Bike className="h-10 w-10 text-moto-orange" /></div>
           <h1 className="mt-6 text-3xl font-bold">Empieza la historia de tu moto</h1>
           <p className="mx-auto mt-3 max-w-lg text-gray-400">Registra tu moto para controlar mantenimientos, documentos y próximos servicios desde un solo lugar.</p>
-          <Link to="/app/bikes" className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-xl bg-moto-orange px-5 font-semibold text-moto-darker"><Plus className="h-5 w-5" />Agregar mi moto</Link>
+          <Link to="/app/garage" className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-xl bg-moto-orange px-5 font-semibold text-moto-darker"><Plus className="h-5 w-5" />Agregar mi moto</Link>
         </div>
       </div>
     )
@@ -113,41 +120,26 @@ export function Home() {
       <section aria-labelledby="bike-selector-title">
         <div>
           <p className="text-sm font-medium text-moto-orange">Tu moto. Tu historia. Tu ruta.</p>
-          <h1 id="bike-selector-title" className="mt-1 text-2xl font-bold sm:text-3xl">Mi Garage</h1>
-          <p className="mt-2 text-sm text-gray-400">Selecciona una moto para consultar su estado. Tu moto predeterminada aparece primero.</p>
+          <h1 id="bike-selector-title" className="mt-1 text-2xl font-bold sm:text-3xl">Resumen de Mi Garage</h1>
+          <p className="mt-2 text-sm text-gray-400">Tu moto principal mantiene siempre el foco. Puedes cambiarla desde Mi Garage.</p>
         </div>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3" role="group" aria-label="Motos de mi garage">
-          {orderedMotorcycles.map((motorcycle) => {
-            const isSelected = motorcycle.id === selectedBike.id
-            const isPrimary = motorcycle.id === profile?.primary_motorcycle_id
-            return (
-              <button
-                key={motorcycle.id}
-                type="button"
-                aria-pressed={isSelected}
-                onClick={() => setSelectedId(motorcycle.id)}
-                className={`flex min-h-24 items-center gap-3 rounded-2xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-moto-orange ${
-                  isSelected
-                    ? 'border-moto-orange bg-moto-orange/15'
-                    : 'border-white/5 bg-moto-darker hover:border-white/20'
-                }`}
-              >
-                <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-xl bg-moto-gray">
-                  {motorcycle.image_url
-                    ? <img src={motorcycle.image_url} alt="" className="h-full w-full object-cover" />
-                    : <Bike className="h-8 w-8 text-moto-orange" aria-hidden="true" />}
-                </span>
-                <span className="min-w-0">
-                  <span className="flex flex-wrap items-center gap-2">
-                    <span className="truncate font-semibold">{motorcycle.brand} {motorcycle.model}</span>
-                    {isPrimary && <span className="rounded-full bg-moto-orange px-2 py-0.5 text-[10px] font-bold text-moto-darker">Predeterminada</span>}
-                  </span>
-                  <span className="mt-1 block truncate text-sm text-gray-400">{motorcycle.plate ?? 'Sin placa'} · {motorcycle.year ?? 'Año sin registrar'}</span>
-                </span>
-              </button>
-            )
-          })}
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl border border-white/5 bg-moto-darker p-4"><p className="text-sm text-gray-400">Motos registradas</p><p className="mt-1 text-2xl font-bold">{motorcycles.length}</p></div>
+          <div className="rounded-2xl border border-white/5 bg-moto-darker p-4"><p className="text-sm text-gray-400">Requieren atención</p><p className="mt-1 text-2xl font-bold">{motorcyclesNeedingAttention}</p></div>
+          <div className="rounded-2xl border border-white/5 bg-moto-darker p-4"><p className="text-sm text-gray-400">Al día</p><p className="mt-1 text-2xl font-bold">{motorcycles.length - motorcyclesNeedingAttention}</p></div>
         </div>
+        {orderedMotorcycles.length > 1 && (
+          <label className="mt-4 block max-w-md">
+            <span className="mb-2 block text-sm font-medium">Moto en foco</span>
+            <select value={selectedBike.id} onChange={(event) => setSelectedId(event.target.value)} className="min-h-11 w-full rounded-xl border border-white/10 bg-moto-darker px-3 text-white">
+              {orderedMotorcycles.map((motorcycle) => (
+                <option key={motorcycle.id} value={motorcycle.id}>
+                  {motorcycle.brand} {motorcycle.model} · {motorcycle.plate ?? 'Sin placa'}{motorcycle.id === profile?.primary_motorcycle_id ? ' · Principal' : ''}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
       </section>
 
       <section className="overflow-hidden rounded-3xl border border-white/10 bg-moto-darker">
@@ -202,7 +194,8 @@ export function Home() {
       </section>
 
       <section aria-labelledby="quick-actions-title">
-        <h2 id="quick-actions-title" className="mb-3 text-xl font-bold">Acciones rápidas</h2>
+        <h2 id="quick-actions-title" className="text-xl font-bold">Acciones rápidas</h2>
+        <p className="mb-3 mt-1 text-sm text-gray-400">Se registrarán para {selectedBike.brand} {selectedBike.model}.</p>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {[
             { label: 'Registrar mantenimiento', to: `${bikeBasePath}/history?action=service`, icon: Wrench },

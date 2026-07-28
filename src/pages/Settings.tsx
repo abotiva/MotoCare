@@ -240,7 +240,7 @@ export function Settings() {
               <h3 className="font-semibold">Accesos rápidos</h3>
             </CardHeader>
             <CardContent className="p-0">
-              <QuickLink icon={Bike} label="Mi moto" description="Motos, documentos y mantenimientos" to="/app/my-bikes" />
+              <QuickLink icon={Bike} label="Mi Garage" description="Motos, documentos y mantenimientos" to="/app/garage" />
               <QuickLink icon={Route} label="Rutas" description="Crear, editar y guardar rutas" to="/app/map" />
             </CardContent>
           </Card>

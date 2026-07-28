@@ -37,7 +37,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
-import type { Notification } from '@/types/database'
+import type { Motorcycle, Notification } from '@/types/database'
 
 type NavigationItem = {
   path: string
@@ -46,11 +46,11 @@ type NavigationItem = {
 }
 
 const motorcycleItems: NavigationItem[] = [
-  { path: '/app/home', label: 'Mi Garage', icon: Home },
-  { path: '/app/bikes/history', label: 'Historial', icon: Wrench },
-  { path: '/app/bikes/schedule', label: 'Agenda', icon: CalendarClock },
-  { path: '/app/bikes/documents', label: 'Documentos', icon: FileText },
-  { path: '/app/bikes/expenses', label: 'Gastos', icon: CircleDollarSign },
+  { path: '/app/garage', label: 'Resumen', icon: Bike },
+  { path: '/app/garage/history', label: 'Historial', icon: Wrench },
+  { path: '/app/garage/schedule', label: 'Agenda', icon: CalendarClock },
+  { path: '/app/garage/documents', label: 'Documentos', icon: FileText },
+  { path: '/app/garage/expenses', label: 'Gastos', icon: CircleDollarSign },
 ]
 
 const exploreItems: NavigationItem[] = [
@@ -68,11 +68,11 @@ const accountItems: NavigationItem[] = [
 ]
 
 const quickActions = [
-  { label: 'Registrar mantenimiento', path: '/app/bikes?action=service', icon: Wrench },
-  { label: 'Actualizar kilometraje', path: '/app/bikes?action=mileage', icon: Gauge },
-  { label: 'Agregar gasto', path: '/app/bikes/expenses', icon: CircleDollarSign },
-  { label: 'Cargar documento', path: '/app/bikes/documents', icon: FileText },
-  { label: 'Crear recordatorio', path: '/app/bikes?action=reminder', icon: CalendarClock },
+  { label: 'Registrar mantenimiento', path: '/app/garage?action=service', icon: Wrench },
+  { label: 'Actualizar kilometraje', path: '/app/garage?action=mileage', icon: Gauge },
+  { label: 'Agregar gasto', path: '/app/garage/expenses', icon: CircleDollarSign },
+  { label: 'Cargar documento', path: '/app/garage/documents', icon: FileText },
+  { label: 'Crear recordatorio', path: '/app/garage?action=reminder', icon: CalendarClock },
 ] satisfies Array<NavigationItem>
 
 function initials(name: string | null | undefined, email: string | undefined) {
@@ -85,15 +85,15 @@ function initials(name: string | null | undefined, email: string | undefined) {
 }
 
 function navigationTitle(pathname: string) {
-  if (pathname.startsWith('/app/bikes/')) {
+  if (pathname.startsWith('/app/garage') || pathname.startsWith('/app/bikes')) {
     const section = pathname.split('/').at(-1)
     return {
-      overview: 'Mi moto',
+      overview: 'Resumen',
       history: 'Historial',
       schedule: 'Agenda',
       documents: 'Documentos',
       expenses: 'Gastos',
-    }[section ?? ''] ?? 'Mi moto'
+    }[section ?? ''] ?? 'Mi Garage'
   }
   if (pathname.startsWith('/app/routes/')) return 'Detalle de ruta'
   return [...motorcycleItems, ...exploreItems, ...accountItems].find((item) => item.path === pathname)?.label
@@ -110,6 +110,7 @@ export function MainLayout() {
   const [isExploreOpen, setIsExploreOpen] = useState(false)
   const [unreadNotifications, setUnreadNotifications] = useState(0)
   const [notificationItems, setNotificationItems] = useState<Notification[]>([])
+  const [quickActionBike, setQuickActionBike] = useState<Motorcycle | null>(null)
 
   const userId = user?.id
   const avatarFallback = initials(profile?.full_name, user?.email)
@@ -138,6 +139,26 @@ export function MainLayout() {
 
   useEffect(() => {
     if (!supabase || !userId) {
+      setQuickActionBike(null)
+      return
+    }
+    void supabase
+      .from('motorcycles')
+      .select('*')
+      .eq('owner_id', userId)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        const motorcycles = (data ?? []) as Motorcycle[]
+        setQuickActionBike(
+          motorcycles.find((motorcycle) => motorcycle.id === profile?.primary_motorcycle_id)
+            ?? motorcycles[0]
+            ?? null
+        )
+      })
+  }, [profile?.primary_motorcycle_id, userId])
+
+  useEffect(() => {
+    if (!supabase || !userId) {
       setIsAdmin(false)
       return
     }
@@ -151,10 +172,13 @@ export function MainLayout() {
 
   const isItemActive = (path: string) => {
     if (path === '/app/home') return location.pathname === path
-    if (path.startsWith('/app/bikes/')) {
+    if (path.startsWith('/app/garage')) {
       const section = path.split('/').at(-1)
+      if (path === '/app/garage') {
+        return ['/app/garage', '/app/bikes', '/app/my-bikes'].includes(location.pathname)
+          || location.pathname.endsWith('/overview')
+      }
       return location.pathname.endsWith(`/${section}`)
-        || (path.endsWith('/history') && (location.pathname === '/app/bikes' || location.pathname === '/app/my-bikes'))
     }
     if (path === '/app/map') return location.pathname === path || location.pathname.startsWith('/app/routes/')
     return location.pathname === path
@@ -180,8 +204,9 @@ export function MainLayout() {
           <MotoCareLogo />
         </NavLink>
         <nav className="flex-1 space-y-6 overflow-y-auto p-4" aria-label="Navegación principal">
+          <div>{sidebarLink({ path: '/app/home', label: 'Inicio', icon: Home })}</div>
           <section aria-labelledby="nav-motorcycle">
-            <h2 id="nav-motorcycle" className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Mi moto</h2>
+            <h2 id="nav-motorcycle" className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Mi Garage</h2>
             <div className="space-y-1">{motorcycleItems.map(sidebarLink)}</div>
           </section>
           <section aria-labelledby="nav-explore">
@@ -268,12 +293,12 @@ export function MainLayout() {
         <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-moto-darker/98 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden" aria-label="Navegación móvil">
           <div className="grid h-[4.5rem] grid-cols-5">
             <NavLink to="/app/home" className={`flex min-h-11 flex-col items-center justify-center gap-1 text-[10px] font-medium ${isItemActive('/app/home') ? 'text-moto-orange' : 'text-gray-400'}`}><Home className="h-5 w-5" />Inicio</NavLink>
-            <NavLink to="/app/bikes" className={`flex min-h-11 flex-col items-center justify-center gap-1 text-[10px] font-medium ${location.pathname.includes('/bikes') || location.pathname === '/app/my-bikes' ? 'text-moto-orange' : 'text-gray-400'}`}><Bike className="h-5 w-5" />Mi moto</NavLink>
+            <NavLink to="/app/garage" className={`flex min-h-11 flex-col items-center justify-center gap-1 text-[10px] font-medium ${location.pathname.includes('/garage') || location.pathname.includes('/bikes') || location.pathname === '/app/my-bikes' ? 'text-moto-orange' : 'text-gray-400'}`}><Bike className="h-5 w-5" />Mi Garage</NavLink>
             <button type="button" onClick={() => setIsQuickActionsOpen(true)} aria-label="Abrir acciones para registrar" aria-expanded={isQuickActionsOpen} className="relative flex min-h-11 flex-col items-center justify-center gap-1 text-[10px] font-bold text-moto-orange">
               <span className="-mt-7 grid h-14 w-14 place-items-center rounded-full border-4 border-moto-darker bg-moto-orange text-moto-darker shadow-lg shadow-moto-orange/20"><Plus className="h-7 w-7" /></span>
               <span>Registrar</span>
             </button>
-            <NavLink to="/app/bikes/schedule" className={`flex min-h-11 flex-col items-center justify-center gap-1 text-[10px] font-medium ${location.pathname.endsWith('/schedule') ? 'text-moto-orange' : 'text-gray-400'}`}><CalendarClock className="h-5 w-5" />Agenda</NavLink>
+            <NavLink to="/app/garage/schedule" className={`flex min-h-11 flex-col items-center justify-center gap-1 text-[10px] font-medium ${location.pathname.endsWith('/schedule') ? 'text-moto-orange' : 'text-gray-400'}`}><CalendarClock className="h-5 w-5" />Agenda</NavLink>
             <button type="button" onClick={() => setIsExploreOpen(true)} aria-label="Abrir Explorar" aria-expanded={isExploreOpen} className={`flex min-h-11 flex-col items-center justify-center gap-1 text-[10px] font-medium ${exploreItems.some((item) => isItemActive(item.path)) ? 'text-moto-orange' : 'text-gray-400'}`}><Compass className="h-5 w-5" />Explorar</button>
           </div>
         </nav>
@@ -283,11 +308,21 @@ export function MainLayout() {
         <SheetContent side="bottom" className="rounded-t-3xl border-white/10 bg-moto-darker text-white">
           <SheetHeader className="text-left">
             <SheetTitle className="text-white">Registrar</SheetTitle>
-            <SheetDescription>Actualiza la hoja de vida de tu moto.</SheetDescription>
+            <SheetDescription>
+              {quickActionBike
+                ? `Registrar para ${quickActionBike.brand} ${quickActionBike.model}, tu moto en foco.`
+                : 'Agrega una moto a Mi Garage para comenzar.'}
+            </SheetDescription>
           </SheetHeader>
           <div className="mt-5 grid gap-2">
             {quickActions.map((action) => (
-              <button key={action.path} type="button" onClick={() => { setIsQuickActionsOpen(false); navigate(action.path) }} className="flex min-h-12 items-center gap-3 rounded-xl bg-white/5 px-4 text-left hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-moto-orange">
+              <button key={action.path} type="button" onClick={() => {
+                setIsQuickActionsOpen(false)
+                const path = quickActionBike
+                  ? action.path.replace('/app/garage', `/app/garage/${quickActionBike.id}`)
+                  : '/app/garage'
+                navigate(path)
+              }} className="flex min-h-12 items-center gap-3 rounded-xl bg-white/5 px-4 text-left hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-moto-orange">
                 <action.icon className="h-5 w-5 text-moto-orange" /><span>{action.label}</span>
               </button>
             ))}
