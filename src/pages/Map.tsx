@@ -773,7 +773,7 @@ export function Map() {
                 : 'Con Free puedes planear rutas privadas. Compartir y descubrir rutas comunitarias queda reservado para licencias Premium.'}
             </p>
             <Button asChild variant="outline" className="w-full border-white/10">
-              <Link to="/app/my-bikes">Volver a Mi moto</Link>
+              <Link to="/app/garage">Volver a Mi Garage</Link>
             </Button>
           </CardContent>
         </Card>

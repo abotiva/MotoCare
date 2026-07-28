@@ -216,6 +216,7 @@ export function MyBikes() {
   const [documents, setDocuments] = useState<MotorcycleDocument[]>([])
   const [maintenanceSuggestions, setMaintenanceSuggestions] = useState<MaintenanceSuggestion[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [primaryMotorcycleId, setPrimaryMotorcycleId] = useState<string | null>(profile?.primary_motorcycle_id ?? null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [uploadingKey, setUploadingKey] = useState<string | null>(null)
@@ -229,6 +230,8 @@ export function MyBikes() {
   const [showRecordDetail, setShowRecordDetail] = useState(false)
   const [reminderToCancel, setReminderToCancel] = useState<Reminder | null>(null)
   const [documentToDelete, setDocumentToDelete] = useState<MotorcycleDocument | null>(null)
+  const [bikeToMakePrimary, setBikeToMakePrimary] = useState<Motorcycle | null>(null)
+  const [showGarageLimit, setShowGarageLimit] = useState(false)
   const [editingBike, setEditingBike] = useState<Motorcycle | null>(null)
   const [editingReminder, setEditingReminder] = useState<Reminder | null>(null)
   const [completingReminder, setCompletingReminder] = useState<Reminder | null>(null)
@@ -258,6 +261,11 @@ export function MyBikes() {
   const canViewMaintenanceReports = hasPlan('premium')
   const canUploadDocuments = effectivePlan === 'pro' || effectivePlan === 'premium'
   const isBusinessAccount = effectivePlan === 'business'
+  const isPremiumRider = effectivePlan === 'pro' || effectivePlan === 'premium'
+
+  useEffect(() => {
+    setPrimaryMotorcycleId(profile?.primary_motorcycle_id ?? null)
+  }, [profile?.primary_motorcycle_id])
 
   useEffect(() => {
     setActiveTab(routeTab ?? tabFromHash(location.hash))
@@ -270,11 +278,11 @@ export function MyBikes() {
 
   const orderedMotorcycles = useMemo(() => {
     return [...motorcycles].sort((a, b) => {
-      if (a.id === profile?.primary_motorcycle_id) return -1
-      if (b.id === profile?.primary_motorcycle_id) return 1
+      if (a.id === primaryMotorcycleId) return -1
+      if (b.id === primaryMotorcycleId) return 1
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     })
-  }, [motorcycles, profile?.primary_motorcycle_id])
+  }, [motorcycles, primaryMotorcycleId])
 
   const selectedBike = useMemo(
     () => motorcycles.find((motorcycle) => motorcycle.id === selectedId) ?? orderedMotorcycles[0] ?? null,
@@ -293,7 +301,7 @@ export function MyBikes() {
     const requestedSection = section && section in sectionToTab ? section : null
     const legacySection = location.hash ? tabToSection[tabFromHash(location.hash)] : null
     const nextSection = requestedSection ?? legacySection ?? 'overview'
-    const canonicalPath = `/app/bikes/${nextBike.id}/${nextSection}`
+    const canonicalPath = `/app/garage/${nextBike.id}/${nextSection}`
 
     if (location.pathname !== canonicalPath) {
       navigate({ pathname: canonicalPath, search: location.search }, { replace: true })
@@ -475,6 +483,21 @@ export function MyBikes() {
       notifyError('Garaje no disponible', 'La licencia Business es para negocios y no permite registrar motos.')
       return
     }
+    if (effectivePlan === 'free') {
+      const { count, error: countError } = await supabase
+        .from('motorcycles')
+        .select('id', { count: 'exact', head: true })
+        .eq('owner_id', user.id)
+      if (countError) {
+        notifyError('No pudimos verificar tu plan', countError.message)
+        return
+      }
+      if ((count ?? 0) >= 1) {
+        setShowAddBike(false)
+        setShowGarageLimit(true)
+        return
+      }
+    }
     if (isNegativeNumber(bikeForm.mileage)) {
       notifyError('Kilometraje inválido', 'El kilometraje inicial no puede ser negativo.')
       return
@@ -525,6 +548,14 @@ export function MyBikes() {
       setBikePhotoFile(null)
       setShowAddBike(false)
 
+      if (!primaryMotorcycleId) {
+        const { error: primaryError } = await supabase
+          .from('profiles')
+          .update({ primary_motorcycle_id: motorcycle.id })
+          .eq('id', user.id)
+        if (!primaryError) setPrimaryMotorcycleId(motorcycle.id)
+      }
+
       const starterReminders: StarterReminder[] = [
         motorcycle.soat_expires_on
           ? { owner_id: user.id, motorcycle_id: motorcycle.id, title: 'Renovar SOAT', due_date: motorcycle.soat_expires_on }
@@ -556,10 +587,36 @@ export function MyBikes() {
       notifyError('Garaje no disponible', 'La licencia Business es para negocios y no permite registrar motos.')
       return
     }
+    if (effectivePlan === 'free' && motorcycles.length >= 1) {
+      setShowGarageLimit(true)
+      return
+    }
     setEditingBike(null)
     setBikeForm(emptyBikeForm)
     setBikePhotoFile(null)
     setShowAddBike(true)
+  }
+
+  const makePrimaryMotorcycle = async () => {
+    if (!supabase || !user || !bikeToMakePrimary || !isPremiumRider) return
+    setIsSaving(true)
+    const motorcycle = bikeToMakePrimary
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ primary_motorcycle_id: motorcycle.id })
+      .eq('id', user.id)
+
+    if (updateError) {
+      notifyError('No pudimos cambiar la moto principal', updateError.message)
+    } else {
+      setPrimaryMotorcycleId(motorcycle.id)
+      setSelectedId(motorcycle.id)
+      toast.success('Moto principal actualizada', {
+        description: `${motorcycle.brand} ${motorcycle.model} será el foco predeterminado de Mi Garage.`,
+      })
+    }
+    setBikeToMakePrimary(null)
+    setIsSaving(false)
   }
 
   const openEditBike = (motorcycle: Motorcycle) => {
@@ -1260,8 +1317,8 @@ export function MyBikes() {
     <div className="mx-auto max-w-6xl p-4 pb-24 lg:p-6">
       <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
         <div>
-          <h1 className="mb-1 text-2xl font-bold">Mi moto</h1>
-          <p className="text-gray-400">Tu moto, mantenimientos y vencimientos en un solo lugar.</p>
+          <h1 className="mb-1 text-2xl font-bold">Mi Garage</h1>
+          <p className="text-gray-400">Tus motos, mantenimientos y vencimientos en un solo lugar.</p>
         </div>
         <div className="grid w-full grid-cols-3 gap-2 sm:w-auto sm:flex sm:flex-wrap sm:gap-3">
           {!isBusinessAccount && (
@@ -1311,7 +1368,7 @@ export function MyBikes() {
               <div className="mx-auto grid h-20 w-20 place-items-center rounded-2xl bg-moto-orange/20">
                 <Bike className="h-10 w-10 text-moto-orange" />
               </div>
-              <h2 className="mt-6 text-2xl font-bold">Crea tu primer garaje MotoCare</h2>
+              <h2 className="mt-6 text-2xl font-bold">Agrega tu primera moto a Mi Garage</h2>
               <p className="mx-auto mt-2 max-w-md text-gray-400">
                 Registra tu moto para empezar a controlar SOAT, tecnomecánica, kilometraje y mantenimientos.
               </p>
@@ -1327,10 +1384,12 @@ export function MyBikes() {
           <MotorcycleSelector
             motorcycles={orderedMotorcycles}
             selectedId={selectedBike?.id ?? null}
-            primaryId={profile?.primary_motorcycle_id}
+            primaryId={primaryMotorcycleId}
+            canSetPrimary={isPremiumRider}
+            onSetPrimary={setBikeToMakePrimary}
             onSelect={(motorcycle) => {
               setSelectedId(motorcycle.id)
-              navigate(`/app/bikes/${motorcycle.id}/${section && section in sectionToTab ? section : 'overview'}`)
+              navigate(`/app/garage/${motorcycle.id}/${section && section in sectionToTab ? section : 'overview'}`)
             }}
           />
 
@@ -1398,7 +1457,7 @@ export function MyBikes() {
                     onValueChange={(value) => {
                       const nextTab = value as BikeTab
                       setActiveTab(nextTab)
-                      if (selectedBike) navigate(`/app/bikes/${selectedBike.id}/${tabToSection[nextTab]}`)
+                      if (selectedBike) navigate(`/app/garage/${selectedBike.id}/${tabToSection[nextTab]}`)
                     }}
                     className="w-full scroll-mt-24"
                   >
@@ -2244,6 +2303,26 @@ export function MyBikes() {
         onConfirm={() => {
           if (documentToDelete) void deleteMotorcycleDocument(documentToDelete)
         }}
+      />
+      <ConfirmActionDialog
+        open={showGarageLimit}
+        title="Tu plan Free incluye una moto"
+        description="Ya tienes una moto en Mi Garage. Con Premium puedes administrar varias motos y elegir cuál será la principal."
+        confirmLabel="Conocer Premium"
+        cancelLabel="Seguir con mi moto"
+        destructive={false}
+        onOpenChange={setShowGarageLimit}
+        onConfirm={() => navigate('/app/plan')}
+      />
+      <ConfirmActionDialog
+        open={Boolean(bikeToMakePrimary)}
+        title="Cambiar moto principal"
+        description={bikeToMakePrimary ? `${bikeToMakePrimary.brand} ${bikeToMakePrimary.model} será la moto predeterminada al entrar a Mi Garage.` : ''}
+        confirmLabel="Definir como principal"
+        destructive={false}
+        isProcessing={isSaving}
+        onOpenChange={(open) => !open && setBikeToMakePrimary(null)}
+        onConfirm={() => void makePrimaryMotorcycle()}
       />
       <ImageViewer
         src={viewerImage?.src ?? null}

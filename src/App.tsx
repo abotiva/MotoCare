@@ -50,6 +50,9 @@ function App() {
             <Route path="community" element={<Navigate to="/app/messages" replace />} />
             <Route path="clubs" element={<Clubs />} />
             <Route path="profile" element={<Profile />} />
+            <Route path="garage" element={<MyBikes />} />
+            <Route path="garage/:section" element={<MyBikes />} />
+            <Route path="garage/:bikeId/:section" element={<MyBikes />} />
             <Route path="bikes" element={<MyBikes />} />
             <Route path="bikes/:section" element={<MyBikes />} />
             <Route path="bikes/:bikeId/:section" element={<MyBikes />} />
