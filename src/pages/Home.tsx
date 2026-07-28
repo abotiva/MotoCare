@@ -1,672 +1,203 @@
 import { useEffect, useMemo, useState } from 'react'
+import {
+  AlertTriangle,
+  ArrowRight,
+  Bike,
+  CalendarClock,
+  CheckCircle2,
+  CircleDollarSign,
+  FileText,
+  Gauge,
+  MapPinned,
+  MessageCircle,
+  Plus,
+  ShoppingBag,
+  Wrench,
+} from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { AlertTriangle, Bell, Bike, Calendar, CheckCircle2, FileText, Loader2, MapPinned, Plus, Settings, Star, Store, UserPlus, Wrench, X } from 'lucide-react'
-import { toast } from 'sonner'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { ImageViewer } from '@/components/ImageViewer'
 import { useAuth } from '@/contexts/AuthContext'
-import { useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
-import type { MaintenanceRecord, Motorcycle, Notification, Reminder } from '@/types/database'
+import type { MaintenanceRecord, Motorcycle, Reminder } from '@/types/database'
+import { formatCurrency, formatShortDate, getMotorcycleHealth } from '@/features/motorcycles/utils/motorcycleHealth'
 
-type HomeStats = {
-  motorcycles: number
-  pendingReminders: number
-  maintenanceRecords: number
-  documents: number
-}
-
-const emptyStats: HomeStats = {
-  motorcycles: 0,
-  pendingReminders: 0,
-  maintenanceRecords: 0,
-  documents: 0,
-}
-
-function initials(name: string | null | undefined, email: string | undefined) {
-  const source = name || email || 'MC'
-  return source
-    .split(/[\s@._-]+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join('')
-}
-
-function daysUntil(date: string | null) {
-  if (!date) return null
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const target = new Date(date)
-  target.setHours(0, 0, 0, 0)
-  return Math.ceil((target.getTime() - today.getTime()) / 86_400_000)
-}
-
-function formatDate(value: string) {
-  return new Date(`${value}T00:00:00`).toLocaleDateString('es-CO')
-}
-
-function daysUntilDate(value: string) {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const target = new Date(`${value}T00:00:00`)
-  return Math.ceil((target.getTime() - today.getTime()) / 86_400_000)
-}
-
-function notificationDisplay(notification: Notification) {
-  if (notification.type === 'moderation_notice') {
-    return {
-      title: notification.title || 'Aviso de moderación',
-      message: notification.message,
-      dateLabel: `Emitido: ${new Date(notification.scheduled_for).toLocaleDateString('es-CO')}`,
-    }
-  }
-
-  if (notification.type === 'route_planned' && notification.routes?.start_date) {
-    const days = daysUntilDate(notification.routes.start_date)
-    const title = 'Ruta planeada cercana'
-    const when =
-      days === 0
-        ? 'hoy'
-        : days === 1
-          ? 'mañana'
-          : days > 1
-            ? `en ${days} días`
-            : `hace ${Math.abs(days)} días`
-    const message = `Tu ruta "${notification.routes.title}" está programada para ${when}.`
-    const dateLabel = `Fecha de ruta: ${formatDate(notification.routes.start_date)}`
-    return { title, message, dateLabel }
-  }
-
-  if (notification.type === 'route_overdue' && notification.routes?.end_date) {
-    const dateLabel = `Fecha final: ${formatDate(notification.routes.end_date)}`
-    return { title: notification.title, message: notification.message, dateLabel }
-  }
-
-  if (notification.type === 'club_invite' && notification.club_invitations?.clubs) {
-    return {
-      title: 'Invitación a club',
-      message: `El club "${notification.club_invitations.clubs.name}" quiere agregarte como miembro.`,
-      dateLabel: notification.club_invitations.clubs.city || 'Club MotoCare Co',
-    }
-  }
-
-  return {
-    title: notification.title,
-    message: notification.message,
-    dateLabel: `Visible desde: ${new Date(notification.scheduled_for).toLocaleDateString('es-CO')}`,
-  }
-}
+const exploreItems = [
+  { label: 'Rutas', description: 'Planea tu próxima salida.', to: '/app/map', icon: MapPinned },
+  { label: 'Clubes', description: 'Conecta con grupos moteros.', to: '/app/clubs', icon: Bike },
+  { label: 'Comunidad', description: 'Comparte experiencias.', to: '/app/messages', icon: MessageCircle },
+  { label: 'Marketplace', description: 'Motos, repuestos y servicios.', to: '/app/marketplace', icon: ShoppingBag },
+]
 
 export function Home() {
   const { user, profile } = useAuth()
-  const { effectivePlan } = useSubscription()
-  const [stats, setStats] = useState<HomeStats>(emptyStats)
   const [motorcycles, setMotorcycles] = useState<Motorcycle[]>([])
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [records, setRecords] = useState<MaintenanceRecord[]>([])
   const [reminders, setReminders] = useState<Reminder[]>([])
-  const [maintenanceRecords, setMaintenanceRecords] = useState<MaintenanceRecord[]>([])
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [viewerImage, setViewerImage] = useState<{ src: string; alt: string } | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  const primaryMotorcycle = useMemo(() => {
-    return motorcycles.find((motorcycle) => motorcycle.id === profile?.primary_motorcycle_id) ?? motorcycles[0] ?? null
-  }, [motorcycles, profile?.primary_motorcycle_id])
-
-  const urgentReminders = useMemo(() => {
-    return reminders
-      .filter((reminder) => {
-        const days = daysUntil(reminder.due_date)
-        const dueByDate = days !== null && days <= 15
-        const dueByKm = primaryMotorcycle && reminder.due_mileage !== null && reminder.due_mileage <= primaryMotorcycle.mileage + 300
-        return dueByDate || dueByKm
-      })
-      .slice(0, 3)
-  }, [primaryMotorcycle, reminders])
-
-  const recentMaintenanceRecords = useMemo(() => maintenanceRecords.slice(0, 3), [maintenanceRecords])
-
-  const profileCompletion = useMemo(() => {
-    const checks = [
-      Boolean(profile?.full_name),
-      Boolean(profile?.username),
-      Boolean(profile?.city),
-      Boolean(profile?.rider_type),
-      Boolean(profile?.avatar_url),
-      Boolean(primaryMotorcycle),
-    ]
-    return Math.round((checks.filter(Boolean).length / checks.length) * 100)
-  }, [primaryMotorcycle, profile])
-
-  const nextStep = useMemo(() => {
-    if (stats.pendingReminders > 0) {
-      return {
-        icon: Calendar,
-        title: 'Revisa tus pendientes',
-        description: 'Cierra el próximo mantenimiento o ajusta la agenda antes de que se venza.',
-        actionLabel: 'Ver pendientes',
-        to: '/app/my-bikes#reminders',
-      }
-    }
-
-    if (stats.maintenanceRecords === 0) {
-      return {
-        icon: Wrench,
-        title: 'Registra el primer servicio',
-        description: 'Empieza la hoja de vida verificable de tu moto con el último mantenimiento realizado.',
-        actionLabel: 'Registrar servicio',
-        to: '/app/my-bikes#history',
-      }
-    }
-
-    return {
-      icon: FileText,
-      title: 'Completa tus documentos',
-      description: 'Sube SOAT, revisión técnica u otros soportes para cerrar el expediente de la moto.',
-      actionLabel: 'Ver documentos',
-      to: '/app/my-bikes#documents',
-    }
-  }, [stats.maintenanceRecords, stats.pendingReminders])
-
-  const loadDashboard = async () => {
+  useEffect(() => {
     if (!supabase || !user) return
-    setIsLoading(true)
-    const todayIso = new Date().toISOString()
-
-    const [motorcyclesResult, remindersResult, maintenanceResult, documentsResult, notificationsResult] = await Promise.all([
-      supabase.from('motorcycles').select('*').eq('owner_id', user.id).order('created_at', { ascending: false }),
-      supabase.from('reminders').select('*').eq('owner_id', user.id).eq('status', 'pending').order('due_date', { ascending: true, nullsFirst: false }),
-      supabase.from('maintenance_records').select('*', { count: 'exact' }).eq('owner_id', user.id).order('service_date', { ascending: false }).limit(5),
-      supabase.from('motorcycle_documents').select('id', { count: 'exact', head: true }).eq('owner_id', user.id),
-      supabase
-        .from('notifications')
-        .select('*, routes:route_id(title, start_date, end_date, status), club_invitations:club_invitation_id(*, clubs:club_id(id, name, image_url, city))')
-        .eq('user_id', user.id)
-        .is('read_at', null)
-        .lte('scheduled_for', todayIso)
-        .order('scheduled_for', { ascending: true })
-        .limit(5),
-    ])
-
-    if (motorcyclesResult.error) {
-      toast.error('No pudimos cargar tus motos', { description: motorcyclesResult.error.message })
-    } else {
+    const client = supabase
+    const loadDashboard = async () => {
+      setIsLoading(true)
+      const motorcyclesResult = await client.from('motorcycles').select('*').eq('owner_id', user.id).order('created_at', { ascending: false })
       const nextMotorcycles = (motorcyclesResult.data ?? []) as Motorcycle[]
       setMotorcycles(nextMotorcycles)
-      setStats((current) => ({ ...current, motorcycles: nextMotorcycles.length }))
+      const preferred = nextMotorcycles.find((motorcycle) => motorcycle.id === profile?.primary_motorcycle_id) ?? nextMotorcycles[0]
+      setSelectedId((current) => nextMotorcycles.some((motorcycle) => motorcycle.id === current) ? current : preferred?.id ?? null)
+      setIsLoading(false)
     }
-
-    if (remindersResult.error) {
-      toast.error('No pudimos cargar pendientes', { description: remindersResult.error.message })
-    } else {
-      const nextReminders = (remindersResult.data ?? []) as Reminder[]
-      setReminders(nextReminders)
-      setStats((current) => ({ ...current, pendingReminders: nextReminders.length }))
-    }
-
-    if (maintenanceResult.error) {
-      toast.error('No pudimos cargar mantenimientos', { description: maintenanceResult.error.message })
-    } else {
-      setMaintenanceRecords((maintenanceResult.data ?? []) as MaintenanceRecord[])
-      setStats((current) => ({ ...current, maintenanceRecords: maintenanceResult.count ?? 0 }))
-    }
-
-    if (documentsResult.error) {
-      toast.error('No pudimos cargar documentos', { description: documentsResult.error.message })
-    } else {
-      setStats((current) => ({ ...current, documents: documentsResult.count ?? 0 }))
-    }
-
-    if (notificationsResult.error) {
-      toast.error('No pudimos cargar notificaciones', { description: notificationsResult.error.message })
-    } else {
-      setNotifications((notificationsResult.data ?? []) as Notification[])
-    }
-
-    setIsLoading(false)
-  }
+    void loadDashboard()
+  }, [profile?.primary_motorcycle_id, user])
 
   useEffect(() => {
-    void loadDashboard()
-    // Dashboard load is intentionally keyed only by authenticated user id.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id])
-
-  const markNotificationAsRead = async (notification: Notification) => {
-    if (!supabase || !user) return
-
-    const readAt = new Date().toISOString()
-    const { error } = await supabase
-      .from('notifications')
-      .update({ read_at: readAt })
-      .eq('id', notification.id)
-      .eq('user_id', user.id)
-
-    if (error) {
-      toast.error('No pudimos marcar la notificación', { description: error.message })
-    } else {
-      setNotifications((current) => current.filter((item) => item.id !== notification.id))
-      toast.success('Notificación marcada como leída')
-    }
-  }
-
-  const respondToClubInvite = async (notification: Notification, accepted: boolean) => {
-    if (!supabase || !user || !notification.club_invitation_id || !notification.club_invitations) return
-
-    if (accepted && effectivePlan === 'business') {
-      toast.error('Clubes para moteros', {
-        description: 'La licencia Business es para negocios y no permite operar como motero.',
-      })
+    if (!supabase || !user || !selectedId) {
+      setRecords([])
+      setReminders([])
       return
     }
-
-    if (accepted && effectivePlan === 'free') {
-      const { count, error: membershipError } = await supabase
-        .from('club_members')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-
-      if (membershipError) {
-        toast.error('No pudimos validar tus clubes', { description: membershipError.message })
-        return
-      }
-
-      if ((count ?? 0) >= 1) {
-        toast.error('Tu licencia Free permite un solo club', {
-          description: 'Solo puedes unirte por invitación y pertenecer a un club a la vez.',
-        })
-        return
-      }
-    }
-
-    const status = accepted ? 'accepted' : 'declined'
-    const respondedAt = new Date().toISOString()
-    const { error: invitationError } = await supabase
-      .from('club_invitations')
-      .update({ status, responded_at: respondedAt })
-      .eq('id', notification.club_invitation_id)
-      .eq('invited_user_id', user.id)
-
-    if (invitationError) {
-      toast.error('No pudimos responder la invitación', { description: invitationError.message })
-      return
-    }
-
-    if (accepted) {
-      const { error: memberError } = await supabase.from('club_members').insert({
-        club_id: notification.club_invitations.club_id,
-        user_id: user.id,
-        role: 'member',
-      })
-
-      if (memberError) {
-        await supabase
-          .from('club_invitations')
-          .update({ status: 'pending', responded_at: null })
-          .eq('id', notification.club_invitation_id)
-          .eq('invited_user_id', user.id)
-
-        toast.error('La invitación fue aprobada, pero no pudimos agregarte al club', { description: memberError.message })
-        return
-      }
-    }
-
-    await markNotificationAsRead(notification)
-    toast.success(accepted ? 'Invitacion aprobada' : 'Invitacion rechazada', {
-      description: accepted ? 'Ya apareces como miembro del club.' : 'El club no fue agregado a tu perfil.',
+    const client = supabase
+    void Promise.all([
+      client.from('maintenance_records').select('*').eq('owner_id', user.id).eq('motorcycle_id', selectedId).order('service_date', { ascending: false }).limit(20),
+      client.from('reminders').select('*').eq('owner_id', user.id).eq('motorcycle_id', selectedId).order('due_date', { ascending: true, nullsFirst: false }).limit(50),
+    ]).then(([recordsResult, remindersResult]) => {
+      setRecords((recordsResult.data ?? []) as MaintenanceRecord[])
+      setReminders((remindersResult.data ?? []) as Reminder[])
     })
-  }
+  }, [selectedId, user])
+
+  const selectedBike = motorcycles.find((motorcycle) => motorcycle.id === selectedId) ?? motorcycles[0] ?? null
+  const health = useMemo(() => selectedBike ? getMotorcycleHealth(selectedBike, reminders) : null, [reminders, selectedBike])
+  const nextReminder = reminders.find((reminder) => reminder.status === 'pending') ?? null
+  const monthExpenses = records.filter((record) => {
+    const date = new Date(`${record.service_date}T00:00:00`)
+    const now = new Date()
+    return record.cost !== null && date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()
+  })
+  const monthExpenseTotal = monthExpenses.reduce((sum, record) => sum + Number(record.cost ?? 0), 0)
+  const bikeBasePath = selectedBike ? `/app/bikes/${selectedBike.id}` : '/app/bikes'
+  const statusStyles = health?.level === 'urgent'
+    ? 'border-red-500/30 bg-red-500/10 text-red-300'
+    : health?.level === 'attention'
+      ? 'border-amber-500/30 bg-amber-500/10 text-amber-300'
+      : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
 
   if (isLoading) {
+    return <div className="mx-auto max-w-7xl animate-pulse space-y-4 p-4 pb-24 sm:p-6"><div className="h-12 rounded-2xl bg-white/5" /><div className="h-96 rounded-3xl bg-white/5" /></div>
+  }
+
+  if (!selectedBike) {
     return (
-      <div className="grid min-h-[70vh] place-items-center text-moto-orange">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="mx-auto grid min-h-[70vh] max-w-3xl place-items-center p-6 text-center">
+        <div>
+          <div className="mx-auto grid h-20 w-20 place-items-center rounded-3xl bg-moto-orange/15"><Bike className="h-10 w-10 text-moto-orange" /></div>
+          <h1 className="mt-6 text-3xl font-bold">Empieza la historia de tu moto</h1>
+          <p className="mx-auto mt-3 max-w-lg text-gray-400">Registra tu moto para controlar mantenimientos, documentos y próximos servicios desde un solo lugar.</p>
+          <Link to="/app/bikes" className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-xl bg-moto-orange px-5 font-semibold text-moto-darker"><Plus className="h-5 w-5" />Agregar mi moto</Link>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="mx-auto max-w-7xl p-4 pb-24 lg:p-6">
-      <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
-        <div className="flex items-center gap-4">
-          <div className="relative shrink-0">
-            <Avatar className="h-14 w-14 bg-moto-gray">
-              <AvatarImage src={profile?.avatar_url ?? undefined} />
-              <AvatarFallback>{initials(profile?.full_name, user?.email)}</AvatarFallback>
-            </Avatar>
-            {(effectivePlan === 'pro' || effectivePlan === 'premium') && (
-              <span className="absolute -right-1 -top-1 grid h-6 w-6 place-items-center rounded-full border-2 border-moto-dark bg-amber-400 text-amber-950 shadow-lg" title="Licencia Premium" aria-label="Licencia Premium">
-                <Star className="h-3 w-3 fill-current" />
-              </span>
-            )}
-            {effectivePlan === 'business' && (
-              <span className="absolute -right-1 -top-1 grid h-6 w-6 place-items-center rounded-full border-2 border-moto-dark bg-violet-500 text-white shadow-lg" title="Licencia Business" aria-label="Licencia Business">
-                <Store className="h-3 w-3" />
-              </span>
-            )}
-          </div>
+    <div className="mx-auto max-w-7xl space-y-6 p-4 pb-24 sm:p-6 lg:pb-8">
+      <section aria-labelledby="bike-selector-title">
+        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
           <div>
-            <h1 className="text-2xl font-bold">Hola, {profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'motero'}</h1>
-            <p className="text-gray-400">Este es el estado actual de tu MotoCare Co.</p>
+            <p className="text-sm font-medium text-moto-orange">Tu moto. Tu historia. Tu ruta.</p>
+            <h1 id="bike-selector-title" className="mt-1 text-2xl font-bold sm:text-3xl">Estado de tu moto</h1>
           </div>
+          <label className="text-sm text-gray-400">
+            Moto seleccionada
+            <select value={selectedBike.id} onChange={(event) => setSelectedId(event.target.value)} className="mt-1 min-h-11 w-full rounded-xl border border-white/10 bg-moto-darker px-3 text-white sm:w-72">
+              {motorcycles.map((motorcycle) => <option key={motorcycle.id} value={motorcycle.id}>{motorcycle.brand} {motorcycle.model}{motorcycle.plate ? ` · ${motorcycle.plate}` : ''}</option>)}
+            </select>
+          </label>
         </div>
-        <div className="grid w-full grid-cols-2 gap-2 sm:w-auto sm:flex sm:flex-wrap">
-          <Button asChild className="min-w-0 bg-moto-orange px-3 text-moto-darker hover:bg-moto-orange-dark sm:px-4">
-            <Link to="/app/my-bikes#history">
-              <Plus className="mr-1.5 h-4 w-4 sm:mr-2" />
-              <span className="sm:hidden">Servicio</span>
-              <span className="hidden sm:inline">Registrar servicio</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="min-w-0 border-white/10 px-3 sm:px-4">
-            <Link to="/app/my-bikes#reminders">
-              <Calendar className="mr-1.5 h-4 w-4 sm:mr-2" />
-              <span className="sm:hidden">Pendiente</span>
-              <span className="hidden sm:inline">Programar pendiente</span>
-            </Link>
-          </Button>
-        </div>
-      </div>
+      </section>
 
-      <div className="mb-4 grid grid-cols-4 gap-2 sm:mb-5 sm:gap-4">
-        <MetricCard icon={Bike} label="Motos" value={stats.motorcycles} tone="orange" to="/app/my-bikes" />
-        <MetricCard icon={Calendar} label="Programados" mobileLabel="Agenda" value={stats.pendingReminders} tone="yellow" to="/app/my-bikes#reminders" />
-        <MetricCard icon={Wrench} label="Servicios" value={stats.maintenanceRecords} tone="sky" to="/app/my-bikes#history" />
-        <MetricCard icon={FileText} label="Documentos" value={stats.documents} tone="green" to="/app/my-bikes#documents" />
-      </div>
-
-      <Card className="mb-5 border-moto-orange/20 bg-moto-orange/10 py-0">
-        <CardContent className="p-4 sm:p-5">
-          <Link to={nextStep.to} className="flex min-w-0 flex-col gap-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-moto-orange sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-moto-orange text-moto-darker">
-                <nextStep.icon className="h-5 w-5" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-semibold text-white">{nextStep.title}</p>
-                <p className="mt-1 text-sm leading-5 text-gray-300">{nextStep.description}</p>
-              </div>
+      <section className="overflow-hidden rounded-3xl border border-white/10 bg-moto-darker">
+        <div className="grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
+          <div className="relative min-h-64 overflow-hidden bg-moto-gray">
+            <img src={selectedBike.image_url ?? '/hero-motorcycle.jpg'} alt={`${selectedBike.brand} ${selectedBike.model}`} className="absolute inset-0 h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-moto-darker via-transparent to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 p-5">
+              <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-semibold ${statusStyles}`}>
+                {health?.level === 'urgent' ? <AlertTriangle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}{health?.label}
+              </span>
+              <h2 className="mt-3 text-3xl font-bold">{selectedBike.brand} {selectedBike.model}</h2>
+              <p className="mt-1 text-gray-300">{selectedBike.plate ?? 'Sin placa'} · {selectedBike.year ?? 'Año sin registrar'}</p>
             </div>
-            <span className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-md bg-moto-orange px-4 text-sm font-semibold text-moto-darker">
-              {nextStep.actionLabel}
-            </span>
-          </Link>
-        </CardContent>
-      </Card>
-
-      <Card className="mb-5 overflow-hidden border-moto-orange/25 bg-moto-darker py-0">
-        <CardContent className="relative grid gap-4 p-5 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-center">
-          <div className="absolute inset-0 bg-[url('/feature-gps.jpg')] bg-cover bg-center opacity-15" />
-          <div className="absolute inset-0 bg-gradient-to-r from-moto-darker via-moto-darker/95 to-moto-darker/70" />
-          <div className="relative min-w-0">
-            <Badge className="mb-3 bg-moto-orange text-moto-darker">
-              <MapPinned className="mr-1.5 h-3.5 w-3.5" />
-              Nueva opcion premium
-            </Badge>
-            <h2 className="text-xl font-bold">Rutas Premium predeterminadas</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-300">
-              Tu moto. Tu historia. Tu ruta. Explora experiencias de pago con GPX, checklist,
-              puntos de interes y compatibilidad con tu moto.
-            </p>
           </div>
-          <Button asChild className="relative bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
-            <Link to="/app/premium-routes">
-              <MapPinned className="mr-2 h-4 w-4" />
-              Ver Rutas Premium
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="space-y-5">
-          <Card className="border-white/5 bg-moto-gray py-0">
-            <CardContent className="p-5">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold">Moto principal</h2>
-                <Button asChild size="sm" variant="outline" className="border-white/10">
-                  <Link to="/app/my-bikes">Ver mi moto</Link>
-                </Button>
-              </div>
-
-              {primaryMotorcycle ? (
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                  {primaryMotorcycle.image_url ? (
-                    <button
-                      type="button"
-                      className="h-32 w-full overflow-hidden rounded-xl text-left sm:w-48"
-                      onClick={() => setViewerImage({ src: primaryMotorcycle.image_url!, alt: primaryMotorcycle.model })}
-                    >
-                      <img src={primaryMotorcycle.image_url} alt={primaryMotorcycle.model} className="h-full w-full object-cover transition hover:scale-[1.01]" />
-                    </button>
-                  ) : (
-                    <div className="grid h-32 w-full place-items-center rounded-xl bg-moto-darker sm:w-48">
-                      <Bike className="h-12 w-12 text-gray-600" />
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-xl font-bold">{primaryMotorcycle.brand} {primaryMotorcycle.model}</h3>
-                    <p className="text-sm text-gray-400">{primaryMotorcycle.plate || 'Sin placa'} - {primaryMotorcycle.year || 'Sin año'}</p>
-                    <p className="mt-3 text-2xl font-bold text-moto-orange">{primaryMotorcycle.mileage.toLocaleString()} km</p>
-                  </div>
-                </div>
-              ) : (
-                <EmptyState icon={Bike} text="Aún no tienes una moto registrada." actionLabel="Agregar moto" to="/app/my-bikes" />
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="border-white/5 bg-moto-gray py-0">
-            <CardContent className="p-5">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold">Pendientes importantes</h2>
-                <Button asChild size="sm" variant="outline" className="border-white/10">
-                  <Link to="/app/my-bikes">Ver todos</Link>
-                </Button>
-              </div>
-
-              {urgentReminders.length > 0 ? (
-                <div className="space-y-3">
-                  {urgentReminders.map((reminder) => (
-                    <div key={reminder.id} className="flex items-center justify-between gap-3 rounded-xl bg-moto-darker p-4">
-                      <div className="min-w-0">
-                        <p className="truncate font-medium">{reminder.title}</p>
-                        <p className="text-sm text-gray-400">
-                          {reminder.due_mileage ? `${reminder.due_mileage.toLocaleString()} km` : 'Sin kilometraje'} - {reminder.due_date || 'Sin fecha'}
-                        </p>
-                      </div>
-                      <Badge className="bg-yellow-500/15 text-yellow-300">Pendiente</Badge>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-xl bg-moto-darker p-5 text-center text-gray-400">
-                  <CheckCircle2 className="mx-auto mb-2 h-10 w-10 text-green-400" />
-                  No hay pendientes urgentes.
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="border-white/5 bg-moto-gray py-0">
-            <CardContent className="p-5">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold">Notificaciones</h2>
-                <Button asChild size="sm" variant="outline" className="border-white/10">
-                  <Link to="/app/notifications">Ver todas</Link>
-                </Button>
-              </div>
-
-              {notifications.length > 0 ? (
-                <div className="space-y-3">
-                  {notifications.map((notification) => (
-                    <div key={notification.id} className="rounded-xl bg-moto-darker p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          {(() => {
-                            const display = notificationDisplay(notification)
-                            return (
-                              <>
-                                <p className="font-medium">{display.title}</p>
-                                <p className="mt-1 text-sm text-gray-400">{display.message}</p>
-                                <p className="mt-2 flex items-center gap-1 text-xs text-gray-500">
-                                  <Calendar className="h-3.5 w-3.5" />
-                                  {display.dateLabel}
-                                </p>
-                              </>
-                            )
-                          })()}
-                        </div>
-                        {notification.type === 'club_invite' ? (
-                          <div className="flex shrink-0 flex-col gap-2">
-                            <Button size="sm" className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => void respondToClubInvite(notification, true)}>
-                              <UserPlus className="mr-2 h-4 w-4" />
-                              Aprobar
-                            </Button>
-                            <Button size="sm" variant="outline" className="border-white/10" onClick={() => void respondToClubInvite(notification, false)}>
-                              <X className="mr-2 h-4 w-4" />
-                              Rechazar
-                            </Button>
-                          </div>
-                        ) : notification.type === 'marketplace_message' ? (
-                          <Button asChild size="sm" className="shrink-0 bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
-                            <Link
-                              to="/app/marketplace?inbox=1"
-                              onClick={() => void markNotificationAsRead(notification)}
-                            >
-                              Ver mensaje
-                            </Link>
-                          </Button>
-                        ) : (
-                          <Button size="sm" variant="outline" className="border-white/10" onClick={() => void markNotificationAsRead(notification)}>
-                            Leida
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-xl bg-moto-darker p-5 text-center text-gray-400">
-                  <Bell className="mx-auto mb-2 h-10 w-10 text-gray-600" />
-                  No hay notificaciones pendientes.
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <div className="grid content-start gap-5 p-5 sm:p-7">
+            <div className="grid grid-cols-2 gap-4">
+              <div><p className="text-xs uppercase tracking-wide text-gray-500">Kilometraje</p><p className="mt-1 text-xl font-bold">{selectedBike.mileage.toLocaleString('es-CO')} km</p></div>
+              <div><p className="text-xs uppercase tracking-wide text-gray-500">Última actualización</p><p className="mt-1 text-sm font-semibold">{formatShortDate(selectedBike.updated_at)}</p></div>
+              <div><p className="text-xs uppercase tracking-wide text-gray-500">Próximo mantenimiento</p><p className="mt-1 text-sm font-semibold">{nextReminder?.title ?? 'Sin programar'}</p></div>
+              <div><p className="text-xs uppercase tracking-wide text-gray-500">Pendientes</p><p className="mt-1 text-xl font-bold">{health?.pendingCount ?? 0}</p></div>
+            </div>
+            <div className="rounded-2xl bg-white/5 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-moto-orange">Próxima acción recomendada</p>
+              <p className="mt-2 font-semibold">{health?.level === 'urgent' ? 'Revisa las alertas vencidas hoy' : nextReminder ? `${nextReminder.title}${nextReminder.due_date ? ` · ${formatShortDate(nextReminder.due_date)}` : ''}` : 'Programa tu próximo mantenimiento'}</p>
+              <Link to={`${bikeBasePath}/schedule`} className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-moto-orange">Abrir agenda <ArrowRight className="h-4 w-4" /></Link>
+            </div>
+          </div>
         </div>
+      </section>
 
-        <div className="space-y-5">
-          {profileCompletion < 100 && (
-            <Card className="border-white/5 bg-moto-gray py-0">
-              <CardContent className="p-5">
-                <div className="mb-4 flex items-center justify-between">
-                  <h2 className="font-semibold">Perfil</h2>
-                  <Badge className={profileCompletion >= 80 ? 'bg-green-500/15 text-green-300' : 'bg-yellow-500/15 text-yellow-300'}>
-                    {profileCompletion}%
-                  </Badge>
-                </div>
-                <div className="mb-4 h-2 overflow-hidden rounded-full bg-moto-darker">
-                  <div className="h-full bg-moto-orange" style={{ width: `${profileCompletion}%` }} />
-                </div>
-                <p className="mb-4 text-sm text-gray-400">Completa tu perfil y deja tu hoja de vida lista para respaldar el historial de tu moto.</p>
-                <Button asChild variant="outline" className="w-full border-white/10">
-                  <Link to="/app/profile">
-                    <Settings className="mr-2 h-4 w-4" />
-                    Completar perfil
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          )}
+      {(health?.documentAlerts.length || health?.overdueReminders.length) ? (
+        <section aria-labelledby="critical-alerts-title" className="rounded-2xl border border-red-500/25 bg-red-500/10 p-5">
+          <h2 id="critical-alerts-title" className="flex items-center gap-2 font-bold text-red-200"><AlertTriangle className="h-5 w-5" />Alertas críticas</h2>
+          <div className="mt-3 grid gap-2 text-sm text-red-100">
+            {health.documentAlerts.map((alert) => <p key={alert.label}>{alert.label}: {alert.days < 0 ? `venció hace ${Math.abs(alert.days)} días` : `vence en ${alert.days} días`}.</p>)}
+            {health.overdueReminders.map((reminder) => <p key={reminder.id}>{reminder.title} está vencido.</p>)}
+          </div>
+        </section>
+      ) : null}
 
-          <Card className="border-white/5 bg-moto-gray py-0">
-            <CardContent className="p-5">
-              <h2 className="mb-4 font-semibold">Últimos mantenimientos</h2>
-              {recentMaintenanceRecords.length > 0 ? (
-                <div className="space-y-3">
-                  {recentMaintenanceRecords.map((record) => (
-                    <Link key={record.id} to="/app/my-bikes#history" className="block rounded-xl bg-moto-darker p-3 transition hover:bg-moto-darker/80 hover:ring-1 hover:ring-moto-orange/40">
-                      <p className="truncate font-medium">{record.service_type}</p>
-                      <p className="text-sm text-gray-400">{record.mileage.toLocaleString()} km{record.cost ? ` - ${record.cost.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })}` : ''}</p>
-                      <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
-                        <Calendar className="h-3.5 w-3.5" />
-                        {formatDate(record.service_date)}
-                      </p>
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <EmptyState icon={Wrench} text="Aún no tienes mantenimientos registrados." actionLabel="Registrar servicio" to="/app/my-bikes#history" />
-              )}
-            </CardContent>
-          </Card>
-
+      <section aria-labelledby="metrics-title">
+        <h2 id="metrics-title" className="mb-3 text-xl font-bold">Lo importante, de un vistazo</h2>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {[
+            { label: 'Próximo servicio', value: nextReminder?.title ?? 'Sin programar', icon: Wrench },
+            { label: 'Pendientes', value: String(health?.pendingCount ?? 0), icon: CalendarClock },
+            { label: 'Documentos por vencer', value: String(health?.documentAlerts.length ?? 0), icon: FileText },
+            { label: 'Gastos del mes', value: monthExpenses.length ? formatCurrency(monthExpenseTotal) : 'Sin gastos registrados', icon: CircleDollarSign },
+          ].map((metric) => <div key={metric.label} className="rounded-2xl border border-white/5 bg-moto-darker p-4"><metric.icon className="h-5 w-5 text-moto-orange" /><p className="mt-4 text-sm text-gray-400">{metric.label}</p><p className="mt-1 font-bold">{metric.value}</p></div>)}
         </div>
-      </div>
-      <ImageViewer
-        src={viewerImage?.src ?? null}
-        alt={viewerImage?.alt}
-        open={Boolean(viewerImage)}
-        onOpenChange={(open) => !open && setViewerImage(null)}
-      />
-    </div>
-  )
-}
+      </section>
 
-function MetricCard({
-  icon: Icon,
-  label,
-  mobileLabel,
-  value,
-  tone,
-  to,
-}: {
-  icon: typeof Bike
-  label: string
-  mobileLabel?: string
-  value: number
-  tone: 'orange' | 'yellow' | 'sky' | 'green'
-  to: string
-}) {
-  const tones = {
-    orange: 'bg-moto-orange/20 text-moto-orange',
-    yellow: 'bg-yellow-500/20 text-yellow-300',
-    sky: 'bg-sky-500/20 text-sky-300',
-    green: 'bg-green-500/20 text-green-300',
-  }
+      <section aria-labelledby="quick-actions-title">
+        <h2 id="quick-actions-title" className="mb-3 text-xl font-bold">Acciones rápidas</h2>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {[
+            { label: 'Registrar mantenimiento', to: `${bikeBasePath}/history?action=service`, icon: Wrench },
+            { label: 'Actualizar kilometraje', to: `${bikeBasePath}/overview?action=mileage`, icon: Gauge },
+            { label: 'Crear recordatorio', to: `${bikeBasePath}/schedule?action=reminder`, icon: CalendarClock },
+            { label: 'Agregar documento', to: `${bikeBasePath}/documents`, icon: FileText },
+          ].map((action) => <Link key={action.label} to={action.to} className="flex min-h-28 flex-col justify-between rounded-2xl border border-white/5 bg-moto-darker p-4 hover:border-moto-orange/40"><action.icon className="h-6 w-6 text-moto-orange" /><span className="font-semibold">{action.label}</span></Link>)}
+        </div>
+      </section>
 
-  return (
-    <Link to={to} className="block min-w-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-moto-orange focus:ring-offset-2 focus:ring-offset-moto-dark">
-      <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0 transition-colors hover:border-moto-orange/40 hover:bg-white/5">
-        <CardContent className="flex min-w-0 flex-col items-center gap-1.5 p-2 text-center sm:flex-row sm:gap-4 sm:p-4 sm:text-left">
-          <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg sm:h-12 sm:w-12 sm:rounded-xl ${tones[tone]}`}>
-            <Icon className="h-4 w-4 sm:h-6 sm:w-6" />
-          </div>
-          <div className="min-w-0">
-            <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">
-              <span className="sm:hidden">{mobileLabel ?? label}</span>
-              <span className="hidden sm:inline">{label}</span>
-            </p>
-            <p className="text-base font-bold leading-tight sm:text-xl">{value}</p>
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
-  )
-}
+      <section aria-labelledby="recent-history-title">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 id="recent-history-title" className="text-xl font-bold">Historial reciente</h2>
+          <Link to={`${bikeBasePath}/history`} className="text-sm font-semibold text-moto-orange">Ver historial</Link>
+        </div>
+        <div className="overflow-hidden rounded-2xl border border-white/5 bg-moto-darker">
+          {records.length ? records.slice(0, 4).map((record) => <div key={record.id} className="flex items-center justify-between gap-4 border-b border-white/5 p-4 last:border-0"><div className="min-w-0"><p className="truncate font-semibold">{record.service_type}</p><p className="text-sm text-gray-400">{formatShortDate(record.service_date)} · {record.mileage.toLocaleString('es-CO')} km</p></div><p className="shrink-0 text-sm font-semibold">{record.cost === null ? 'Sin costo' : formatCurrency(Number(record.cost))}</p></div>) : <p className="p-6 text-center text-gray-400">Aún no hay mantenimientos. Registra el primero para iniciar la historia de tu moto.</p>}
+        </div>
+      </section>
 
-function EmptyState({ icon: Icon, text, actionLabel, to }: { icon: typeof AlertTriangle; text: string; actionLabel: string; to: string }) {
-  return (
-    <div className="rounded-xl bg-moto-darker p-5 text-center text-gray-400">
-      <Icon className="mx-auto mb-3 h-10 w-10 text-gray-600" />
-      <p className="mb-4 text-sm">{text}</p>
-      <Button asChild size="sm" className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
-        <Link to={to}>{actionLabel}</Link>
-      </Button>
+      <section aria-labelledby="explore-title">
+        <div className="mb-3">
+          <p className="text-sm text-gray-500">Cuando tengas tu moto al día</p>
+          <h2 id="explore-title" className="text-xl font-bold">Explorar MotoCare</h2>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {exploreItems.map((item) => <Link key={item.label} to={item.to} className="rounded-2xl border border-white/5 bg-white/[0.03] p-4 hover:border-white/15"><item.icon className="h-6 w-6 text-gray-400" /><h3 className="mt-5 font-semibold">{item.label}</h3><p className="mt-1 text-sm text-gray-500">{item.description}</p></Link>)}
+        </div>
+      </section>
     </div>
   )
 }
