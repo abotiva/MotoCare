@@ -10,7 +10,6 @@ import {
   Clock,
   DollarSign,
   ExternalLink,
-  FileText,
   Gauge,
   ImageUp,
   Loader2,
@@ -19,7 +18,6 @@ import {
   Trash2,
   Upload,
   Wrench,
-  XCircle,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -28,6 +26,13 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ImageViewer } from '@/components/ImageViewer'
+import { DocumentCard } from '@/features/motorcycles/components/DocumentCard'
+import { MaintenanceTimeline } from '@/features/motorcycles/components/MaintenanceTimeline'
+import { MotorcycleHealthCard } from '@/features/motorcycles/components/MotorcycleHealthCard'
+import { MotorcycleSelector } from '@/features/motorcycles/components/MotorcycleSelector'
+import { ReminderList } from '@/features/motorcycles/components/ReminderList'
+import { dateDistanceInDays, daysUntil } from '@/features/motorcycles/utils/dateStatus'
+import { defaultIntervalForMaintenance } from '@/features/motorcycles/utils/maintenanceIntervals'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
@@ -132,43 +137,12 @@ const emptyCompletionForm = (): CompletionForm => ({
   notes: '',
 })
 
-function daysUntil(date: string | null) {
-  if (!date) return null
-  const today = new Date()
-  const target = new Date(`${date}T00:00:00`)
-  return Math.ceil((target.getTime() - today.getTime()) / 86_400_000)
-}
-
-function statusForDate(date: string | null) {
-  const days = daysUntil(date)
-  if (days === null) return { label: 'Sin fecha', tone: 'text-gray-400' }
-  if (days < 0) return { label: `Vencido hace ${Math.abs(days)} días`, tone: 'text-red-400' }
-  if (days <= 30) return { label: `Vence en ${days} días`, tone: 'text-yellow-400' }
-  return { label: `Vigente hasta ${date}`, tone: 'text-green-500' }
-}
-
 function formatMoney(value: number) {
   return value.toLocaleString('es-CO', {
     style: 'currency',
     currency: 'COP',
     maximumFractionDigits: 0,
   })
-}
-
-function dateDistanceInDays(from: string, to: string) {
-  const fromTime = new Date(`${from}T00:00:00`).getTime()
-  const toTime = new Date(`${to}T00:00:00`).getTime()
-  return Math.max(0, Math.round(Math.abs(toTime - fromTime) / 86_400_000))
-}
-
-function defaultIntervalForReminder(title: string) {
-  const normalizedTitle = title.toLowerCase()
-  if (normalizedTitle.includes('aceite')) return 3000
-  if (normalizedTitle.includes('freno')) return 8000
-  if (normalizedTitle.includes('arrastre') || normalizedTitle.includes('cadena')) return 10000
-  if (normalizedTitle.includes('llanta')) return 12000
-  if (normalizedTitle.includes('revision')) return 5000
-  return 3000
 }
 
 type BikeTab = 'reminders' | 'history' | 'reports' | 'documents'
@@ -984,7 +958,7 @@ export function MyBikes() {
 
   const openCompleteReminder = (reminder: Reminder) => {
     if (!selectedBike) return
-    const defaultInterval = defaultIntervalForReminder(reminder.title)
+    const defaultInterval = defaultIntervalForMaintenance(reminder.title)
     setCompletingReminder(reminder)
     setCompletionForm({
       action: reminder.title,
@@ -1329,41 +1303,15 @@ export function MyBikes() {
         </Card>
       ) : (
         <>
-          <div className="mb-6 grid gap-3">
-            {orderedMotorcycles.map((motorcycle) => (
-              <button
-                key={motorcycle.id}
-                onClick={() => {
-                  setSelectedId(motorcycle.id)
-                  navigate(`/app/bikes/${motorcycle.id}/${section && section in sectionToTab ? section : 'overview'}`)
-                }}
-                className={`flex min-w-0 items-center gap-3 rounded-xl border p-3 transition-all ${
-                  selectedBike?.id === motorcycle.id ? 'border-moto-orange bg-moto-orange/20' : 'border-white/5 bg-moto-gray hover:border-white/20'
-                }`}
-              >
-                <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-lg bg-moto-darker">
-                  {motorcycle.image_url ? (
-                    <img src={motorcycle.image_url} alt={`${motorcycle.brand} ${motorcycle.model}`} className="h-full w-full object-cover" />
-                  ) : (
-                    <Bike className="h-8 w-8 text-moto-orange" />
-                  )}
-                </div>
-                <div className="min-w-0 text-left">
-                  <div className="flex min-w-0 flex-wrap items-center gap-2">
-                    <p className="truncate font-semibold">
-                      {motorcycle.brand} {motorcycle.model}
-                    </p>
-                    {motorcycle.id === profile?.primary_motorcycle_id && (
-                      <Badge className="shrink-0 bg-moto-orange text-moto-darker">Principal</Badge>
-                    )}
-                  </div>
-                  <p className="truncate text-sm text-gray-400">
-                    {motorcycle.year ?? 'Sin año'} - {motorcycle.plate ?? 'Sin placa'}
-                  </p>
-                </div>
-              </button>
-            ))}
-          </div>
+          <MotorcycleSelector
+            motorcycles={orderedMotorcycles}
+            selectedId={selectedBike?.id ?? null}
+            primaryId={profile?.primary_motorcycle_id}
+            onSelect={(motorcycle) => {
+              setSelectedId(motorcycle.id)
+              navigate(`/app/bikes/${motorcycle.id}/${section && section in sectionToTab ? section : 'overview'}`)
+            }}
+          />
 
           {selectedBike && (
             <div className="grid gap-6 lg:grid-cols-3">
@@ -1455,86 +1403,17 @@ export function MyBikes() {
                           Nuevo por km
                         </Button>
                       </div>
-                      {selectedReminders.length > 0 ? (
-                        selectedReminders.map((reminder) => (
-                          <div key={reminder.id} className="flex flex-col gap-3 rounded-xl bg-moto-darker p-3 sm:flex-row sm:items-center sm:justify-between">
-                            <div className="flex min-w-0 items-center gap-3">
-                              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-yellow-500/20">
-                                <CalendarClock className="h-5 w-5 text-yellow-400" />
-                              </div>
-                              <div className="min-w-0">
-                                <p className="break-words font-medium">{reminder.title}</p>
-                                <p className="text-sm text-gray-400">
-                                  {reminder.due_date ? `Fecha: ${reminder.due_date}` : ''}
-                                  {reminder.due_mileage ? ` - ${reminder.due_mileage.toLocaleString()} km` : ''}
-                                </p>
-                                {reminder.due_mileage && selectedBike && (
-                                  <p
-                                    className={`text-xs ${
-                                      reminder.due_mileage <= selectedBike.mileage ? 'text-red-400' : 'text-moto-orange'
-                                    }`}
-                                  >
-                                    {reminder.due_mileage <= selectedBike.mileage
-                                      ? `${(selectedBike.mileage - reminder.due_mileage).toLocaleString()} km vencido`
-                                      : `Faltan ${(reminder.due_mileage - selectedBike.mileage).toLocaleString()} km`}
-                                  </p>
-                                )}
-                                {reminder.due_date && !reminder.due_mileage && (
-                                  <p className={`text-xs ${statusForDate(reminder.due_date).tone}`}>{statusForDate(reminder.due_date).label}</p>
-                                )}
-                              </div>
-                            </div>
-                            <div className="grid grid-cols-3 gap-2 sm:flex sm:shrink-0">
-                              <Button size="sm" variant="outline" className="min-w-0 border-white/10 px-2 sm:px-3" onClick={() => openEditReminder(reminder)}>
-                                Editar
-                              </Button>
-                              <Button size="sm" variant="outline" className="min-w-0 border-white/10 px-2 sm:px-3" onClick={() => dismissReminder(reminder)}>
-                                <XCircle className="mr-1 h-4 w-4 sm:mr-2" />
-                                Cancelar
-                              </Button>
-                              <Button size="sm" variant="outline" className="min-w-0 border-white/10 px-2 sm:px-3" onClick={() => openCompleteReminder(reminder)}>
-                                Completar
-                              </Button>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="rounded-xl border border-white/5 bg-moto-darker p-5 text-center text-gray-400">
-                          No tienes pendientes para esta moto.
-                        </div>
-                      )}
+                      <ReminderList
+                        reminders={selectedReminders}
+                        motorcycle={selectedBike}
+                        onEdit={openEditReminder}
+                        onCancel={(reminder) => void dismissReminder(reminder)}
+                        onComplete={openCompleteReminder}
+                      />
                     </TabsContent>
 
                     <TabsContent value="history" className="space-y-2">
-                      {selectedRecords.length > 0 ? (
-                        selectedRecords.map((record) => (
-                          <div key={record.id} className="flex flex-col gap-3 rounded-xl bg-moto-darker p-3 sm:flex-row sm:items-center sm:justify-between">
-                            <div className="flex min-w-0 items-center gap-3">
-                              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-green-500/20">
-                                <CheckCircle className="h-5 w-5 text-green-500" />
-                              </div>
-                              <div className="min-w-0">
-                                <p className="truncate font-medium">{record.service_type}</p>
-                                <p className="text-sm text-gray-400">
-                                  {record.mileage.toLocaleString()} km - {record.service_date}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0 sm:items-center">
-                              <Button size="sm" variant="outline" className="min-w-0 border-white/10 px-2 sm:px-3" onClick={() => openRecordDetail(record)}>
-                                Ver detalle
-                              </Button>
-                              <Badge variant="secondary" className="min-w-0 justify-center truncate bg-green-500/20 px-1 text-[11px] text-green-500 sm:px-2 sm:text-xs">
-                                Completado
-                              </Badge>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="rounded-xl border border-white/5 bg-moto-darker p-5 text-center text-gray-400">
-                          Aún no hay mantenimientos registrados.
-                        </div>
-                      )}
+                      <MaintenanceTimeline records={selectedRecords} onOpen={openRecordDetail} />
                     </TabsContent>
 
                     <TabsContent value="reports" className="space-y-4">
@@ -1614,57 +1493,21 @@ export function MyBikes() {
                         {([
                           ['SOAT', selectedBike.soat_expires_on, 'soat'],
                           ['Tecnomecánica', selectedBike.technical_review_expires_on, 'technical_review'],
-                        ] satisfies Array<[string, string | null, MotorcycleDocument['document_type']]>).map(([title, date, documentType]) => {
-                          const status = statusForDate(date)
-                          const document = selectedDocuments.find((item) => item.document_type === documentType)
-                          return (
-                            <Card key={title} className="border-white/5 bg-moto-darker p-4">
-                              <div className="flex items-start gap-3">
-                                <div className="grid h-12 w-12 place-items-center rounded-lg bg-moto-orange/20">
-                                  <FileText className="h-6 w-6 text-moto-orange" />
-                                </div>
-                                <div className="flex-1">
-                                  <p className="font-medium">{title}</p>
-                                  <p className={`text-sm ${status.tone}`}>{status.label}</p>
-                                  {document && <p className="mt-1 truncate text-xs text-gray-500">{document.file_name}</p>}
-                                  <div className="mt-3 flex flex-wrap gap-2">
-                                    {canUploadDocuments && <label className="inline-flex cursor-pointer items-center rounded-md border border-white/10 px-3 py-2 text-xs transition-colors hover:bg-white/5">
-                                      {uploadingKey === documentType ? (
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                      ) : (
-                                        <Upload className="mr-2 h-4 w-4" />
-                                      )}
-                                      Subir
-                                      <input
-                                        type="file"
-                                        accept="image/*,.pdf"
-                                        className="hidden"
-                                        disabled={uploadingKey !== null}
-                                        onChange={(event) => {
-                                          const file = event.target.files?.[0]
-                                          if (file) void uploadMotorcycleDocument(file, documentType)
-                                          event.target.value = ''
-                                        }}
-                                      />
-                                    </label>}
-                                    {document && (
-                                      <>
-                                        <Button size="sm" variant="outline" className="border-white/10 text-xs" onClick={() => openPrivateDocument(document)}>
-                                          <ExternalLink className="mr-2 h-4 w-4" />
-                                          Ver
-                                        </Button>
-                                        <Button size="sm" variant="outline" className="border-white/10 text-xs" onClick={() => deleteMotorcycleDocument(document)}>
-                                          <Trash2 className="mr-2 h-4 w-4" />
-                                          Eliminar
-                                        </Button>
-                                      </>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            </Card>
-                          )
-                        })}
+                        ] satisfies Array<[string, string | null, MotorcycleDocument['document_type']]>).map(([title, date, documentType]) => (
+                          <DocumentCard
+                            key={title}
+                            title={title}
+                            expiresOn={date}
+                            documentType={documentType}
+                            document={selectedDocuments.find((item) => item.document_type === documentType)}
+                            canUpload={canUploadDocuments}
+                            isUploading={uploadingKey === documentType}
+                            uploadsDisabled={uploadingKey !== null}
+                            onUpload={(file, type) => void uploadMotorcycleDocument(file, type)}
+                            onOpen={(document) => void openPrivateDocument(document)}
+                            onDelete={(document) => void deleteMotorcycleDocument(document)}
+                          />
+                        ))}
                       </div>
                       {selectedDocuments.filter((document) => document.document_type === 'other').length > 0 && (
                         <div className="mt-4 space-y-2">
@@ -1712,50 +1555,7 @@ export function MyBikes() {
               </Card>
 
               <div className="space-y-4">
-                <Card className="border-white/5 bg-moto-gray">
-                  <CardContent className="p-6">
-                    <div className="mb-4 flex items-center gap-3">
-                      <div className="grid h-12 w-12 place-items-center rounded-xl bg-moto-orange/20">
-                        <Gauge className="h-6 w-6 text-moto-orange" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-400">Kilometraje</p>
-                        <p className="text-2xl font-bold">{selectedBike.mileage.toLocaleString()} km</p>
-                      </div>
-                    </div>
-                    <p className="mb-4 text-xs text-gray-500">Mantén este dato al día para activar pendientes por kilometraje.</p>
-                    <Button size="sm" variant="outline" className="w-full border-white/10" onClick={openUpdateMileage}>
-                      <Gauge className="mr-2 h-4 w-4" />
-                      Actualizar km
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-white/5 bg-moto-gray">
-                  <CardContent className="p-6">
-                    <div className="mb-4 flex items-center gap-3">
-                      <div className="grid h-12 w-12 place-items-center rounded-xl bg-green-500/20">
-                        <CheckCircle className="h-6 w-6 text-green-500" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-400">Estado general</p>
-                        <p className="text-2xl font-bold text-green-500">{healthScore}%</p>
-                      </div>
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">SOAT</span>
-                        <span className={statusForDate(selectedBike.soat_expires_on).tone}>{statusForDate(selectedBike.soat_expires_on).label}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Tecnomecánica</span>
-                        <span className={statusForDate(selectedBike.technical_review_expires_on).tone}>
-                          {statusForDate(selectedBike.technical_review_expires_on).label}
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <MotorcycleHealthCard motorcycle={selectedBike} score={healthScore} onUpdateMileage={openUpdateMileage} />
 
                 <Card className="border-white/5 bg-moto-gray">
                   <CardContent className="p-4">
