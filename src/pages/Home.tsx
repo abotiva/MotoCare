@@ -44,7 +44,7 @@ export function Home() {
       const nextMotorcycles = (motorcyclesResult.data ?? []) as Motorcycle[]
       setMotorcycles(nextMotorcycles)
       const preferred = nextMotorcycles.find((motorcycle) => motorcycle.id === profile?.primary_motorcycle_id) ?? nextMotorcycles[0]
-      setSelectedId((current) => nextMotorcycles.some((motorcycle) => motorcycle.id === current) ? current : preferred?.id ?? null)
+      setSelectedId(preferred?.id ?? null)
       setIsLoading(false)
     }
     void loadDashboard()
@@ -66,7 +66,16 @@ export function Home() {
     })
   }, [selectedId, user])
 
-  const selectedBike = motorcycles.find((motorcycle) => motorcycle.id === selectedId) ?? motorcycles[0] ?? null
+  const orderedMotorcycles = useMemo(() => {
+    return [...motorcycles].sort((a, b) => {
+      if (a.id === profile?.primary_motorcycle_id) return -1
+      if (b.id === profile?.primary_motorcycle_id) return 1
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    })
+  }, [motorcycles, profile?.primary_motorcycle_id])
+  const selectedBike = motorcycles.find((motorcycle) => motorcycle.id === selectedId)
+    ?? orderedMotorcycles[0]
+    ?? null
   const health = useMemo(() => selectedBike ? getMotorcycleHealth(selectedBike, reminders) : null, [reminders, selectedBike])
   const nextReminder = reminders.find((reminder) => reminder.status === 'pending') ?? null
   const monthExpenses = records.filter((record) => {
@@ -102,17 +111,42 @@ export function Home() {
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-4 pb-24 sm:p-6 lg:pb-8">
       <section aria-labelledby="bike-selector-title">
-        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-          <div>
-            <p className="text-sm font-medium text-moto-orange">Tu moto. Tu historia. Tu ruta.</p>
-            <h1 id="bike-selector-title" className="mt-1 text-2xl font-bold sm:text-3xl">Estado de tu moto</h1>
-          </div>
-          <label className="text-sm text-gray-400">
-            Moto seleccionada
-            <select value={selectedBike.id} onChange={(event) => setSelectedId(event.target.value)} className="mt-1 min-h-11 w-full rounded-xl border border-white/10 bg-moto-darker px-3 text-white sm:w-72">
-              {motorcycles.map((motorcycle) => <option key={motorcycle.id} value={motorcycle.id}>{motorcycle.brand} {motorcycle.model}{motorcycle.plate ? ` · ${motorcycle.plate}` : ''}</option>)}
-            </select>
-          </label>
+        <div>
+          <p className="text-sm font-medium text-moto-orange">Tu moto. Tu historia. Tu ruta.</p>
+          <h1 id="bike-selector-title" className="mt-1 text-2xl font-bold sm:text-3xl">Mi Garage</h1>
+          <p className="mt-2 text-sm text-gray-400">Selecciona una moto para consultar su estado. Tu moto predeterminada aparece primero.</p>
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3" role="group" aria-label="Motos de mi garage">
+          {orderedMotorcycles.map((motorcycle) => {
+            const isSelected = motorcycle.id === selectedBike.id
+            const isPrimary = motorcycle.id === profile?.primary_motorcycle_id
+            return (
+              <button
+                key={motorcycle.id}
+                type="button"
+                aria-pressed={isSelected}
+                onClick={() => setSelectedId(motorcycle.id)}
+                className={`flex min-h-24 items-center gap-3 rounded-2xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-moto-orange ${
+                  isSelected
+                    ? 'border-moto-orange bg-moto-orange/15'
+                    : 'border-white/5 bg-moto-darker hover:border-white/20'
+                }`}
+              >
+                <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-xl bg-moto-gray">
+                  {motorcycle.image_url
+                    ? <img src={motorcycle.image_url} alt="" className="h-full w-full object-cover" />
+                    : <Bike className="h-8 w-8 text-moto-orange" aria-hidden="true" />}
+                </span>
+                <span className="min-w-0">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span className="truncate font-semibold">{motorcycle.brand} {motorcycle.model}</span>
+                    {isPrimary && <span className="rounded-full bg-moto-orange px-2 py-0.5 text-[10px] font-bold text-moto-darker">Predeterminada</span>}
+                  </span>
+                  <span className="mt-1 block truncate text-sm text-gray-400">{motorcycle.plate ?? 'Sin placa'} · {motorcycle.year ?? 'Año sin registrar'}</span>
+                </span>
+              </button>
+            )
+          })}
         </div>
       </section>
 

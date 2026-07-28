@@ -46,7 +46,7 @@ type NavigationItem = {
 }
 
 const motorcycleItems: NavigationItem[] = [
-  { path: '/app/home', label: 'Resumen', icon: Home },
+  { path: '/app/home', label: 'Mi Garage', icon: Home },
   { path: '/app/bikes/history', label: 'Historial', icon: Wrench },
   { path: '/app/bikes/schedule', label: 'Agenda', icon: CalendarClock },
   { path: '/app/bikes/documents', label: 'Documentos', icon: FileText },
