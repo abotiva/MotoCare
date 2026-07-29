@@ -42,6 +42,7 @@ Crear un archivo `.env` basado en `.env.example`:
 VITE_SUPABASE_URL=https://your-project-ref.supabase.co
 VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 VITE_GOOGLE_MAPS_EMBED_KEY=your-google-maps-embed-api-key
+VITE_GOOGLE_MAPS_API_KEY=your-google-maps-javascript-api-key
 ```
 
 El archivo `.env` no debe subirse a GitHub.
