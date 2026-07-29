@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { MotoCareLogo } from '@/components/MotoCareLogo'
+import { useAuth } from '@/contexts/AuthContext'
 
 const navItems = [
   ['Funcionalidades', 'funcionalidades'],
@@ -75,6 +76,7 @@ const faqs = [
 
 export function LandingPage() {
   const navigate = useNavigate()
+  const { user, isLoading: isLoadingAuth } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
@@ -98,8 +100,14 @@ export function LandingPage() {
             {navItems.map(([label, id]) => <button key={id} type="button" onClick={() => scrollTo(id)} className="text-sm text-gray-300 hover:text-white">{label}</button>)}
           </div>
           <div className="hidden items-center gap-3 lg:flex">
-            <Button variant="ghost" onClick={() => navigate('/login')}>Iniciar sesión</Button>
-            <Button className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => navigate('/login?mode=signup')}>Crear cuenta gratis</Button>
+            {user ? (
+              <Button className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => navigate('/app/home')}>Continuar a MotoCare</Button>
+            ) : (
+              <>
+                <Button variant="ghost" onClick={() => navigate('/login')}>Iniciar sesión</Button>
+                <Button className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => navigate('/login?mode=signup')}>Registrarse</Button>
+              </>
+            )}
           </div>
           <button type="button" className="grid h-11 w-11 place-items-center rounded-xl hover:bg-white/5 lg:hidden" aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={menuOpen} onClick={() => setMenuOpen((current) => !current)}>
             {menuOpen ? <X /> : <Menu />}
@@ -108,7 +116,11 @@ export function LandingPage() {
         {menuOpen && (
           <div className="border-t border-white/10 bg-moto-darker p-4 lg:hidden">
             {navItems.map(([label, id]) => <button key={id} type="button" onClick={() => scrollTo(id)} className="block min-h-11 w-full rounded-xl px-3 text-left text-gray-300 hover:bg-white/5">{label}</button>)}
-            <div className="mt-3 grid gap-2"><Button variant="outline" onClick={() => navigate('/login')}>Iniciar sesión</Button><Button className="bg-moto-orange text-moto-darker" onClick={() => navigate('/login?mode=signup')}>Crear cuenta gratis</Button></div>
+            <div className="mt-3 grid gap-2">
+              {user
+                ? <Button className="bg-moto-orange text-moto-darker" onClick={() => navigate('/app/home')}>Continuar a MotoCare</Button>
+                : <><Button variant="outline" onClick={() => navigate('/login')}>Iniciar sesión</Button><Button className="bg-moto-orange text-moto-darker" onClick={() => navigate('/login?mode=signup')}>Registrarse</Button></>}
+            </div>
           </div>
         )}
       </nav>
@@ -122,9 +134,16 @@ export function LandingPage() {
               <h1 className="mt-4 text-4xl font-bold leading-tight sm:text-5xl lg:text-7xl">Todo lo que vive un motero, en un solo lugar.</h1>
               <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-300">Cuida tus motos, descubre nuevas rutas y comparte experiencias con clubes y moteros que viven la misma pasión.</p>
               <p className="mt-3 max-w-2xl text-sm font-medium text-gray-400">MotoCare conecta tu moto, tus rutas y tu comunidad.</p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Button size="lg" className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => navigate('/login?mode=signup')}>Crear cuenta gratis <ArrowRight className="ml-2 h-5 w-5" /></Button>
-                <Button size="lg" variant="outline" className="border-white/20" onClick={() => scrollTo('pilares')}>Descubrir MotoCare</Button>
+              <div className="mt-8 max-w-sm">
+                {user ? (
+                  <Button size="lg" className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => navigate('/app/home')}>Continuar a MotoCare <ArrowRight className="ml-2 h-5 w-5" /></Button>
+                ) : (
+                  <div className="rounded-2xl border border-white/10 bg-moto-darker/80 p-3 backdrop-blur">
+                    <Button size="lg" disabled={isLoadingAuth} className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => navigate('/login')}>Iniciar sesión <ArrowRight className="ml-2 h-5 w-5" /></Button>
+                    <Button size="lg" disabled={isLoadingAuth} variant="ghost" className="mt-2 w-full text-white hover:bg-white/5" onClick={() => navigate('/login?mode=signup')}>Registrarse</Button>
+                  </div>
+                )}
+                <Button size="lg" variant="outline" className="mt-3 w-full border-white/20" onClick={() => scrollTo('pilares')}>Descubrir MotoCare</Button>
               </div>
             </div>
             <div className="relative mx-auto w-full max-w-xl">
