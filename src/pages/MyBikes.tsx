@@ -6,7 +6,6 @@ import type { ZodType } from 'zod'
 import {
   BarChart3,
   Bike,
-  CalendarClock,
   CheckCircle,
   Clock,
   DollarSign,
@@ -200,15 +199,6 @@ function ReportCard({ icon: Icon, label, value, detail }: { icon: LucideIcon; la
         <p className="mt-1 text-xs text-gray-500">{detail}</p>
       </CardContent>
     </Card>
-  )
-}
-
-function ReportLine({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-4 rounded-lg bg-moto-gray px-3 py-2">
-      <p className="min-w-0 truncate text-sm text-gray-400">{label}</p>
-      <p className="shrink-0 text-sm font-semibold text-white">{value}</p>
-    </div>
   )
 }
 
@@ -1592,78 +1582,19 @@ export function MyBikes() {
                               Exportar PDF
                             </Button>
                           </div>
-                          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                            <ReportCard icon={DollarSign} label="Gasto total" value={formatMoney(maintenanceReport.totalSpent)} detail={`${maintenanceReport.totalServices} servicios`} />
-                            <ReportCard icon={CalendarClock} label="Este año" value={formatMoney(maintenanceReport.yearSpent)} detail={`Este mes: ${formatMoney(maintenanceReport.monthSpent)}`} />
-                            <ReportCard icon={BarChart3} label="Promedio por servicio" value={formatMoney(maintenanceReport.averageCost)} detail="Servicios con costo" />
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <ReportCard
+                              icon={DollarSign}
+                              label="Gasto total"
+                              value={formatMoney(maintenanceReport.totalSpent + purchaseReport.total)}
+                              detail={`Servicios: ${formatMoney(maintenanceReport.totalSpent)} · Tienda: ${formatMoney(purchaseReport.total)}`}
+                            />
                             <ReportCard
                               icon={Clock}
                               label="Último servicio"
                               value={maintenanceReport.daysSinceLast !== null ? `${maintenanceReport.daysSinceLast} días` : 'Sin datos'}
                               detail={maintenanceReport.lastRecord?.service_type ?? 'Registra un mantenimiento'}
                             />
-                          </div>
-
-                          <div className="grid gap-4 lg:grid-cols-2">
-                            <Card className="border-white/5 bg-moto-darker py-0">
-                              <CardContent className="p-4">
-                                <h3 className="mb-3 font-semibold">Tiempos y kilometraje</h3>
-                                <div className="space-y-3">
-                                  <ReportLine label="Promedio entre servicios" value={maintenanceReport.averageDaysBetweenServices !== null ? `${maintenanceReport.averageDaysBetweenServices} días` : 'Sin datos suficientes'} />
-                                  <ReportLine label="Promedio entre kilometrajes" value={maintenanceReport.averageKmBetweenServices !== null ? `${maintenanceReport.averageKmBetweenServices.toLocaleString()} km` : 'Sin datos suficientes'} />
-                                  <ReportLine label="Último kilometraje registrado" value={maintenanceReport.lastRecord ? `${maintenanceReport.lastRecord.mileage.toLocaleString()} km` : 'Sin registros'} />
-                                </div>
-                              </CardContent>
-                            </Card>
-
-                            <Card className="border-white/5 bg-moto-darker py-0">
-                              <CardContent className="p-4">
-                                <h3 className="mb-3 font-semibold">Gastos por tipo</h3>
-                                {maintenanceReport.topExpenseTypes.length > 0 ? (
-                                  <div className="space-y-3">
-                                    {maintenanceReport.topExpenseTypes.map(([serviceType, total]) => (
-                                      <ReportLine key={serviceType} label={serviceType} value={formatMoney(total)} />
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <p className="text-sm text-gray-400">Agrega costos a tus mantenimientos para ver este informe.</p>
-                                )}
-                              </CardContent>
-                            </Card>
-                          </div>
-
-                          <div className="grid gap-4 lg:grid-cols-2">
-                            <Card className="border-white/5 bg-moto-darker py-0">
-                              <CardContent className="p-4">
-                                <h3 className="mb-3 font-semibold">Servicios detallados</h3>
-                                {selectedRecords.filter((record) => record.cost !== null).length > 0 ? (
-                                  <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
-                                    {selectedRecords.filter((record) => record.cost !== null).map((record) => (
-                                      <div key={record.id} className="rounded-lg bg-moto-gray p-3">
-                                        <div className="flex justify-between gap-3"><p className="font-medium">{record.service_type}</p><p className="shrink-0 font-semibold">{formatMoney(Number(record.cost))}</p></div>
-                                        <p className="mt-1 text-xs text-gray-500">{record.service_date} · {record.mileage.toLocaleString()} km</p>
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : <p className="text-sm text-gray-400">No hay servicios con costo registrado.</p>}
-                              </CardContent>
-                            </Card>
-
-                            <Card className="border-white/5 bg-moto-darker py-0">
-                              <CardContent className="p-4">
-                                <div className="mb-3 flex items-center justify-between gap-3">
-                                  <h3 className="font-semibold">Compras en Tienda</h3>
-                                  <Badge className="bg-moto-orange/15 text-moto-orange">{formatMoney(purchaseReport.total)}</Badge>
-                                </div>
-                                {purchaseReport.byCategory.length > 0 ? (
-                                  <div className="space-y-3">
-                                    {purchaseReport.byCategory.map(([category, total]) => (
-                                      <ReportLine key={category} label={category} value={formatMoney(total)} />
-                                    ))}
-                                  </div>
-                                ) : <p className="text-sm text-gray-400">Las compras confirmadas por vendedores aparecerán aquí.</p>}
-                              </CardContent>
-                            </Card>
                           </div>
                         </>
                       ) : (
