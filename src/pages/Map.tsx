@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Bike, Calendar, CheckCircle2, Clock, Edit3, Eye, EyeOff, Flag, Loader2, Lock, MapPin, PackageCheck, PlayCircle, Plus, Route, Save, Trash2 } from 'lucide-react'
+import { Bike, Calendar, CheckCircle2, Clock, Edit3, Eye, EyeOff, Flag, Loader2, Lock, MapPin, PackageCheck, PlayCircle, Plus, Route, Save, Search, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -243,6 +243,8 @@ export function Map() {
   const [showCreateRoute, setShowCreateRoute] = useState(false)
   const [showRouteDetail, setShowRouteDetail] = useState(false)
   const [selectedMetric, setSelectedMetric] = useState<RouteMetric | null>(null)
+  const [routeStatusFilter, setRouteStatusFilter] = useState<'all' | RoutePlan['status']>('all')
+  const [routeOriginSearch, setRouteOriginSearch] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [ownedPremiumRouteIds, setOwnedPremiumRouteIds] = useState(() => readOwnedRouteIds(user?.id))
@@ -278,6 +280,15 @@ export function Map() {
     () => myRoutes.filter((route) => route.status === 'completed').length,
     [myRoutes]
   )
+
+  const filteredMyRoutes = useMemo(() => {
+    const origin = routeOriginSearch.trim().toLocaleLowerCase('es')
+    return myRoutes.filter((route) => {
+      const matchesStatus = routeStatusFilter === 'all' || route.status === routeStatusFilter
+      const matchesOrigin = !origin || (route.origin ?? '').toLocaleLowerCase('es').includes(origin)
+      return matchesStatus && matchesOrigin
+    })
+  }, [myRoutes, routeOriginSearch, routeStatusFilter])
 
   const metricRoutes = useMemo(() => {
     if (selectedMetric === 'shared') return myRoutes.filter((route) => route.visibility === 'community')
@@ -713,8 +724,33 @@ export function Map() {
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-3">
-          {myRoutes.length > 0 ? (
-            myRoutes.map((route) => (
+          <Card className="border-white/5 bg-moto-gray py-0">
+            <CardContent className="grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_200px]">
+              <label className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                <input
+                  type="search"
+                  value={routeOriginSearch}
+                  onChange={(event) => setRouteOriginSearch(event.target.value)}
+                  placeholder="Buscar por origen"
+                  className="w-full rounded-xl border border-white/10 bg-moto-darker py-2.5 pl-10 pr-3 text-sm text-white outline-none placeholder:text-gray-500 focus:border-moto-orange"
+                />
+              </label>
+              <select
+                value={routeStatusFilter}
+                onChange={(event) => setRouteStatusFilter(event.target.value as 'all' | RoutePlan['status'])}
+                aria-label="Filtrar rutas por estado"
+                className="rounded-xl border border-white/10 bg-moto-darker px-3 py-2.5 text-sm text-white outline-none focus:border-moto-orange"
+              >
+                <option value="all">Todos los estados</option>
+                <option value="planned">Planeadas</option>
+                <option value="in_progress">En curso</option>
+                <option value="completed">Realizadas</option>
+              </select>
+            </CardContent>
+          </Card>
+          {filteredMyRoutes.length > 0 ? (
+            filteredMyRoutes.map((route) => (
               <RouteCard
                 key={route.id}
                 route={route}
@@ -731,7 +767,7 @@ export function Map() {
             <Card className="border-white/5 bg-moto-gray py-0">
               <CardContent className="p-8 text-center text-gray-400">
                 <MapPin className="mx-auto mb-3 h-12 w-12 text-gray-600" />
-                Aun no tienes rutas guardadas.
+                {myRoutes.length > 0 ? 'No encontramos rutas con estos filtros.' : 'Aún no tienes rutas guardadas.'}
               </CardContent>
             </Card>
           )}
