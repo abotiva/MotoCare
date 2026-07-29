@@ -182,17 +182,18 @@ export function PremiumRoutes() {
       setIsLoadingClaims(false)
       return
     }
+    const client = supabase
 
     const loadMonthlyAccess = async () => {
       setIsLoadingClaims(true)
       const now = new Date().toISOString()
       const [claimsResult, quotaResult] = await Promise.all([
-        supabase
+        client
           .from('premium_route_monthly_claims')
           .select('route_id, claimed_at, expires_at')
           .gt('expires_at', now)
           .order('claimed_at', { ascending: false }),
-        supabase.rpc('current_premium_route_quota'),
+        client.rpc('current_premium_route_quota'),
       ])
 
       if (claimsResult.error || quotaResult.error) {

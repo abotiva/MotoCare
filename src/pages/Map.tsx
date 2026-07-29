@@ -260,9 +260,10 @@ export function Map() {
       setOwnedPremiumRouteIds([])
       return
     }
+    const client = supabase
 
     const loadPremiumRoutes = async () => {
-      const { data } = await supabase
+      const { data } = await client
         .from('premium_route_monthly_claims')
         .select('route_id')
         .gt('expires_at', new Date().toISOString())
