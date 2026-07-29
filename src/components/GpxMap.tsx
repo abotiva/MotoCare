@@ -6,6 +6,10 @@ const googleMapsApiKey = (
   import.meta.env.VITE_GOOGLE_MAPS_API_KEY
   || import.meta.env.VITE_GOOGLE_MAPS_EMBED_KEY
 ) as string | undefined
+const googleMapsEmbedKey = (
+  import.meta.env.VITE_GOOGLE_MAPS_EMBED_KEY
+  || import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+) as string | undefined
 
 type LatLng = { lat: number; lng: number }
 type GoogleMapInstance = object
@@ -57,11 +61,31 @@ function loadGoogleMaps() {
   return googleMapsPromise
 }
 
-export function GpxMap({ track, className = 'h-64' }: { track: RouteTrack | null; className?: string }) {
+function directionsEmbedUrl(origin: string, destination: string) {
+  if (!googleMapsEmbedKey) return null
+  return `https://www.google.com/maps/embed/v1/directions?key=${encodeURIComponent(googleMapsEmbedKey)}&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&mode=driving`
+}
+
+export function GpxMap({
+  track,
+  origin,
+  destination,
+  className = 'h-64',
+}: {
+  track: RouteTrack | null
+  origin?: string | null
+  destination?: string | null
+  className?: string
+}) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [error, setError] = useState<string | null>(null)
+  const hasTrack = Boolean(track?.geometry?.coordinates?.length && track.geometry.coordinates.length >= 2)
+  const directionsUrl = !hasTrack && origin?.trim() && destination?.trim()
+    ? directionsEmbedUrl(origin.trim(), destination.trim())
+    : null
 
   useEffect(() => {
+    if (!hasTrack && directionsUrl) return
     const container = containerRef.current
     if (!container) return
 
@@ -115,7 +139,20 @@ export function GpxMap({ track, className = 'h-64' }: { track: RouteTrack | null
       routeLine?.setMap(null)
       container.replaceChildren()
     }
-  }, [track])
+  }, [directionsUrl, hasTrack, track])
+
+  if (directionsUrl) {
+    return (
+      <iframe
+        title={`Ruta de ${origin} a ${destination}`}
+        src={directionsUrl}
+        className={`w-full rounded-xl border-0 ${className}`}
+        loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+        allowFullScreen
+      />
+    )
+  }
 
   if (!googleMapsApiKey) {
     return (
@@ -128,6 +165,11 @@ export function GpxMap({ track, className = 'h-64' }: { track: RouteTrack | null
   return (
     <div className={`relative w-full overflow-hidden rounded-xl ${className}`}>
       <div ref={containerRef} className="h-full w-full" aria-label="Mapa de Google con el trazado GPX" />
+      {!hasTrack && (
+        <div className="pointer-events-none absolute inset-x-3 bottom-3 rounded-lg bg-moto-darker/90 p-3 text-center text-xs text-gray-300">
+          Define origen y destino o importa un GPX para visualizar la ruta.
+        </div>
+      )}
       {error && (
         <div className="absolute inset-x-3 bottom-3 rounded-lg bg-red-950/90 p-3 text-center text-sm text-red-200">
           {error}

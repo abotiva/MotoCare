@@ -662,7 +662,7 @@ export function Map() {
       <div className="mb-5 flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
         <div>
           <h1 className="text-2xl font-bold">Rutas</h1>
-          <p className="text-gray-400">Importa rutas GPX, visualízalas con MapLibre y guárdalas en tu cuenta.</p>
+          <p className="text-gray-400">Planea recorridos con Google Maps, importa rutas GPX y guárdalas en tu cuenta.</p>
         </div>
         <Button className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={openCreateRoute} disabled={isLoadingSubscription || !canUseRoutes}>
           <Plus className="mr-2 h-5 w-5" />
@@ -850,7 +850,7 @@ export function Map() {
           <DialogHeader>
             <DialogTitle>{editingRoute ? 'Editar ruta' : 'Nueva ruta'}</DialogTitle>
             <DialogDescription className="text-gray-400">
-              {editingRoute ? 'Actualiza los datos de tu ruta.' : 'Importa un GPX propio o prueba el demo; MapLibre usa cartografía abierta sin API de pago.'}
+              {editingRoute ? 'Actualiza los datos de tu ruta.' : 'Define origen y destino o importa un GPX para visualizar el recorrido en Google Maps.'}
             </DialogDescription>
           </DialogHeader>
           <form className="mt-4 space-y-4" onSubmit={handleSubmitRoute}>
@@ -885,7 +885,7 @@ export function Map() {
             </div>
             <div className="overflow-hidden rounded-xl border border-white/10 bg-moto-darker">
               <Suspense fallback={<div className="grid h-64 place-items-center text-sm text-gray-400">Cargando mapa...</div>}>
-                <GpxMap track={routeForm.track_geojson} />
+                <GpxMap track={routeForm.track_geojson} origin={routeForm.origin} destination={routeForm.destination} />
               </Suspense>
               <div className="grid gap-2 border-t border-white/10 p-3 sm:grid-cols-2">
                 {canUploadExternalGpx ? (
@@ -986,7 +986,12 @@ export function Map() {
               </div>
               <div className="overflow-hidden rounded-xl border border-white/10 bg-moto-darker">
                 <Suspense fallback={<div className="grid h-72 place-items-center text-sm text-gray-400">Cargando mapa...</div>}>
-                  <GpxMap track={selectedRoute.track_geojson} className="h-72" />
+                  <GpxMap
+                    track={selectedRoute.track_geojson}
+                    origin={selectedRoute.origin}
+                    destination={selectedRoute.destination}
+                    className="h-72"
+                  />
                 </Suspense>
               </div>
               <div className="rounded-xl border border-white/10 bg-moto-darker p-4">
