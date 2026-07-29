@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Camera, Crown, Edit3, Flag, Loader2, Plus, Save, Shield, Trash2, UserPlus, Users } from 'lucide-react'
+import { Camera, Crown, Edit3, Flag, Loader2, MapPinned, MessageCircle, Plus, Save, Send, Shield, Trash2, UserPlus, Users } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -11,7 +12,7 @@ import { ImageViewer } from '@/components/ImageViewer'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
-import type { Club, ClubInvitation, ClubMemberWithProfile, Profile } from '@/types/database'
+import type { Club, ClubInvitation, ClubMemberWithProfile, ClubPostWithAuthor, Profile, RoutePlan } from '@/types/database'
 
 type ClubForm = {
   name: string
@@ -67,15 +68,20 @@ export function Clubs() {
   const [discoveredClubs, setDiscoveredClubs] = useState<Club[]>([])
   const [members, setMembers] = useState<ClubMemberWithProfile[]>([])
   const [pendingInvitations, setPendingInvitations] = useState<ClubInvitationWithProfile[]>([])
+  const [clubPosts, setClubPosts] = useState<ClubPostWithAuthor[]>([])
+  const [userRoutes, setUserRoutes] = useState<RoutePlan[]>([])
   const [selectedClubId, setSelectedClubId] = useState('')
   const [hasManualSelection, setHasManualSelection] = useState(false)
   const [createForm, setCreateForm] = useState<ClubForm>(emptyClubForm)
+  const [postContent, setPostContent] = useState('')
+  const [postRouteId, setPostRouteId] = useState('')
   const [clubForm, setClubForm] = useState<ClubForm>(emptyClubForm)
   const [inviteUsername, setInviteUsername] = useState('')
   const [inviteSuggestions, setInviteSuggestions] = useState<InviteSearchProfile[]>([])
   const [isSearchingInvite, setIsSearchingInvite] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [isPublishingPost, setIsPublishingPost] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [showCreateClub, setShowCreateClub] = useState(false)
   const [viewerImage, setViewerImage] = useState<{ src: string; alt: string } | null>(null)
@@ -145,6 +151,37 @@ export function Clubs() {
     }
   }, [])
 
+  const loadClubPosts = useCallback(async (clubId: string) => {
+    if (!supabase) return
+
+    const { data, error } = await supabase
+      .from('club_posts')
+      .select('*, profiles:author_id(full_name, username, avatar_url), clubs:club_id(name, image_url), routes:route_id(*)')
+      .eq('club_id', clubId)
+      .order('created_at', { ascending: false })
+      .limit(100)
+
+    if (error) {
+      toast.error('No pudimos cargar los mensajes del club', { description: error.message })
+    } else {
+      setClubPosts((data ?? []) as unknown as ClubPostWithAuthor[])
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!supabase || !userId) {
+      setUserRoutes([])
+      return
+    }
+
+    void supabase
+      .from('routes')
+      .select('*')
+      .eq('owner_id', userId)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => setUserRoutes((data ?? []) as RoutePlan[]))
+  }, [userId])
+
   const loadClubs = useCallback(async () => {
     if (!supabase || !userId) return
     setIsLoading(true)
@@ -208,6 +245,7 @@ export function Clubs() {
       setClubForm(emptyClubForm)
       setInviteSuggestions([])
       setPendingInvitations([])
+      setClubPosts([])
       return
     }
 
@@ -218,7 +256,8 @@ export function Clubs() {
     })
     void loadMembers(selectedClub.id)
     void loadPendingInvitations(selectedClub.id)
-  }, [loadMembers, loadPendingInvitations, selectedClub])
+    void loadClubPosts(selectedClub.id)
+  }, [loadClubPosts, loadMembers, loadPendingInvitations, selectedClub])
 
   useEffect(() => {
     if (!supabase || !selectedClub || !canManageSelectedClub) {
@@ -307,6 +346,48 @@ export function Clubs() {
     toast.success('Club creado', { description: 'Ya puedes invitar miembros.' })
 
     setIsSaving(false)
+  }
+
+  const publishClubPost = async (event: FormEvent) => {
+    event.preventDefault()
+    if (!supabase || !user || !selectedClub) return
+
+    const content = postContent.trim()
+    if (!content && !postRouteId) {
+      toast.info('Escribe un mensaje o selecciona una ruta')
+      return
+    }
+
+    setIsPublishingPost(true)
+    const { error } = await supabase.from('club_posts').insert({
+      club_id: selectedClub.id,
+      author_id: user.id,
+      content: content || 'Compartió una ruta con el club.',
+      route_id: postRouteId || null,
+    })
+
+    if (error) {
+      toast.error('No pudimos publicar en el club', { description: error.message })
+    } else {
+      setPostContent('')
+      setPostRouteId('')
+      await loadClubPosts(selectedClub.id)
+      toast.success('Mensaje publicado para el club')
+    }
+    setIsPublishingPost(false)
+  }
+
+  const deleteClubPost = async (post: ClubPostWithAuthor) => {
+    if (!supabase || !selectedClub || !user) return
+    const canDelete = post.author_id === user.id || canManageSelectedClub
+    if (!canDelete) return
+
+    const { error } = await supabase.from('club_posts').delete().eq('id', post.id).eq('club_id', selectedClub.id)
+    if (error) {
+      toast.error('No pudimos eliminar el mensaje', { description: error.message })
+    } else {
+      setClubPosts((current) => current.filter((item) => item.id !== post.id))
+    }
   }
 
   const updateClub = async (event: FormEvent) => {
@@ -732,6 +813,89 @@ export function Clubs() {
                       </div>
                     )}
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-white/5 bg-moto-gray py-0">
+              <CardContent className="p-4 sm:p-5">
+                <div className="mb-4">
+                  <h2 className="flex items-center gap-2 font-semibold">
+                    <MessageCircle className="h-5 w-5 text-moto-orange" />
+                    Muro exclusivo del club
+                  </h2>
+                  <p className="mt-1 text-sm text-gray-400">Solo los miembros pueden ver y publicar este contenido.</p>
+                </div>
+
+                <form className="rounded-2xl border border-white/5 bg-moto-darker p-3 sm:p-4" onSubmit={publishClubPost}>
+                  <textarea
+                    className="h-24 w-full resize-none bg-transparent text-sm text-white outline-none placeholder:text-gray-500"
+                    value={postContent}
+                    onChange={(event) => setPostContent(event.target.value)}
+                    placeholder="Escribe un mensaje para los miembros..."
+                  />
+                  <div className="mt-3 flex flex-col gap-3 border-t border-white/10 pt-3 sm:flex-row sm:items-center">
+                    <label className="flex min-w-0 flex-1 items-center gap-2 text-sm text-gray-400">
+                      <MapPinned className="h-4 w-4 shrink-0 text-moto-orange" />
+                      <select
+                        className="min-w-0 flex-1 rounded-lg border border-white/10 bg-moto-gray px-3 py-2 text-white"
+                        value={postRouteId}
+                        onChange={(event) => setPostRouteId(event.target.value)}
+                      >
+                        <option value="">Sin ruta adjunta</option>
+                        {userRoutes.map((route) => (
+                          <option key={route.id} value={route.id}>{route.title}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <Button type="submit" disabled={isPublishingPost} className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
+                      {isPublishingPost ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                      Publicar
+                    </Button>
+                  </div>
+                </form>
+
+                <div className="mt-4 space-y-3">
+                  {clubPosts.length > 0 ? clubPosts.map((post) => {
+                    const authorName = post.profiles?.full_name || post.profiles?.username || 'Motero MotoCare'
+                    return (
+                      <article key={post.id} className="rounded-2xl border border-white/5 bg-moto-darker p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <Avatar className="h-10 w-10 bg-moto-gray">
+                              <AvatarImage src={post.profiles?.avatar_url ?? undefined} />
+                              <AvatarFallback>{initials(authorName)}</AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0">
+                              <p className="truncate font-medium">{authorName}</p>
+                              <p className="text-xs text-gray-500">{new Date(post.created_at).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })}</p>
+                            </div>
+                          </div>
+                          {(post.author_id === user?.id || canManageSelectedClub) && (
+                            <Button type="button" size="icon" variant="ghost" className="h-8 w-8 text-gray-500 hover:text-red-300" aria-label="Eliminar mensaje" onClick={() => void deleteClubPost(post)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                        <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-gray-200">{post.content}</p>
+                        {post.routes && (
+                          <Link to={`/app/routes/${post.routes.id}`} className="mt-4 flex items-center gap-3 rounded-xl border border-moto-orange/20 bg-moto-orange/10 p-3 transition hover:border-moto-orange/40">
+                            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-moto-orange text-moto-darker">
+                              <MapPinned className="h-5 w-5" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="truncate font-semibold text-white">{post.routes.title}</p>
+                              <p className="truncate text-xs text-gray-400">{post.routes.origin || 'Origen por definir'} → {post.routes.destination || 'Destino por definir'}</p>
+                            </div>
+                          </Link>
+                        )}
+                      </article>
+                    )
+                  }) : (
+                    <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-gray-400">
+                      Sé el primero en compartir un mensaje o una ruta con el club.
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
