@@ -167,6 +167,7 @@ export function Profile() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   const visibleName = profile?.full_name || user?.email?.split('@')[0] || 'Motero MotoCare Co'
   const username = profile?.username || user?.email?.split('@')[0] || 'motocare'
@@ -174,6 +175,14 @@ export function Profile() {
   const socialUrl = normalizeUrl(profile?.social_url)
   const isPremiumProfile = effectivePlan === 'pro' || effectivePlan === 'premium'
   const isBusinessProfile = effectivePlan === 'business'
+
+  useEffect(() => {
+    if (!supabase || !user) {
+      setIsAdmin(false)
+      return
+    }
+    void supabase.rpc('is_current_user_admin').then(({ data }) => setIsAdmin(Boolean(data)))
+  }, [user])
 
   const primaryBike = useMemo(
     () => motorcycles.find((motorcycle) => motorcycle.id === profile?.primary_motorcycle_id) ?? motorcycles[0] ?? null,
@@ -414,6 +423,25 @@ export function Profile() {
           </div>
         </CardContent>
       </Card>
+
+      {isAdmin && (
+        <Card className="mb-5 border-moto-orange/30 bg-moto-orange/10 py-0">
+          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-moto-orange text-moto-darker">
+                <Shield className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="font-semibold">Panel de administración</h2>
+                <p className="text-sm text-gray-300">Gestiona usuarios, licencias, clubes, moderación y Tienda.</p>
+              </div>
+            </div>
+            <Button asChild className="shrink-0 bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
+              <Link to="/app/admin">Abrir administración</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <Card className="mb-5 border-white/5 bg-moto-gray py-0">
         <CardContent className="p-5">
