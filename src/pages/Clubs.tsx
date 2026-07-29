@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Camera, Crown, Edit3, Flag, Loader2, MapPinned, MessageCircle, Plus, Save, Send, Shield, Trash2, UserPlus, Users } from 'lucide-react'
+import { Camera, ChevronDown, Crown, Edit3, Flag, Loader2, MapPinned, MessageCircle, Plus, Save, Send, Shield, Trash2, UserPlus, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -87,6 +87,7 @@ export function Clubs() {
   const [createForm, setCreateForm] = useState<ClubForm>(emptyClubForm)
   const [postContent, setPostContent] = useState('')
   const [postRouteId, setPostRouteId] = useState('')
+  const [showDiscoveredClubs, setShowDiscoveredClubs] = useState(false)
   const [requestedClubIds, setRequestedClubIds] = useState<Set<string>>(new Set())
   const [clubForm, setClubForm] = useState<ClubForm>(emptyClubForm)
   const [inviteUsername, setInviteUsername] = useState('')
@@ -783,11 +784,21 @@ export function Clubs() {
       </div>
 
       <section className="mb-6" aria-labelledby="discover-clubs-title">
-        <div className="mb-3">
-          <div><h2 id="discover-clubs-title" className="text-lg font-bold">Descubre clubes</h2><p className="text-sm text-gray-400">Encuentra comunidades y solicita ingreso a las que tengan esta opción habilitada.</p></div>
+        <div className="flex flex-col justify-between gap-3 rounded-2xl border border-white/5 bg-moto-gray p-4 sm:flex-row sm:items-center">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 id="discover-clubs-title" className="text-lg font-bold">Descubre clubes</h2>
+              {discoveredClubs.length > 0 && <Badge className="bg-moto-orange/15 text-moto-orange">{discoveredClubs.length}</Badge>}
+            </div>
+            <p className="text-sm text-gray-400">Clubes que actualmente aceptan solicitudes de ingreso.</p>
+          </div>
+          <Button type="button" variant="outline" className="shrink-0 border-white/10" aria-expanded={showDiscoveredClubs} aria-controls="discover-clubs-list" onClick={() => setShowDiscoveredClubs((current) => !current)}>
+            {showDiscoveredClubs ? 'Ocultar clubes' : 'Ver clubes'}
+            <ChevronDown className={`ml-2 h-4 w-4 transition-transform ${showDiscoveredClubs ? 'rotate-180' : ''}`} />
+          </Button>
         </div>
-        {discoveredClubs.length ? (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {showDiscoveredClubs && (discoveredClubs.length ? (
+          <div id="discover-clubs-list" className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {discoveredClubs.map((club) => (
               <article key={club.id} className="rounded-2xl border border-white/5 bg-moto-gray p-4">
                 <div className="flex items-center gap-3"><Avatar className="h-11 w-11"><AvatarImage src={club.image_url ?? undefined} /><AvatarFallback>{initials(club.name)}</AvatarFallback></Avatar><div className="min-w-0"><h3 className="truncate font-semibold">{club.name}</h3><p className="truncate text-sm text-gray-500">{club.city || 'Ciudad sin definir'}</p></div></div>
@@ -805,7 +816,7 @@ export function Clubs() {
               </article>
             ))}
           </div>
-        ) : <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-gray-400">No hay clubes aceptando solicitudes en este momento.</div>}
+        ) : <div id="discover-clubs-list" className="mt-3 rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-gray-400">No hay clubes aceptando solicitudes en este momento.</div>)}
       </section>
 
       <div className="grid gap-5 lg:grid-cols-[320px_minmax(0,1fr)]">
