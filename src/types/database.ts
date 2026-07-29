@@ -264,6 +264,7 @@ export type Club = {
   description: string | null
   city: string | null
   image_url: string | null
+  accepts_join_requests: boolean
   moderation_status?: 'active' | 'suspended' | 'deleted'
   moderation_until?: string | null
   moderation_reason?: string | null
@@ -335,6 +336,15 @@ export type ClubPostWithAuthor = ClubPost & {
     image_url: string | null
   } | null
   routes: RoutePlan | null
+  club_post_attendees: Array<{
+    user_id: string
+    created_at: string
+    profiles: {
+      full_name: string | null
+      username: string | null
+      avatar_url: string | null
+    } | null
+  }>
 }
 
 export type Post = {
