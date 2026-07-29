@@ -23,6 +23,7 @@ type PublicProfileSummary = {
   city: string | null
   rider_type: string | null
   avatar_url: string | null
+  is_premium: boolean
   last_seen_at: string | null
 }
 type PeopleFilter = 'all' | 'online'
@@ -176,7 +177,7 @@ export function Community() {
 
     const { data, error } = await supabase
       .from('posts')
-      .select('*, profiles:author_id(full_name, username, city, avatar_url), routes:route_id(id, owner_id, title, origin, destination, distance_km, duration_minutes, start_date, end_date, visibility, status, created_at), post_images(id, post_id, owner_id, image_url, sort_order, created_at)')
+      .select('*, profiles:author_id(full_name, username, city, avatar_url, is_premium), routes:route_id(id, owner_id, title, origin, destination, distance_km, duration_minutes, start_date, end_date, visibility, status, created_at), post_images(id, post_id, owner_id, image_url, sort_order, created_at)')
       .order('created_at', { ascending: false })
       .limit(30)
 
@@ -283,7 +284,7 @@ export function Community() {
 
     const { data, error } = await supabase
       .from('club_posts')
-      .select('*, profiles:author_id(full_name, username, avatar_url), clubs:club_id(name, image_url), routes:route_id(id, owner_id, title, origin, destination, distance_km, duration_minutes, start_date, end_date, visibility, status, created_at)')
+      .select('*, profiles:author_id(full_name, username, avatar_url, is_premium), clubs:club_id(name, image_url), routes:route_id(id, owner_id, title, origin, destination, distance_km, duration_minutes, start_date, end_date, visibility, status, created_at)')
       .eq('club_id', clubId)
       .order('created_at', { ascending: false })
       .limit(40)
@@ -426,7 +427,7 @@ export function Community() {
 
       const { data: fullPost, error: fetchError } = await supabase
         .from('posts')
-        .select('*, profiles:author_id(full_name, username, city, avatar_url), routes:route_id(id, owner_id, title, origin, destination, distance_km, duration_minutes, start_date, end_date, visibility, status, created_at), post_images(id, post_id, owner_id, image_url, sort_order, created_at)')
+        .select('*, profiles:author_id(full_name, username, city, avatar_url, is_premium), routes:route_id(id, owner_id, title, origin, destination, distance_km, duration_minutes, start_date, end_date, visibility, status, created_at), post_images(id, post_id, owner_id, image_url, sort_order, created_at)')
         .eq('id', insertedPost.id)
         .single()
 
@@ -481,7 +482,7 @@ export function Community() {
       })
       .eq('id', post.id)
       .eq('author_id', user.id)
-      .select('*, profiles:author_id(full_name, username, city, avatar_url), routes:route_id(id, owner_id, title, origin, destination, distance_km, duration_minutes, start_date, end_date, visibility, status, created_at), post_images(id, post_id, owner_id, image_url, sort_order, created_at)')
+      .select('*, profiles:author_id(full_name, username, city, avatar_url, is_premium), routes:route_id(id, owner_id, title, origin, destination, distance_km, duration_minutes, start_date, end_date, visibility, status, created_at), post_images(id, post_id, owner_id, image_url, sort_order, created_at)')
       .single()
 
     if (error) {
@@ -608,7 +609,7 @@ export function Community() {
         author_id: user.id,
         content,
       })
-      .select('*, profiles:author_id(full_name, username, avatar_url)')
+      .select('*, profiles:author_id(full_name, username, avatar_url, is_premium)')
       .single()
 
     if (error) {
@@ -649,7 +650,7 @@ export function Community() {
         content: content || `Compartiendo ruta con el club: ${selectedClubRoute?.title}`,
         route_id: selectedClubRoute?.id ?? null,
       })
-      .select('*, profiles:author_id(full_name, username, avatar_url), clubs:club_id(name, image_url), routes:route_id(id, owner_id, title, origin, destination, distance_km, duration_minutes, start_date, end_date, visibility, status, created_at)')
+      .select('*, profiles:author_id(full_name, username, avatar_url, is_premium), clubs:club_id(name, image_url), routes:route_id(id, owner_id, title, origin, destination, distance_km, duration_minutes, start_date, end_date, visibility, status, created_at)')
       .single()
 
     if (error) {
@@ -730,7 +731,7 @@ export function Community() {
           <Card className="border-white/5 bg-moto-gray py-0">
             <CardContent className="p-3 sm:p-4">
               <form className="flex gap-3 sm:gap-4" onSubmit={handleCreatePost}>
-                <Avatar className="hidden h-11 w-11 sm:flex">
+                <Avatar premium={profile?.is_premium} className="hidden h-11 w-11 sm:flex">
                   <AvatarImage src={profile?.avatar_url ?? undefined} />
                   <AvatarFallback>{initials(profile?.full_name, profile?.username)}</AvatarFallback>
                 </Avatar>
@@ -844,7 +845,7 @@ export function Community() {
                   <CardHeader className="p-4 pb-0">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="flex min-w-0 items-center gap-3">
-                        <Avatar className="h-11 w-11">
+                        <Avatar premium={author?.is_premium} className="h-11 w-11">
                           <AvatarImage src={author?.avatar_url ?? undefined} />
                           <AvatarFallback>{initials(authorName, authorUsername)}</AvatarFallback>
                         </Avatar>
@@ -981,7 +982,7 @@ export function Community() {
                             const commentName = commentAuthor?.full_name || commentAuthor?.username || 'Motero MotoCare Co'
                             return (
                               <div key={comment.id} className="flex gap-3 rounded-xl bg-moto-darker p-3">
-                                <Avatar className="h-9 w-9">
+                                <Avatar premium={commentAuthor?.is_premium} className="h-9 w-9">
                                   <AvatarImage src={commentAuthor?.avatar_url ?? undefined} />
                                   <AvatarFallback>{initials(commentName, commentAuthor?.username)}</AvatarFallback>
                                 </Avatar>
@@ -999,7 +1000,7 @@ export function Community() {
                           <p className="rounded-xl bg-moto-darker p-3 text-sm text-gray-500">Aun no hay comentarios.</p>
                         )}
                         <form className="flex gap-2 sm:gap-3" onSubmit={(event) => void handleCreateComment(event, post)}>
-                          <Avatar className="hidden h-9 w-9 sm:flex">
+                          <Avatar premium={profile?.is_premium} className="hidden h-9 w-9 sm:flex">
                             <AvatarImage src={profile?.avatar_url ?? undefined} />
                             <AvatarFallback>{initials(profile?.full_name, profile?.username)}</AvatarFallback>
                           </Avatar>
@@ -1066,7 +1067,7 @@ export function Community() {
                     return (
                       <div key={publicProfile.id} className="flex items-center gap-3 rounded-xl bg-moto-darker p-3">
                         <div className="relative">
-                          <Avatar className="h-10 w-10">
+                          <Avatar premium={publicProfile.is_premium} className="h-10 w-10">
                             <AvatarImage src={publicProfile.avatar_url ?? undefined} />
                             <AvatarFallback>{initials(publicProfile.full_name, publicProfile.username)}</AvatarFallback>
                           </Avatar>
@@ -1146,7 +1147,7 @@ export function Community() {
                       </select>
                     </div>
                     <form className="flex gap-3 sm:gap-4" onSubmit={handleCreateClubPost}>
-                      <Avatar className="hidden h-11 w-11 sm:flex">
+                      <Avatar premium={profile?.is_premium} className="hidden h-11 w-11 sm:flex">
                         <AvatarImage src={profile?.avatar_url ?? undefined} />
                         <AvatarFallback>{initials(profile?.full_name, profile?.username)}</AvatarFallback>
                       </Avatar>
@@ -1204,7 +1205,7 @@ export function Community() {
                         <CardContent className="p-4">
                           <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div className="flex min-w-0 items-center gap-3">
-                              <Avatar className="h-10 w-10">
+                              <Avatar premium={author?.is_premium} className="h-10 w-10">
                                 <AvatarImage src={author?.avatar_url ?? undefined} />
                                 <AvatarFallback>{initials(authorName, author?.username)}</AvatarFallback>
                               </Avatar>

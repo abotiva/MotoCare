@@ -340,7 +340,7 @@ export function Profile() {
                 onClick={() => setShowAvatarPreview(true)}
                 aria-label="Ver foto de perfil"
               >
-                <Avatar className="h-20 w-20 border-4 border-moto-darker bg-moto-darker sm:h-28 sm:w-28">
+                <Avatar premium={profile?.is_premium} className="h-20 w-20 border-4 border-moto-darker bg-moto-darker sm:h-28 sm:w-28">
                   <AvatarImage src={profile?.avatar_url ?? undefined} />
                   <AvatarFallback className="text-2xl sm:text-3xl">{avatarFallback}</AvatarFallback>
                 </Avatar>

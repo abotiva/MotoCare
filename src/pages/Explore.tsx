@@ -78,7 +78,7 @@ export function Explore() {
 
     let routesQuery = supabase
         .from('routes')
-        .select('*, profiles:owner_id(full_name, username, city, avatar_url)')
+        .select('*, profiles:owner_id(full_name, username, city, avatar_url, is_premium)')
         .eq('visibility', 'community')
         .order('created_at', { ascending: false })
         .limit(50)
@@ -270,7 +270,7 @@ export function Explore() {
                       </Link>
 
                       <div className="mb-4 flex items-center gap-3 rounded-xl bg-moto-darker p-3">
-                        <Avatar className="h-10 w-10">
+                        <Avatar premium={owner?.is_premium} className="h-10 w-10">
                           <AvatarImage src={owner?.avatar_url ?? undefined} />
                           <AvatarFallback>{initials(ownerName, owner?.username)}</AvatarFallback>
                         </Avatar>
@@ -342,7 +342,7 @@ export function Explore() {
                       </Link>
 
                       <div className="mb-4 flex items-center gap-3 rounded-xl bg-moto-darker p-3">
-                        <Avatar className="h-10 w-10">
+                        <Avatar premium={owner?.is_premium} className="h-10 w-10">
                           <AvatarImage src={owner?.avatar_url ?? undefined} />
                           <AvatarFallback>{initials(ownerName, owner?.username)}</AvatarFallback>
                         </Avatar>
@@ -402,7 +402,7 @@ export function Explore() {
                 <Card key={post.id} className="border-white/5 bg-moto-gray py-0">
                   <CardContent className="p-4">
                     <div className="mb-3 flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
+                      <Avatar premium={author?.is_premium} className="h-10 w-10">
                         <AvatarImage src={author?.avatar_url ?? undefined} />
                         <AvatarFallback>{initials(authorName, author?.username)}</AvatarFallback>
                       </Avatar>

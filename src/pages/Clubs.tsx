@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ImageViewer } from '@/components/ImageViewer'
+import { ClubSelector } from '@/features/clubs/components/ClubSelector'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
@@ -26,7 +27,7 @@ type MembershipRow = {
   clubs: Club | null
 }
 
-type InviteSearchProfile = Pick<Profile, 'id' | 'full_name' | 'username' | 'city' | 'avatar_url'>
+type InviteSearchProfile = Pick<Profile, 'id' | 'full_name' | 'username' | 'city' | 'avatar_url' | 'is_premium'>
 
 type ClubInvitationWithProfile = ClubInvitation & {
   profiles: {
@@ -34,6 +35,7 @@ type ClubInvitationWithProfile = ClubInvitation & {
     username: string | null
     city: string | null
     avatar_url: string | null
+    is_premium: boolean
   } | null
 }
 
@@ -43,7 +45,7 @@ type ClubJoinRequestWithProfile = {
   requester_id: string
   status: 'pending' | 'accepted' | 'declined' | 'cancelled'
   created_at: string
-  profiles: Pick<Profile, 'full_name' | 'username' | 'city' | 'avatar_url'> | null
+  profiles: Pick<Profile, 'full_name' | 'username' | 'city' | 'avatar_url' | 'is_premium'> | null
 }
 
 const emptyClubForm: ClubForm = {
@@ -137,7 +139,7 @@ export function Clubs() {
 
     const { data, error } = await supabase
       .from('club_members')
-      .select('*, profiles:user_id(full_name, username, city, avatar_url, is_public)')
+      .select('*, profiles:user_id(full_name, username, city, avatar_url, is_public, is_premium)')
       .eq('club_id', clubId)
       .order('created_at', { ascending: true })
 
@@ -153,7 +155,7 @@ export function Clubs() {
 
     const { data, error } = await supabase
       .from('club_invitations')
-      .select('*, profiles:invited_user_id(full_name, username, city, avatar_url)')
+      .select('*, profiles:invited_user_id(full_name, username, city, avatar_url, is_premium)')
       .eq('club_id', clubId)
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
@@ -170,7 +172,7 @@ export function Clubs() {
 
     const { data, error } = await supabase
       .from('club_posts')
-      .select('*, profiles:author_id(full_name, username, avatar_url), clubs:club_id(name, image_url), routes:route_id(*), club_post_attendees(user_id, created_at, profiles:user_id(full_name, username, avatar_url))')
+      .select('*, profiles:author_id(full_name, username, avatar_url, is_premium), clubs:club_id(name, image_url), routes:route_id(*), club_post_attendees(user_id, created_at, profiles:user_id(full_name, username, avatar_url, is_premium))')
       .eq('club_id', clubId)
       .order('created_at', { ascending: false })
       .limit(100)
@@ -186,7 +188,7 @@ export function Clubs() {
     if (!supabase) return
     const { data, error } = await supabase
       .from('club_join_requests')
-      .select('*, profiles:requester_id(full_name, username, city, avatar_url)')
+      .select('*, profiles:requester_id(full_name, username, city, avatar_url, is_premium)')
       .eq('club_id', clubId)
       .eq('status', 'pending')
       .order('created_at', { ascending: true })
@@ -581,7 +583,7 @@ export function Clubs() {
       return
     }
 
-    const profile = foundProfile as Pick<Profile, 'id' | 'full_name' | 'username' | 'city' | 'avatar_url' | 'is_public'>
+    const profile = foundProfile as Pick<Profile, 'id' | 'full_name' | 'username' | 'city' | 'avatar_url' | 'is_public' | 'is_premium'>
 
     const { data: existingMember } = await supabase
       .from('club_members')
@@ -819,49 +821,26 @@ export function Clubs() {
         ) : <div id="discover-clubs-list" className="mt-3 rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-gray-400">No hay clubes aceptando solicitudes en este momento.</div>)}
       </section>
 
-      <div className="grid gap-5 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <div className="order-2 space-y-4 lg:order-1">
-          <Card className="border-white/5 bg-moto-gray py-0">
-            <CardContent className="p-4">
-              <h2 className="mb-3 font-semibold">Mis clubes</h2>
-              {clubs.length > 0 ? (
-                <div className="space-y-2">
-                  {clubs.map((club) => (
-                    <button
-                      key={club.id}
-                      type="button"
-                      className={`flex w-full items-center gap-3 rounded-xl p-3 text-left transition-colors ${selectedClub?.id === club.id ? 'bg-moto-orange text-moto-darker' : 'bg-moto-darker hover:bg-white/5'}`}
-                      onClick={() => {
-                        setHasManualSelection(true)
-                        setSelectedClubId(club.id)
-                      }}
-                    >
-                      <Avatar className="h-10 w-10 bg-moto-gray">
-                        <AvatarImage src={club.image_url ?? undefined} />
-                        <AvatarFallback>{initials(club.name)}</AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0">
-                        <div className="flex min-w-0 items-center gap-2">
-                          <p className="truncate font-medium">{club.name}</p>
-                          {club.id === profile?.primary_club_id && (
-                            <Badge className="shrink-0 bg-white/20 text-[10px] text-inherit">Predeterminado</Badge>
-                          )}
-                        </div>
-                        <p className={`truncate text-xs ${selectedClub?.id === club.id ? 'text-moto-darker/70' : 'text-gray-500'}`}>{club.city || 'Ciudad sin definir'}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-xl bg-moto-darker p-4 text-sm text-gray-400"><p className="font-semibold text-white">Encuentra tu comunidad</p><p className="mt-1">Descubre clubes, conoce otros moteros y participa en próximas salidas.</p></div>
-              )}
-            </CardContent>
-          </Card>
-
+      {clubs.length > 0 ? (
+        <ClubSelector
+          clubs={clubs}
+          selectedId={selectedClub?.id ?? null}
+          primaryId={profile?.primary_club_id}
+          onSelect={(club) => {
+            setHasManualSelection(true)
+            setSelectedClubId(club.id)
+          }}
+          onSetPrimary={(club) => void setPrimaryClub(club)}
+        />
+      ) : (
+        <div className="mb-6 rounded-xl border border-white/5 bg-moto-gray p-4 text-sm text-gray-400">
+          <p className="font-semibold text-white">Encuentra tu comunidad</p>
+          <p className="mt-1">Descubre clubes, conoce otros moteros y participa en próximas salidas.</p>
         </div>
+      )}
 
-        {selectedClub ? (
-          <div className="order-1 space-y-5 lg:order-2">
+      {selectedClub ? (
+          <div className="space-y-5">
             <Card className="border-white/5 bg-moto-gray py-0">
               <CardContent className="p-4 sm:p-5">
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
@@ -902,12 +881,12 @@ export function Clubs() {
                     </div>
                     <p className="text-gray-400">{selectedClub.city || 'Ciudad sin definir'}</p>
                     <p className="mt-3 text-sm leading-6 text-gray-300">{selectedClub.description || 'Club sin descripción todavía.'}</p>
-                    {canManageSelectedClub && (
+                    {(canManageSelectedClub || selectedClub.id !== profile?.primary_club_id) && (
                       <div className="mt-4 flex flex-wrap justify-center gap-2 sm:justify-start">
                         {selectedClub.id !== profile?.primary_club_id && (
                           <Button size="sm" variant="outline" className="border-white/10" onClick={() => void setPrimaryClub(selectedClub)}>
                             <Crown className="mr-2 h-4 w-4" />
-                            Usar por defecto
+                            Definir como principal
                           </Button>
                         )}
                         {selectedClub.owner_id === user?.id && (
@@ -976,7 +955,7 @@ export function Clubs() {
                       <article key={post.id} className="rounded-2xl border border-white/5 bg-moto-darker p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex min-w-0 items-center gap-3">
-                            <Avatar className="h-10 w-10 bg-moto-gray">
+                            <Avatar premium={post.profiles?.is_premium} className="h-10 w-10 bg-moto-gray">
                               <AvatarImage src={post.profiles?.avatar_url ?? undefined} />
                               <AvatarFallback>{initials(authorName)}</AvatarFallback>
                             </Avatar>
@@ -1007,7 +986,7 @@ export function Clubs() {
                               <div className="flex min-w-0 items-center">
                                 {post.club_post_attendees.slice(0, 5).map((attendee) => {
                                   const attendeeName = attendee.profiles?.full_name || attendee.profiles?.username || 'Motero'
-                                  return <Avatar key={attendee.user_id} title={attendeeName} className="-ml-1 h-7 w-7 border-2 border-moto-darker first:ml-0"><AvatarImage src={attendee.profiles?.avatar_url ?? undefined} /><AvatarFallback className="text-[9px]">{initials(attendeeName)}</AvatarFallback></Avatar>
+                                  return <Avatar key={attendee.user_id} premium={attendee.profiles?.is_premium} title={attendeeName} className="-ml-1 h-7 w-7 border-2 border-moto-darker first:ml-0"><AvatarImage src={attendee.profiles?.avatar_url ?? undefined} /><AvatarFallback className="text-[9px]">{initials(attendeeName)}</AvatarFallback></Avatar>
                                 })}
                                 <span className="ml-2 text-xs text-gray-300">{post.club_post_attendees.length} {post.club_post_attendees.length === 1 ? 'miembro va' : 'miembros van'}</span>
                               </div>
@@ -1088,7 +1067,7 @@ export function Clubs() {
                                       setInviteSuggestions([])
                                     }}
                                   >
-                                    <Avatar className="h-9 w-9 bg-moto-gray">
+                                    <Avatar premium={suggestion.is_premium} className="h-9 w-9 bg-moto-gray">
                                       <AvatarImage src={suggestion.avatar_url ?? undefined} />
                                       <AvatarFallback>{initials(suggestionName)}</AvatarFallback>
                                     </Avatar>
@@ -1118,7 +1097,7 @@ export function Clubs() {
                     return (
                       <div key={member.id} className="flex flex-col gap-3 rounded-xl bg-moto-darker p-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex min-w-0 items-center gap-3">
-                          <Avatar className="h-10 w-10 bg-moto-gray">
+                          <Avatar premium={member.profiles?.is_premium} className="h-10 w-10 bg-moto-gray">
                             <AvatarImage src={member.profiles?.avatar_url ?? undefined} />
                             <AvatarFallback>{initials(memberName)}</AvatarFallback>
                           </Avatar>
@@ -1152,7 +1131,7 @@ export function Clubs() {
                         return (
                           <div key={request.id} className="flex flex-col gap-3 rounded-xl bg-moto-darker p-3 sm:flex-row sm:items-center sm:justify-between">
                             <div className="flex min-w-0 items-center gap-3">
-                              <Avatar className="h-10 w-10 bg-moto-gray"><AvatarImage src={request.profiles?.avatar_url ?? undefined} /><AvatarFallback>{initials(requesterName)}</AvatarFallback></Avatar>
+                              <Avatar premium={request.profiles?.is_premium} className="h-10 w-10 bg-moto-gray"><AvatarImage src={request.profiles?.avatar_url ?? undefined} /><AvatarFallback>{initials(requesterName)}</AvatarFallback></Avatar>
                               <div className="min-w-0"><p className="truncate font-medium">{requesterName}</p><p className="truncate text-xs text-gray-500">{request.profiles?.city || 'Ciudad sin definir'}</p></div>
                             </div>
                             <div className="flex gap-2">
@@ -1178,7 +1157,7 @@ export function Clubs() {
                         return (
                           <div key={invitation.id} className="flex flex-col gap-3 rounded-xl bg-moto-darker p-3 sm:flex-row sm:items-center sm:justify-between">
                             <div className="flex min-w-0 items-center gap-3">
-                              <Avatar className="h-10 w-10 bg-moto-gray">
+                              <Avatar premium={invitation.profiles?.is_premium} className="h-10 w-10 bg-moto-gray">
                                 <AvatarImage src={invitation.profiles?.avatar_url ?? undefined} />
                                 <AvatarFallback>{initials(invitedName)}</AvatarFallback>
                               </Avatar>
@@ -1207,7 +1186,6 @@ export function Clubs() {
             </CardContent>
           </Card>
         )}
-      </div>
       <Dialog open={showCreateClub} onOpenChange={(open) => {
         setShowCreateClub(open)
         if (!open && !isSaving) setCreateForm(emptyClubForm)

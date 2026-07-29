@@ -97,7 +97,7 @@ export function RouteDetail() {
       setIsLoading(true)
       const { data, error } = await supabase
         .from('routes')
-        .select('*, profiles:owner_id(full_name, username, city, avatar_url), motorcycles:motorcycle_id(id, brand, model, plate)')
+        .select('*, profiles:owner_id(full_name, username, city, avatar_url, is_premium), motorcycles:motorcycle_id(id, brand, model, plate)')
         .eq('id', routeId)
         .maybeSingle()
 
@@ -183,7 +183,7 @@ export function RouteDetail() {
             </div>
 
             <div className="flex min-w-0 items-center gap-3 rounded-xl bg-moto-darker p-3 lg:min-w-72">
-              <Avatar className="h-12 w-12">
+              <Avatar premium={owner?.is_premium} className="h-12 w-12">
                 <AvatarImage src={owner?.avatar_url ?? undefined} />
                 <AvatarFallback>{initials(ownerName, owner?.username)}</AvatarFallback>
               </Avatar>

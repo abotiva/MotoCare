@@ -163,7 +163,7 @@ export function Settings() {
       <Card className="mb-6 overflow-hidden border-white/5 bg-moto-gray py-0">
         <CardContent className="p-4 sm:p-5">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-            <Avatar className="mx-auto h-16 w-16 shrink-0 sm:mx-0 sm:h-20 sm:w-20">
+            <Avatar premium={profile?.is_premium} className="mx-auto h-16 w-16 shrink-0 sm:mx-0 sm:h-20 sm:w-20">
               <AvatarImage src={profile?.avatar_url ?? undefined} />
               <AvatarFallback className="text-xl">{initials(profile?.full_name, user?.email)}</AvatarFallback>
             </Avatar>

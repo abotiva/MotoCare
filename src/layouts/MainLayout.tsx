@@ -246,7 +246,7 @@ export function MainLayout() {
         </nav>
         <div className="border-t border-white/5 p-4">
           <Link to="/app/profile" className="flex min-h-11 items-center gap-3 rounded-xl p-2 hover:bg-white/5">
-            <Avatar className="h-9 w-9 bg-moto-gray">
+            <Avatar premium={profile?.is_premium} className="h-9 w-9 bg-moto-gray">
               <AvatarImage src={profile?.avatar_url ?? undefined} />
               <AvatarFallback>{avatarFallback}</AvatarFallback>
             </Avatar>
@@ -292,7 +292,7 @@ export function MainLayout() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button type="button" className="grid h-11 w-11 place-items-center rounded-xl hover:bg-white/5" aria-label="Abrir opciones de cuenta">
-                    <Avatar className="h-8 w-8 bg-moto-gray">
+                    <Avatar premium={profile?.is_premium} className="h-8 w-8 bg-moto-gray">
                       <AvatarImage src={profile?.avatar_url ?? undefined} />
                       <AvatarFallback className="text-xs">{avatarFallback}</AvatarFallback>
                     </Avatar>

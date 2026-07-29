@@ -7,6 +7,7 @@ export type Profile = {
   bio: string | null
   social_url: string | null
   avatar_url: string | null
+  is_premium: boolean
   primary_motorcycle_id: string | null
   primary_club_id: string | null
   is_public: boolean
@@ -74,6 +75,7 @@ export type MarketplaceListingWithSeller = MarketplaceListing & {
     username: string | null
     city: string | null
     avatar_url: string | null
+    is_premium: boolean
   } | null
   marketplace_listing_images: MarketplaceListingImage[]
 }
@@ -220,6 +222,7 @@ export type RouteWithOwner = RoutePlan & {
     username: string | null
     city: string | null
     avatar_url: string | null
+    is_premium: boolean
   } | null
   motorcycles?: {
     id: string
@@ -286,6 +289,7 @@ export type ClubMemberWithProfile = ClubMember & {
     username: string | null
     city: string | null
     avatar_url: string | null
+    is_premium: boolean
     is_public?: boolean
   } | null
 }
@@ -330,6 +334,7 @@ export type ClubPostWithAuthor = ClubPost & {
     full_name: string | null
     username: string | null
     avatar_url: string | null
+    is_premium: boolean
   } | null
   clubs: {
     name: string
@@ -343,6 +348,7 @@ export type ClubPostWithAuthor = ClubPost & {
       full_name: string | null
       username: string | null
       avatar_url: string | null
+      is_premium: boolean
     } | null
   }>
 }
@@ -374,6 +380,7 @@ export type PostWithAuthor = Post & {
     username: string | null
     city: string | null
     avatar_url: string | null
+    is_premium: boolean
   } | null
   routes: RoutePlan | null
   post_images: PostImage[]
@@ -401,6 +408,7 @@ export type PostCommentWithAuthor = PostComment & {
     full_name: string | null
     username: string | null
     avatar_url: string | null
+    is_premium: boolean
   } | null
 }
 
