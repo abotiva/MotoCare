@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Bookmark, BookmarkCheck, Calendar, Clock, Loader2, MapPin, Route as RouteIcon, Search } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Bookmark, BookmarkCheck, Calendar, ChevronDown, Clock, Download, Loader2, MapPin, Route as RouteIcon, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -45,12 +45,15 @@ const routeStatusLabels: Record<RouteWithOwner['status'], string> = {
 
 export function Explore() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const userId = user?.id
   const [searchQuery, setSearchQuery] = useState('')
   const [routes, setRoutes] = useState<RouteWithOwner[]>([])
   const [savedRouteIds, setSavedRouteIds] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [savingRouteId, setSavingRouteId] = useState<string | null>(null)
+  const [importingRouteId, setImportingRouteId] = useState<string | null>(null)
+  const [showSavedRoutes, setShowSavedRoutes] = useState(false)
 
   const filteredRoutes = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
@@ -63,6 +66,11 @@ export function Explore() {
         .some((value) => String(value).toLowerCase().includes(query))
     })
   }, [routes, searchQuery])
+
+  const savedRoutes = useMemo(
+    () => routes.filter((route) => savedRouteIds.includes(route.id)),
+    [routes, savedRouteIds]
+  )
 
   const loadExplore = useCallback(async () => {
     if (!supabase) return
@@ -123,6 +131,33 @@ export function Explore() {
     setSavingRouteId(null)
   }
 
+  const importSavedRoute = async (route: RouteWithOwner) => {
+    if (!supabase || !user || importingRouteId) return
+    setImportingRouteId(route.id)
+    const { error } = await supabase.from('routes').insert({
+      owner_id: user.id,
+      motorcycle_id: null,
+      title: route.title,
+      origin: route.origin,
+      destination: route.destination,
+      distance_km: route.distance_km,
+      duration_minutes: route.duration_minutes,
+      start_date: route.start_date,
+      end_date: route.end_date,
+      visibility: 'private',
+      status: 'planned',
+      track_geojson: route.track_geojson,
+    })
+    setImportingRouteId(null)
+
+    if (error) {
+      toast.error('No pudimos importar la ruta', { description: error.message })
+    } else {
+      toast.success('Ruta importada', { description: 'Se agregó como ruta privada y planeada.' })
+      navigate('/app/map')
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="grid min-h-[70vh] place-items-center text-moto-orange">
@@ -164,6 +199,52 @@ export function Explore() {
           />
         </div>
       </div>
+
+      <section className="mb-6" aria-labelledby="saved-routes-title">
+        <button
+          type="button"
+          className="flex w-full items-center justify-between gap-3 rounded-2xl border border-white/5 bg-moto-gray p-4 text-left"
+          aria-expanded={showSavedRoutes}
+          aria-controls="saved-routes-list"
+          onClick={() => setShowSavedRoutes((current) => !current)}
+        >
+          <div>
+            <div className="flex items-center gap-2">
+              <BookmarkCheck className="h-5 w-5 text-moto-orange" />
+              <h2 id="saved-routes-title" className="font-semibold">Rutas guardadas</h2>
+              <Badge className="bg-moto-orange/15 text-moto-orange">{savedRoutes.length}</Badge>
+            </div>
+            <p className="mt-1 text-sm text-gray-400">Consúltalas o impórtalas como rutas privadas en Mis rutas.</p>
+          </div>
+          <ChevronDown className={`h-5 w-5 shrink-0 text-gray-400 transition-transform ${showSavedRoutes ? 'rotate-180' : ''}`} />
+        </button>
+
+        {showSavedRoutes && (
+          <div id="saved-routes-list" className="mt-3 grid gap-3 md:grid-cols-2">
+            {savedRoutes.length > 0 ? savedRoutes.map((route) => (
+              <Card key={route.id} className="border-white/5 bg-moto-gray py-0">
+                <CardContent className="p-4">
+                  <Link to={`/app/routes/${route.id}`} className="font-semibold transition hover:text-moto-orange">{route.title}</Link>
+                  <p className="mt-1 truncate text-sm text-gray-400">{route.origin || 'Origen sin definir'} - {route.destination || 'Destino sin definir'}</p>
+                  <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                    <Button asChild size="sm" variant="outline" className="flex-1 border-white/10">
+                      <Link to={`/app/routes/${route.id}`}>Ver detalle</Link>
+                    </Button>
+                    <Button type="button" size="sm" disabled={importingRouteId === route.id} className="flex-1 bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => void importSavedRoute(route)}>
+                      {importingRouteId === route.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                      Importar a Mis rutas
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )) : (
+              <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-gray-400 md:col-span-2">
+                Guarda una ruta pública para encontrarla aquí.
+              </div>
+            )}
+          </div>
+        )}
+      </section>
 
       <section className="space-y-4" aria-label="Rutas públicas de otros miembros">
           {filteredRoutes.length > 0 ? (
