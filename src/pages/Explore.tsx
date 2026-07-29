@@ -1,16 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Bookmark, BookmarkCheck, Calendar, Clock, Loader2, MapPin, MessageCircle, Route as RouteIcon, Search, Star, TrendingUp, Users } from 'lucide-react'
+import { Bookmark, BookmarkCheck, Calendar, Clock, Loader2, MapPin, Route as RouteIcon, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
-import type { PostWithAuthor, RouteWithOwner } from '@/types/database'
+import type { RouteWithOwner } from '@/types/database'
 
 function initials(name: string | null | undefined, username: string | null | undefined) {
   const source = name || username || 'MC'
@@ -38,16 +37,6 @@ function formatRouteDates(route: { start_date: string | null; end_date: string |
   return `Finaliza ${formatDate(route.end_date!)}`
 }
 
-function relativeDate(value: string) {
-  const created = new Date(value).getTime()
-  const diffMinutes = Math.max(Math.floor((Date.now() - created) / 60_000), 0)
-  if (diffMinutes < 1) return 'Ahora'
-  if (diffMinutes < 60) return `${diffMinutes} min`
-  const diffHours = Math.floor(diffMinutes / 60)
-  if (diffHours < 24) return `${diffHours} h`
-  return `${Math.floor(diffHours / 24)} d`
-}
-
 const routeStatusLabels: Record<RouteWithOwner['status'], string> = {
   planned: 'Planeada',
   in_progress: 'En curso',
@@ -59,7 +48,6 @@ export function Explore() {
   const userId = user?.id
   const [searchQuery, setSearchQuery] = useState('')
   const [routes, setRoutes] = useState<RouteWithOwner[]>([])
-  const [posts, setPosts] = useState<PostWithAuthor[]>([])
   const [savedRouteIds, setSavedRouteIds] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [savingRouteId, setSavingRouteId] = useState<string | null>(null)
@@ -76,39 +64,20 @@ export function Explore() {
     })
   }, [routes, searchQuery])
 
-  const filteredPosts = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase()
-    if (!query) return posts
-
-    return posts.filter((post) => {
-      const author = post.profiles
-      const route = post.routes
-      return [post.content, author?.full_name, author?.username, author?.city, route?.title, route?.origin, route?.destination]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(query))
-    })
-  }, [posts, searchQuery])
-
-  const completedRoutes = useMemo(() => routes.filter((route) => route.status === 'completed').length, [routes])
-  const totalKm = useMemo(() => routes.reduce((total, route) => total + (route.distance_km ?? 0), 0), [routes])
-  const savedRoutes = useMemo(() => routes.filter((route) => savedRouteIds.includes(route.id)), [routes, savedRouteIds])
-
   const loadExplore = useCallback(async () => {
     if (!supabase) return
     setIsLoading(true)
 
-    const [routesResult, postsResult, savedRoutesResult] = await Promise.all([
-      supabase
+    let routesQuery = supabase
         .from('routes')
         .select('*, profiles:owner_id(full_name, username, city, avatar_url)')
         .eq('visibility', 'community')
         .order('created_at', { ascending: false })
-        .limit(50),
-      supabase
-        .from('posts')
-        .select('*, profiles:author_id(full_name, username, city, avatar_url), routes:route_id(id, owner_id, title, origin, destination, distance_km, duration_minutes, start_date, end_date, visibility, status, created_at)')
-        .order('created_at', { ascending: false })
-        .limit(30),
+        .limit(50)
+    if (userId) routesQuery = routesQuery.neq('owner_id', userId)
+
+    const [routesResult, savedRoutesResult] = await Promise.all([
+      routesQuery,
       userId
         ? supabase.from('saved_routes').select('route_id').eq('user_id', userId)
         : Promise.resolve({ data: [], error: null }),
@@ -118,12 +87,6 @@ export function Explore() {
       toast.error('No pudimos cargar rutas para explorar', { description: routesResult.error.message })
     } else {
       setRoutes((routesResult.data ?? []) as RouteWithOwner[])
-    }
-
-    if (postsResult.error) {
-      toast.error('No pudimos cargar publicaciones', { description: postsResult.error.message })
-    } else {
-      setPosts((postsResult.data ?? []) as PostWithAuthor[])
     }
 
     if (savedRoutesResult.error) {
@@ -175,41 +138,20 @@ export function Explore() {
         <p className="text-gray-400">Encuentra recorridos compartidos por la comunidad MotoCare.</p>
       </div>
 
-      <div className="mb-5 grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-        <Card className="border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="grid h-12 w-12 place-items-center rounded-xl bg-moto-orange/20">
-              <RouteIcon className="h-6 w-6 text-moto-orange" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">Rutas publicas</p>
-              <p className="text-xl font-bold">{routes.length}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="grid h-12 w-12 place-items-center rounded-xl bg-sky-500/20">
-              <TrendingUp className="h-6 w-6 text-sky-300" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">Km compartidos</p>
-              <p className="text-xl font-bold">{totalKm.toLocaleString()} km</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-white/5 bg-moto-gray py-0">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="grid h-12 w-12 place-items-center rounded-xl bg-green-500/20">
-              <BookmarkCheck className="h-6 w-6 text-green-400" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-400">Guardadas</p>
-              <p className="text-xl font-bold">{savedRouteIds.length}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <Card className="relative mb-6 overflow-hidden border-moto-orange/30 bg-moto-darker py-0">
+        <div className="absolute inset-0 bg-[url('/feature-gps.jpg')] bg-cover bg-center opacity-25" />
+        <div className="absolute inset-0 bg-gradient-to-r from-moto-darker via-moto-darker/90 to-moto-darker/40" />
+        <CardContent className="relative flex min-h-44 flex-col justify-center gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-7">
+          <div className="max-w-2xl">
+            <Badge className="mb-3 bg-moto-orange text-moto-darker">Rutas Premium</Badge>
+            <h2 className="text-xl font-bold sm:text-2xl">Recorridos seleccionados y GPX listos para usar</h2>
+            <p className="mt-2 text-sm leading-6 text-gray-300">Complementa las rutas públicas de la comunidad con experiencias Premium.</p>
+          </div>
+          <Button asChild className="shrink-0 bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
+            <Link to="/app/premium-routes">Ver rutas Premium</Link>
+          </Button>
+        </CardContent>
+      </Card>
 
       <div className="mb-6">
         <div className="relative">
@@ -223,23 +165,7 @@ export function Explore() {
         </div>
       </div>
 
-      <Tabs defaultValue="routes" className="w-full">
-        <TabsList className="mb-6 w-full border-white/5 bg-moto-gray">
-          <TabsTrigger value="routes" className="flex-1 data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker">
-            Rutas
-          </TabsTrigger>
-          <TabsTrigger value="posts" className="flex-1 data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker">
-            Publicaciones
-          </TabsTrigger>
-          <TabsTrigger value="saved" className="flex-1 data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker">
-            Guardadas
-          </TabsTrigger>
-          <TabsTrigger value="activity" className="flex-1 data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker">
-            Actividad
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="routes" className="space-y-4">
+      <section className="space-y-4" aria-label="Rutas públicas de otros miembros">
           {filteredRoutes.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2">
               {filteredRoutes.map((route) => {
@@ -309,9 +235,9 @@ export function Explore() {
               </CardContent>
             </Card>
           )}
-        </TabsContent>
+      </section>
 
-        <TabsContent value="saved" className="space-y-4">
+        {/*
           {savedRoutes.length > 0 ? (
             <div className="grid gap-4 md:grid-cols-2">
               {savedRoutes.map((route) => {
@@ -455,7 +381,7 @@ export function Explore() {
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
+        */}
     </div>
   )
 }
