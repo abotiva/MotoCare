@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ImageViewer } from '@/components/ImageViewer'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
@@ -76,6 +77,7 @@ export function Clubs() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [showCreateClub, setShowCreateClub] = useState(false)
   const [viewerImage, setViewerImage] = useState<{ src: string; alt: string } | null>(null)
 
   const selectedClub = useMemo(
@@ -301,6 +303,7 @@ export function Clubs() {
       await setPrimaryClub(createdClub)
     }
     setCreateForm(emptyClubForm)
+    setShowCreateClub(false)
     toast.success('Club creado', { description: 'Ya puedes invitar miembros.' })
 
     setIsSaving(false)
@@ -589,8 +592,21 @@ export function Clubs() {
       <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
         <div className="min-w-0">
           <h1 className="text-xl font-bold sm:text-2xl">Clubes</h1>
-          <p className="text-sm leading-6 text-gray-400 sm:text-base">Crea clubes, administra miembros y prepara espacios privados para rodadas.</p>
+          <p className="text-sm leading-6 text-gray-400 sm:text-base">Descubre comunidades, administra tus clubes y organiza próximas rodadas.</p>
         </div>
+        <Button
+          type="button"
+          size="icon"
+          className="h-12 w-12 shrink-0 rounded-full bg-moto-orange text-moto-darker shadow-lg shadow-moto-orange/20 hover:bg-moto-orange-dark"
+          aria-label="Crear un club nuevo"
+          title="Crear un club nuevo"
+          onClick={() => {
+            if (canCreateClub) setShowCreateClub(true)
+            else showUpgradeForClubCreation()
+          }}
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
       </div>
 
       <section className="mb-6" aria-labelledby="discover-clubs-title">
@@ -647,37 +663,6 @@ export function Clubs() {
             </CardContent>
           </Card>
 
-          <Card className="border-white/5 bg-moto-gray py-0">
-            <CardContent className="p-4">
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                <h2 className="font-semibold">Crear club</h2>
-                <Badge className={canCreateClub ? 'bg-moto-orange text-moto-darker' : 'bg-white/10 text-gray-300'}>
-                  {effectivePlan === 'business' ? 'No aplica' : `${ownedClubsCount}/3`}
-                </Badge>
-              </div>
-              {!canCreateClub && (
-                <div className="mb-3 rounded-xl border border-moto-orange/20 bg-moto-orange/10 p-3 text-sm text-gray-200">
-                  {effectivePlan === 'business'
-                    ? 'La licencia Business es para negocios. No permite crear clubes ni operar como motero.'
-                    : 'Free solo puede unirse por invitación y pertenecer a un club. Crear clubes requiere Premium.'}
-                </div>
-              )}
-              <form className="space-y-3" onSubmit={createClub}>
-                <input disabled={!canCreateClub || isLoadingSubscription} className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white disabled:opacity-60" value={createForm.name} onChange={(event) => setCreateForm({ ...createForm, name: event.target.value })} placeholder="Nombre del club" />
-                <input disabled={!canCreateClub || isLoadingSubscription} className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white disabled:opacity-60" value={createForm.city} onChange={(event) => setCreateForm({ ...createForm, city: event.target.value })} placeholder="Ciudad" />
-                <textarea disabled={!canCreateClub || isLoadingSubscription} className="h-20 w-full resize-none rounded-lg border border-white/10 bg-moto-darker p-2 text-white disabled:opacity-60" value={createForm.description} onChange={(event) => setCreateForm({ ...createForm, description: event.target.value })} placeholder="Descripcion corta" />
-                <Button type="submit" disabled={isSaving || isLoadingSubscription} className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={(event) => {
-                  if (!canCreateClub) {
-                    event.preventDefault()
-                    showUpgradeForClubCreation()
-                  }
-                }}>
-                  {isSaving || isLoadingSubscription ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
-                  {canCreateClub ? 'Crear club' : 'Actualizar cuenta'}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
         </div>
 
         {selectedClub ? (
@@ -901,6 +886,45 @@ export function Clubs() {
           </Card>
         )}
       </div>
+      <Dialog open={showCreateClub} onOpenChange={(open) => {
+        setShowCreateClub(open)
+        if (!open && !isSaving) setCreateForm(emptyClubForm)
+      }}>
+        <DialogContent className="max-w-md border-white/10 bg-moto-gray text-white">
+          <DialogHeader>
+            <div className="mb-1 flex items-center gap-3">
+              <div className="grid h-11 w-11 place-items-center rounded-full bg-moto-orange/15 text-moto-orange">
+                <Users className="h-5 w-5" />
+              </div>
+              <div>
+                <DialogTitle>Nuevo club</DialogTitle>
+                <Badge className="mt-2 bg-moto-orange/15 text-moto-orange">{ownedClubsCount}/3 creados</Badge>
+              </div>
+            </div>
+            <DialogDescription className="text-left text-gray-400">
+              Dale una identidad a tu comunidad. Podrás agregar una imagen e invitar miembros después de crearla.
+            </DialogDescription>
+          </DialogHeader>
+          <form className="space-y-4" onSubmit={createClub}>
+            <label className="block space-y-1.5 text-sm font-medium">
+              <span>Nombre del club</span>
+              <input autoFocus className="w-full rounded-xl border border-white/10 bg-moto-darker px-3 py-2.5 text-white outline-none focus:border-moto-orange" value={createForm.name} onChange={(event) => setCreateForm({ ...createForm, name: event.target.value })} placeholder="Ej. Moteros de Bogotá" />
+            </label>
+            <label className="block space-y-1.5 text-sm font-medium">
+              <span>Ciudad</span>
+              <input className="w-full rounded-xl border border-white/10 bg-moto-darker px-3 py-2.5 text-white outline-none focus:border-moto-orange" value={createForm.city} onChange={(event) => setCreateForm({ ...createForm, city: event.target.value })} placeholder="Ciudad principal" />
+            </label>
+            <label className="block space-y-1.5 text-sm font-medium">
+              <span>Descripción</span>
+              <textarea className="h-24 w-full resize-none rounded-xl border border-white/10 bg-moto-darker px-3 py-2.5 text-white outline-none focus:border-moto-orange" value={createForm.description} onChange={(event) => setCreateForm({ ...createForm, description: event.target.value })} placeholder="¿Qué identifica a este club?" />
+            </label>
+            <Button type="submit" disabled={isSaving || isLoadingSubscription} className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
+              {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+              Crear club
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
       <ImageViewer
         src={viewerImage?.src ?? null}
         alt={viewerImage?.alt}
