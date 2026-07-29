@@ -87,7 +87,6 @@ export function Clubs() {
   const [createForm, setCreateForm] = useState<ClubForm>(emptyClubForm)
   const [postContent, setPostContent] = useState('')
   const [postRouteId, setPostRouteId] = useState('')
-  const [onlyRequestableClubs, setOnlyRequestableClubs] = useState(false)
   const [requestedClubIds, setRequestedClubIds] = useState<Set<string>>(new Set())
   const [clubForm, setClubForm] = useState<ClubForm>(emptyClubForm)
   const [inviteUsername, setInviteUsername] = useState('')
@@ -253,6 +252,7 @@ export function Clubs() {
       .from('clubs')
       .select('*')
       .eq('moderation_status', 'active')
+      .eq('accepts_join_requests', true)
       .order('created_at', { ascending: false })
       .limit(12)
       .then(({ data }) => setDiscoveredClubs((data ?? []) as Club[]))
@@ -506,6 +506,9 @@ export function Clubs() {
     } else if (data) {
       const updatedClub = data as Club
       setClubs((current) => current.map((club) => (club.id === updatedClub.id ? updatedClub : club)))
+      setDiscoveredClubs((current) => updatedClub.accepts_join_requests
+        ? [updatedClub, ...current.filter((club) => club.id !== updatedClub.id)]
+        : current.filter((club) => club.id !== updatedClub.id))
       toast.success('Club actualizado')
     }
 
@@ -780,35 +783,29 @@ export function Clubs() {
       </div>
 
       <section className="mb-6" aria-labelledby="discover-clubs-title">
-        <div className="mb-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+        <div className="mb-3">
           <div><h2 id="discover-clubs-title" className="text-lg font-bold">Descubre clubes</h2><p className="text-sm text-gray-400">Encuentra comunidades y solicita ingreso a las que tengan esta opción habilitada.</p></div>
-          <label className="flex items-center gap-2 text-sm text-gray-300">
-            <input type="checkbox" checked={onlyRequestableClubs} onChange={(event) => setOnlyRequestableClubs(event.target.checked)} className="h-4 w-4 accent-moto-orange" />
-            Solo los que aceptan solicitudes
-          </label>
         </div>
-        {(onlyRequestableClubs ? discoveredClubs.filter((club) => club.accepts_join_requests) : discoveredClubs).length ? (
+        {discoveredClubs.length ? (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {(onlyRequestableClubs ? discoveredClubs.filter((club) => club.accepts_join_requests) : discoveredClubs).map((club) => (
+            {discoveredClubs.map((club) => (
               <article key={club.id} className="rounded-2xl border border-white/5 bg-moto-gray p-4">
                 <div className="flex items-center gap-3"><Avatar className="h-11 w-11"><AvatarImage src={club.image_url ?? undefined} /><AvatarFallback>{initials(club.name)}</AvatarFallback></Avatar><div className="min-w-0"><h3 className="truncate font-semibold">{club.name}</h3><p className="truncate text-sm text-gray-500">{club.city || 'Ciudad sin definir'}</p></div></div>
                 <p className="mt-3 line-clamp-2 text-sm text-gray-400">{club.description || 'Comunidad motera en MotoCare.'}</p>
-                {club.accepts_join_requests ? (
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={requestedClubIds.has(club.id) || clubs.some((item) => item.id === club.id)}
-                    className="mt-4 w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark"
-                    onClick={() => void requestClubMembership(club)}
-                  >
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    {clubs.some((item) => item.id === club.id) ? 'Ya eres miembro' : requestedClubIds.has(club.id) ? 'Solicitud enviada' : 'Solicitar ingreso'}
-                  </Button>
-                ) : <Badge className="mt-4 bg-white/10 text-gray-300">Solo por invitación</Badge>}
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={requestedClubIds.has(club.id) || clubs.some((item) => item.id === club.id)}
+                  className="mt-4 w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark"
+                  onClick={() => void requestClubMembership(club)}
+                >
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  {clubs.some((item) => item.id === club.id) ? 'Ya eres miembro' : requestedClubIds.has(club.id) ? 'Solicitud enviada' : 'Solicitar ingreso'}
+                </Button>
               </article>
             ))}
           </div>
-        ) : <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-gray-400">Aún no hay clubes públicos para descubrir.</div>}
+        ) : <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-gray-400">No hay clubes aceptando solicitudes en este momento.</div>}
       </section>
 
       <div className="grid gap-5 lg:grid-cols-[320px_minmax(0,1fr)]">
