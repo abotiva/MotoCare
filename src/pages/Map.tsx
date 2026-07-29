@@ -12,7 +12,7 @@ import { useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
 import { parseGpx, trackDistanceKm } from '@/lib/gpx'
 import type { RouteTrack } from '@/lib/gpx'
-import { premiumRouteSummaries, readOwnedRouteIds } from '@/lib/premiumRoutePurchases'
+import { premiumRouteSummaries } from '@/lib/premiumRoutePurchases'
 import type { Motorcycle, RoutePlan } from '@/types/database'
 
 const GpxMap = lazy(() => import('@/components/GpxMap').then((module) => ({ default: module.GpxMap })))
@@ -247,7 +247,7 @@ export function Map() {
   const [routeOriginSearch, setRouteOriginSearch] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [ownedPremiumRouteIds, setOwnedPremiumRouteIds] = useState(() => readOwnedRouteIds(user?.id))
+  const [ownedPremiumRouteIds, setOwnedPremiumRouteIds] = useState<string[]>([])
   const [searchParams, setSearchParams] = useSearchParams()
 
   const purchasedRoutes = useMemo(
@@ -256,14 +256,20 @@ export function Map() {
   )
 
   useEffect(() => {
-    const refreshPurchasedRoutes = () => setOwnedPremiumRouteIds(readOwnedRouteIds(user?.id))
-    refreshPurchasedRoutes()
-    window.addEventListener('focus', refreshPurchasedRoutes)
-    window.addEventListener('motocare:premium-routes-updated', refreshPurchasedRoutes)
-    return () => {
-      window.removeEventListener('focus', refreshPurchasedRoutes)
-      window.removeEventListener('motocare:premium-routes-updated', refreshPurchasedRoutes)
+    if (!supabase || !user?.id) {
+      setOwnedPremiumRouteIds([])
+      return
     }
+
+    const loadPremiumRoutes = async () => {
+      const { data } = await supabase
+        .from('premium_route_monthly_claims')
+        .select('route_id')
+        .gt('expires_at', new Date().toISOString())
+      setOwnedPremiumRouteIds((data ?? []).map((claim) => claim.route_id))
+    }
+
+    void loadPremiumRoutes()
   }, [user?.id])
 
   const totalKm = useMemo(
@@ -409,7 +415,7 @@ export function Map() {
 
   const loadDemoGpx = async () => {
     if (purchasedRoutes.length === 0) {
-      toast.error('No tienes rutas compradas', { description: 'Compra una ruta en MotoCare para usar el GPX incluido.' })
+      toast.error('No tienes rutas Premium activas', { description: 'Elige una de tus cinco rutas gratuitas del mes.' })
       return
     }
     try { const response = await fetch('/demo-guatavita.gpx'); if (!response.ok) throw new Error('No pudimos cargar el GPX demo.'); applyGpx(parseGpx(await response.text(), 'demo-guatavita.gpx')) }
@@ -692,9 +698,9 @@ export function Map() {
             <div>
               <div className="flex items-center gap-2">
                 <PackageCheck className="h-5 w-5 text-moto-orange" />
-                <h2 className="font-semibold">Rutas compradas</h2>
+                <h2 className="font-semibold">Rutas Premium del mes</h2>
               </div>
-              <p className="mt-1 text-sm text-gray-400">Sus GPX incluidos están disponibles para cualquier licencia.</p>
+              <p className="mt-1 text-sm text-gray-400">Disponibles hasta el final del mes para licencias Premium.</p>
             </div>
             <Button asChild variant="outline" className="border-white/10">
               <Link to="/app/premium-routes">Ver catálogo</Link>
@@ -717,7 +723,7 @@ export function Map() {
               ))}
             </div>
           ) : (
-            <p className="mt-4 rounded-xl border border-dashed border-white/10 p-4 text-sm text-gray-400">Aún no has comprado rutas.</p>
+            <p className="mt-4 rounded-xl border border-dashed border-white/10 p-4 text-sm text-gray-400">Aún no has elegido rutas Premium este mes.</p>
           )}
         </CardContent>
       </Card>
@@ -886,7 +892,7 @@ export function Map() {
                 ) : (
                   <div className="flex min-h-9 items-center justify-center rounded-md border border-moto-orange/20 bg-moto-orange/10 px-3 text-center text-xs text-moto-orange"><Lock className="mr-2 h-4 w-4" />GPX propio requiere Premium</div>
                 )}
-                <Button type="button" size="sm" variant="outline" className="border-white/10" disabled={purchasedRoutes.length === 0} onClick={() => void loadDemoGpx()}>Usar GPX de ruta comprada</Button>
+                <Button type="button" size="sm" variant="outline" className="border-white/10" disabled={purchasedRoutes.length === 0} onClick={() => void loadDemoGpx()}>Usar GPX de ruta Premium</Button>
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">

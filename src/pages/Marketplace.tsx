@@ -5,7 +5,7 @@ import type { FormEvent } from 'react'
 import { toast } from 'sonner'
 import { 
   Search, Filter, Grid3X3, List, MapPin, Heart, MessageCircle, 
-  Star, TrendingUp, Bike, Wrench, Shirt, Clock3, Lock, Store, MapPinned, PackageCheck, Sparkles,
+  Star, TrendingUp, Bike, Wrench, Shirt, Clock3, Lock, Store, MapPinned, Sparkles,
   AlertCircle, LoaderCircle, ImagePlus, Trash2, CheckCircle2, Inbox, Send, Plus, X
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -39,7 +39,6 @@ const categories = [
   { id: 'gear', name: 'Equipamiento', icon: Shirt },
   { id: 'services', name: 'Servicios', icon: Store },
   { id: 'premium-routes', name: 'Rutas Premium', icon: MapPinned },
-  { id: 'packs', name: 'Packs', icon: PackageCheck },
 ]
 
 type StoreListing = {
@@ -199,19 +198,6 @@ const demoListings: StoreListing[] = [
     featured: true,
     likes: 91,
     category: 'premium-routes'
-  },
-  {
-    id: 'demo-8',
-    title: 'Pack Eje Cafetero',
-    price: 59900,
-    condition: 'Pack Premium',
-    mileage: '5 rutas',
-    location: 'Salento, Filandia, Cocora y Buenavista',
-    image: '/community.jpg',
-    seller: { name: 'MotoCare Experiences', rating: 5.0, verified: true },
-    featured: false,
-    likes: 76,
-    category: 'packs'
   },
   {
     id: 'demo-9',
@@ -817,7 +803,7 @@ export function Marketplace() {
               </Badge>
               <h2 className="text-2xl font-bold">Rutas premium dentro de la tienda</h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-300">
-                Además de comprar motos y accesorios, ahora puedes adquirir rutas verificadas, archivos GPX, puntos de interés, checklist de preparación y packs listos para rodar por Colombia.
+                Además de comprar motos y accesorios, puedes adquirir rutas verificadas con archivos GPX, puntos de interés y checklist de preparación.
               </p>
             </div>
             <Button asChild className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
@@ -1190,7 +1176,7 @@ export function Marketplace() {
                       {selectedListing.seller.rating}
                     </div>
                   </div>
-                  {selectedListing.category === 'premium-routes' || selectedListing.category === 'packs' ? (
+                  {selectedListing.category === 'premium-routes' ? (
                     <Button asChild className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
                       <Link to="/app/premium-routes" onClick={() => setSelectedListing(null)}>Explorar ruta</Link>
                     </Button>
@@ -1211,7 +1197,6 @@ export function Marketplace() {
                 </div>
 
                 {selectedListing.category !== 'premium-routes'
-                  && selectedListing.category !== 'packs'
                   && selectedListing.sellerId !== user?.id ? (
                     <div className="rounded-xl border border-moto-orange/30 bg-moto-orange/10 p-4">
                       <h3 className="flex items-center gap-2 font-semibold">

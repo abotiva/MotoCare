@@ -4,40 +4,29 @@ import {
   Bike,
   CheckCircle2,
   ChevronLeft,
-  CreditCard,
   Filter,
   Gauge,
+  Lock,
   MapPin,
   Mountain,
   PackageCheck,
   Route,
-  ShieldCheck,
-  ShoppingCart,
   Trophy,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/contexts/AuthContext'
-import { readOwnedRouteIds, writeOwnedRouteIds } from '@/lib/premiumRoutePurchases'
+import { useSubscription } from '@/hooks/useSubscription'
+import { supabase } from '@/lib/supabase'
 
 type PremiumRoute = {
   id: string
-  type: 'route' | 'pack'
   title: string
   subtitle: string
   location: string
-  price: number
   level: 3 | 4 | 5
   distance: string
   duration: string
@@ -54,11 +43,9 @@ type PremiumRoute = {
 const premiumRoutes: PremiumRoute[] = [
   {
     id: 'nevado-ruiz-adventure',
-    type: 'route',
     title: 'Nevado del Ruiz Adventure',
     subtitle: 'Alta montana, miradores volcanicos y destapado controlado.',
     location: 'Manizales - Murillo - Libano',
-    price: 24900,
     level: 4,
     distance: '168 km',
     duration: '7 h',
@@ -72,31 +59,10 @@ const premiumRoutes: PremiumRoute[] = [
     checklist: ['Presion de llantas', 'Aceite y refrigerante', 'Cadena limpia y lubricada', 'Impermeable y guantes termicos'],
   },
   {
-    id: 'pack-eje-cafetero',
-    type: 'pack',
-    title: 'Pack Eje Cafetero',
-    subtitle: 'Cinco experiencias para fin de semana entre cafe, curvas y miradores.',
-    location: 'Salento, Filandia, Cocora y Buenavista',
-    price: 59900,
-    level: 3,
-    distance: '420 km',
-    duration: '2 dias',
-    terrain: 'Curvas, pavimento rural y destapado liviano',
-    compatibility: 'Ideal para touring, naked, scooter grande y adventure light.',
-    image: '/community.jpg',
-    progress: 68,
-    badge: 'Pack popular',
-    includes: ['5 rutas premium', 'Presupuesto estimado', 'Hoteles y restaurantes', 'Insignia Ruta del Cafe', 'Mapa offline'],
-    pois: ['Valle del Cocora', 'Filandia', 'Buenavista', 'Mirador Alto de la Cruz'],
-    checklist: ['Luces y documentos', 'Llantas para lluvia', 'Kit de pinchazos', 'Reserva para peajes'],
-  },
-  {
     id: 'chicamocha-touring',
-    type: 'route',
     title: 'Canon del Chicamocha Touring',
     subtitle: 'Ruta panoramica con curvas tecnicas y paradas gastronomicas.',
     location: 'Bucaramanga - Mesa de los Santos - Barichara',
-    price: 29900,
     level: 3,
     distance: '236 km',
     duration: '8 h',
@@ -111,11 +77,9 @@ const premiumRoutes: PremiumRoute[] = [
   },
   {
     id: 'alta-guajira-expedition',
-    type: 'route',
     title: 'Alta Guajira Expedition',
     subtitle: 'Experiencia remota para pilotos con manejo off-road y autonomia.',
     location: 'Riohacha - Cabo de la Vela - Punta Gallinas',
-    price: 79900,
     level: 5,
     distance: '392 km',
     duration: '3 dias',
@@ -128,14 +92,54 @@ const premiumRoutes: PremiumRoute[] = [
     pois: ['Cabo de la Vela', 'Dunas de Taroa', 'Faro Punta Gallinas', 'Uribia'],
     checklist: ['Autonomia extendida', 'Hidratacion extra', 'GPS offline', 'Revision de filtro de aire'],
   },
+  {
+    id: 'sierra-nevada-caribbean',
+    title: 'Sierra Nevada Caribe',
+    subtitle: 'Ascenso desde el Caribe entre bosque tropical, café y vistas al mar.',
+    location: 'Santa Marta - Minca - San Lorenzo',
+    level: 4,
+    distance: '124 km',
+    duration: '6 h',
+    terrain: 'Pavimento de montaña y destapado intermedio',
+    compatibility: 'Recomendada para doble propósito, adventure y pilotos intermedios.',
+    image: '/community.jpg',
+    progress: 0,
+    badge: 'Montaña y mar',
+    includes: ['Archivo GPX', 'Mapa offline', 'Puntos de hidratación', 'Checklist de montaña'],
+    pois: ['Minca', 'Cerro Kennedy', 'San Lorenzo', 'Mirador del Caribe'],
+    checklist: ['Frenos', 'Kit de lluvia', 'Hidratación', 'Protección solar'],
+  },
+  {
+    id: 'boyaca-lagunas',
+    title: 'Circuito Lagunas de Boyacá',
+    subtitle: 'Una jornada entre pueblos coloniales, páramo y lagunas de alta montaña.',
+    location: 'Tunja - Tota - Iza - Paipa',
+    level: 3,
+    distance: '218 km',
+    duration: '8 h',
+    terrain: 'Pavimento rural y tramos fríos de montaña',
+    compatibility: 'Apta para touring, naked, scooter grande y adventure.',
+    image: '/feature-maintenance.jpg',
+    progress: 0,
+    badge: 'Ruta cultural',
+    includes: ['Archivo GPX', 'Roadbook', 'Paradas gastronómicas', 'Presupuesto estimado'],
+    pois: ['Laguna de Tota', 'Iza', 'Duitama', 'Paipa'],
+    checklist: ['Documentos', 'Ropa térmica', 'Presión de llantas', 'Luces'],
+  },
 ]
 
-function formatPrice(value: number) {
-  return new Intl.NumberFormat('es-CO', {
-    style: 'currency',
-    currency: 'COP',
-    maximumFractionDigits: 0,
-  }).format(value)
+type MonthlyClaim = {
+  route_id: string
+  claimed_at: string
+  expires_at: string
+}
+
+type MonthlyQuota = {
+  used: number
+  monthly_limit: number
+  remaining: number
+  period_start: string
+  expires_at: string
 }
 
 function levelLabel(level: PremiumRoute['level']) {
@@ -146,50 +150,117 @@ function levelLabel(level: PremiumRoute['level']) {
 
 export function PremiumRoutes() {
   const { user } = useAuth()
+  const { effectivePlan, isLoadingSubscription } = useSubscription()
   const [searchParams] = useSearchParams()
   const requestedRoute = premiumRoutes.find((routeItem) => routeItem.id === searchParams.get('route'))
-  const [filter, setFilter] = useState<'all' | 'route' | 'pack' | 'level-3' | 'level-4'>('all')
+  const [filter, setFilter] = useState<'all' | 'level-3' | 'level-4'>('all')
   const [selectedRoute, setSelectedRoute] = useState<PremiumRoute>(requestedRoute ?? premiumRoutes[0])
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') === 'detail' ? 'detail' : 'catalog')
-  const [ownedRouteIds, setOwnedRouteIds] = useState(() => readOwnedRouteIds(user?.id))
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
+  const [claims, setClaims] = useState<MonthlyClaim[]>([])
+  const [quota, setQuota] = useState<MonthlyQuota | null>(null)
+  const [isLoadingClaims, setIsLoadingClaims] = useState(true)
+  const [claimingRouteId, setClaimingRouteId] = useState<string | null>(null)
+  const hasPremiumPlan = effectivePlan === 'premium' || effectivePlan === 'pro'
 
   const filteredRoutes = useMemo(() => {
     return premiumRoutes.filter((routeItem) => {
       if (filter === 'all') return true
-      if (filter === 'route' || filter === 'pack') return routeItem.type === filter
       if (filter === 'level-3') return routeItem.level === 3
       if (filter === 'level-4') return routeItem.level === 4
       return true
     })
   }, [filter])
 
-  const ownedRoutes = premiumRoutes.filter((routeItem) => ownedRouteIds.includes(routeItem.id))
-  const isSelectedOwned = ownedRouteIds.includes(selectedRoute.id)
+  const claimedRouteIds = claims.map((claim) => claim.route_id)
+  const ownedRoutes = premiumRoutes.filter((routeItem) => claimedRouteIds.includes(routeItem.id))
+  const isSelectedOwned = claimedRouteIds.includes(selectedRoute.id)
 
   useEffect(() => {
-    setOwnedRouteIds(readOwnedRouteIds(user?.id))
-  }, [user?.id])
-
-  const openCheckout = (routeItem: PremiumRoute) => {
-    setSelectedRoute(routeItem)
-    if (ownedRouteIds.includes(routeItem.id)) {
-      toast.info('Ya tienes esta experiencia en Mis rutas')
+    if (!supabase || !user?.id) {
+      setClaims([])
+      setQuota(null)
+      setIsLoadingClaims(false)
       return
     }
-    setIsCheckoutOpen(true)
+
+    const loadMonthlyAccess = async () => {
+      setIsLoadingClaims(true)
+      const now = new Date().toISOString()
+      const [claimsResult, quotaResult] = await Promise.all([
+        supabase
+          .from('premium_route_monthly_claims')
+          .select('route_id, claimed_at, expires_at')
+          .gt('expires_at', now)
+          .order('claimed_at', { ascending: false }),
+        supabase.rpc('current_premium_route_quota'),
+      ])
+
+      if (claimsResult.error || quotaResult.error) {
+        toast.error('No pudimos consultar tus rutas Premium', {
+          description: claimsResult.error?.message ?? quotaResult.error?.message,
+        })
+      } else {
+        setClaims((claimsResult.data ?? []) as MonthlyClaim[])
+        const quotaRow = Array.isArray(quotaResult.data) ? quotaResult.data[0] : quotaResult.data
+        setQuota((quotaRow ?? null) as MonthlyQuota | null)
+      }
+      setIsLoadingClaims(false)
+    }
+
+    void loadMonthlyAccess()
+  }, [user?.id])
+
+  const claimRoute = async (routeItem: PremiumRoute) => {
+    setSelectedRoute(routeItem)
+    if (claimedRouteIds.includes(routeItem.id)) {
+      setActiveTab('owned')
+      return
+    }
+    if (!hasPremiumPlan) {
+      toast.error('Esta opción requiere licencia Premium')
+      return
+    }
+    if (!supabase) return
+
+    setClaimingRouteId(routeItem.id)
+    const { data, error } = await supabase.rpc('claim_monthly_premium_route', {
+      target_route_id: routeItem.id,
+    })
+    setClaimingRouteId(null)
+
+    if (error) {
+      toast.error('No pudimos habilitar la ruta', { description: error.message })
+      return
+    }
+
+    const row = (Array.isArray(data) ? data[0] : data) as MonthlyClaim & { remaining: number }
+    setClaims((current) => [
+      { route_id: row.route_id, claimed_at: row.claimed_at, expires_at: row.expires_at },
+      ...current.filter((claim) => claim.route_id !== row.route_id),
+    ])
+    setQuota((current) => current ? { ...current, used: 5 - row.remaining, remaining: row.remaining, expires_at: row.expires_at } : current)
+    toast.success('Ruta Premium habilitada', {
+      description: `Te quedan ${row.remaining} rutas gratis este mes.`,
+    })
   }
 
-  const confirmPurchase = () => {
-    setOwnedRouteIds((current) => {
-      const next = Array.from(new Set([...current, selectedRoute.id]))
-      writeOwnedRouteIds(next, user?.id)
-      return next
-    })
-    setIsCheckoutOpen(false)
-    toast.success('Ruta agregada a Mis rutas', {
-      description: `${selectedRoute.title} quedo disponible para preparar tu viaje.`,
-    })
+  const downloadGpx = async (routeItem: PremiumRoute) => {
+    try {
+      const response = await fetch('/demo-guatavita.gpx')
+      if (!response.ok) throw new Error('No pudimos preparar el archivo GPX.')
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = `${routeItem.id}.gpx`
+      anchor.click()
+      URL.revokeObjectURL(url)
+      toast.success('Descarga GPX iniciada')
+    } catch (error) {
+      toast.error('No pudimos descargar la ruta', {
+        description: error instanceof Error ? error.message : 'Intenta nuevamente.',
+      })
+    }
   }
 
   return (
@@ -206,8 +277,8 @@ export function PremiumRoutes() {
               Rutas Premium predeterminadas para viajar con tu moto lista.
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-6 text-gray-300 sm:text-base">
-              Tu moto. Tu historia. Tu ruta. Compra experiencias verificadas con GPX,
-              puntos de interes, checklist y preparacion conectada a la hoja de vida de tu moto.
+              Tu licencia Premium incluye hasta cinco rutas verificadas por mes con GPX,
+              puntos de interés y checklist. El acceso se renueva al iniciar cada mes.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <Button className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => setSelectedRoute(premiumRoutes[0])}>
@@ -216,7 +287,7 @@ export function PremiumRoutes() {
               </Button>
               <Button variant="outline" className="border-white/10 bg-white/5">
                 <PackageCheck className="mr-2 h-4 w-4" />
-                {ownedRoutes.length} rutas compradas
+                {quota ? `${quota.remaining} de ${quota.monthly_limit} disponibles` : '5 rutas gratis al mes'}
               </Button>
             </div>
           </div>
@@ -230,7 +301,7 @@ export function PremiumRoutes() {
                 <Metric icon={Gauge} label={levelLabel(selectedRoute.level)} />
                 <Metric icon={MapPin} label={selectedRoute.distance} />
               </div>
-              <p className="mt-4 text-2xl font-black text-moto-orange">{formatPrice(selectedRoute.price)}</p>
+              <p className="mt-4 text-2xl font-black text-moto-orange">Incluida con Premium</p>
             </CardContent>
           </Card>
         </div>
@@ -250,12 +321,10 @@ export function PremiumRoutes() {
                 <Filter className="h-4 w-4" />
                 Filtros basicos
               </div>
-              <h2 className="text-2xl font-bold">Catálogo de rutas y packs</h2>
+              <h2 className="text-2xl font-bold">Catálogo de rutas Premium</h2>
             </div>
             <div className="flex flex-wrap gap-2">
               <FilterButton active={filter === 'all'} onClick={() => setFilter('all')}>Todas</FilterButton>
-              <FilterButton active={filter === 'route'} onClick={() => setFilter('route')}>Rutas</FilterButton>
-              <FilterButton active={filter === 'pack'} onClick={() => setFilter('pack')}>Packs</FilterButton>
               <FilterButton active={filter === 'level-3'} onClick={() => setFilter('level-3')}>Nivel 3</FilterButton>
               <FilterButton active={filter === 'level-4'} onClick={() => setFilter('level-4')}>Nivel 4</FilterButton>
             </div>
@@ -266,12 +335,13 @@ export function PremiumRoutes() {
               <RouteCard
                 key={routeItem.id}
                 routeItem={routeItem}
-                owned={ownedRouteIds.includes(routeItem.id)}
+                owned={claimedRouteIds.includes(routeItem.id)}
+                disabled={isLoadingClaims || isLoadingSubscription || claimingRouteId === routeItem.id || (!claimedRouteIds.includes(routeItem.id) && (quota?.remaining === 0 || !hasPremiumPlan))}
                 onDetail={() => {
                   setSelectedRoute(routeItem)
                   setActiveTab('detail')
                 }}
-                onBuy={() => openCheckout(routeItem)}
+                onBuy={() => void claimRoute(routeItem)}
               />
             ))}
           </div>
@@ -281,7 +351,8 @@ export function PremiumRoutes() {
           <RouteDetailPanel
             routeItem={selectedRoute}
             owned={isSelectedOwned}
-            onBuy={() => openCheckout(selectedRoute)}
+            disabled={isLoadingClaims || isLoadingSubscription || claimingRouteId === selectedRoute.id || (!isSelectedOwned && (quota?.remaining === 0 || !hasPremiumPlan))}
+            onBuy={() => void claimRoute(selectedRoute)}
           />
         </TabsContent>
 
@@ -293,10 +364,13 @@ export function PremiumRoutes() {
                   <div className="min-w-0">
                     <Badge className="mb-3 bg-green-500/15 text-green-300">
                       <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
-                      Comprada
+                      Disponible este mes
                     </Badge>
                     <h3 className="text-xl font-bold">{routeItem.title}</h3>
                     <p className="mt-1 text-sm text-gray-400">{routeItem.location}</p>
+                    <p className="mt-2 text-xs text-gray-500">
+                      Disponible hasta {new Date(claims.find((claim) => claim.route_id === routeItem.id)?.expires_at ?? '').toLocaleDateString('es-CO')}
+                    </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <Badge variant="outline" className="border-white/10 text-gray-300">{routeItem.distance}</Badge>
                       <Badge variant="outline" className="border-white/10 text-gray-300">{routeItem.terrain}</Badge>
@@ -313,52 +387,23 @@ export function PremiumRoutes() {
                     <Button
                       variant="outline"
                       className="mt-4 w-full border-white/10"
-                      onClick={() => {
-                        setSelectedRoute(routeItem)
-                        setActiveTab('detail')
-                      }}
+                      onClick={() => void downloadGpx(routeItem)}
                     >
-                      Continuar preparacion
+                      Descargar GPX
                     </Button>
                   </div>
                 </CardContent>
               </Card>
             ))}
+            {!isLoadingClaims && ownedRoutes.length === 0 && (
+              <div className="rounded-xl border border-dashed border-white/10 p-6 text-center text-sm text-gray-400">
+                Aún no has elegido ninguna de tus rutas gratuitas de este mes.
+              </div>
+            )}
           </div>
         </TabsContent>
       </Tabs>
 
-      <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
-        <DialogContent className="border-white/10 bg-moto-darker text-white sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Comprar experiencia premium</DialogTitle>
-            <DialogDescription className="text-gray-400">
-              Flujo simulado para validar la presentacion comercial dentro de MotoCare.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="rounded-xl border border-moto-orange/20 bg-moto-orange/10 p-4">
-            <p className="font-semibold text-white">{selectedRoute.title}</p>
-            <p className="mt-1 text-sm text-gray-300">{selectedRoute.subtitle}</p>
-            <div className="mt-4 flex items-center justify-between gap-3">
-              <span className="text-sm text-gray-400">Total</span>
-              <span className="text-2xl font-black text-moto-orange">{formatPrice(selectedRoute.price)}</span>
-            </div>
-          </div>
-          <div className="grid gap-2 text-sm text-gray-300">
-            <Metric icon={CreditCard} label="Metodo: tarjeta terminada en 4821" />
-            <Metric icon={ShieldCheck} label="Incluye acceso a GPX, puntos de interes y checklist" />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" className="border-white/10" onClick={() => setIsCheckoutOpen(false)}>
-              Cancelar
-            </Button>
-            <Button className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={confirmPurchase}>
-              <ShoppingCart className="mr-2 h-4 w-4" />
-              Confirmar compra
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
@@ -366,11 +411,13 @@ export function PremiumRoutes() {
 function RouteCard({
   routeItem,
   owned,
+  disabled,
   onDetail,
   onBuy,
 }: {
   routeItem: PremiumRoute
   owned: boolean
+  disabled: boolean
   onDetail: () => void
   onBuy: () => void
 }) {
@@ -378,13 +425,13 @@ function RouteCard({
     <Card className="overflow-hidden border-white/5 bg-moto-gray py-0 transition hover:border-moto-orange/40">
       <div className="relative min-h-44 bg-cover bg-center" style={{ backgroundImage: `linear-gradient(rgba(8,17,26,0.05), rgba(8,17,26,0.78)), url(${routeItem.image})` }}>
         <div className="absolute left-3 top-3 flex flex-wrap gap-2">
-          <Badge className="bg-moto-darker/90 text-white">{routeItem.type === 'pack' ? 'Pack' : 'Ruta'}</Badge>
+          <Badge className="bg-moto-darker/90 text-white">Ruta</Badge>
           <Badge className="bg-moto-orange text-moto-darker">{levelLabel(routeItem.level)}</Badge>
         </div>
         {owned && (
           <Badge className="absolute right-3 top-3 bg-green-500/90 text-moto-darker">
             <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
-            Comprada
+            Disponible
           </Badge>
         )}
       </div>
@@ -396,13 +443,14 @@ function RouteCard({
           <Metric icon={Mountain} label={routeItem.terrain} />
         </div>
         <div className="mt-4 flex items-center justify-between gap-3">
-          <span className="text-xl font-black text-moto-orange">{formatPrice(routeItem.price)}</span>
+          <span className="text-sm font-bold text-moto-orange">Incluida con Premium</span>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" className="border-white/10" onClick={onDetail}>
               Detalle
             </Button>
-            <Button size="sm" className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={onBuy}>
-              {owned ? 'Abrir' : 'Comprar'}
+            <Button size="sm" disabled={disabled} className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={onBuy}>
+              {disabled && !owned ? <Lock className="mr-1 h-3.5 w-3.5" /> : null}
+              {owned ? 'Abrir' : 'Obtener gratis'}
             </Button>
           </div>
         </div>
@@ -411,7 +459,7 @@ function RouteCard({
   )
 }
 
-function RouteDetailPanel({ routeItem, owned, onBuy }: { routeItem: PremiumRoute; owned: boolean; onBuy: () => void }) {
+function RouteDetailPanel({ routeItem, owned, disabled, onBuy }: { routeItem: PremiumRoute; owned: boolean; disabled: boolean; onBuy: () => void }) {
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
       <section className="overflow-hidden rounded-xl border border-white/5 bg-moto-gray">
@@ -437,10 +485,11 @@ function RouteDetailPanel({ routeItem, owned, onBuy }: { routeItem: PremiumRoute
       <aside className="space-y-5">
         <Card className="border-moto-orange/20 bg-moto-darker py-0">
           <CardContent className="p-5">
-            <p className="text-sm text-gray-400">Precio</p>
-            <p className="mt-1 text-3xl font-black text-moto-orange">{formatPrice(routeItem.price)}</p>
-            <Button className="mt-5 w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={onBuy}>
-              {owned ? 'Abrir en Mis rutas' : 'Comprar experiencia'}
+            <p className="text-sm text-gray-400">Beneficio mensual Premium</p>
+            <p className="mt-1 text-2xl font-black text-moto-orange">Sin costo adicional</p>
+            <Button disabled={disabled} className="mt-5 w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={onBuy}>
+              {disabled && !owned ? <Lock className="mr-2 h-4 w-4" /> : null}
+              {owned ? 'Abrir en Mis rutas' : 'Obtener ruta gratis'}
             </Button>
           </CardContent>
         </Card>

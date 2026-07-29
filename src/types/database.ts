@@ -30,7 +30,7 @@ export type UserSubscription = {
   updated_at: string | null
 }
 
-export type MarketplaceCategory = 'motorcycles' | 'parts' | 'gear' | 'services' | 'premium-routes' | 'packs'
+export type MarketplaceCategory = 'motorcycles' | 'parts' | 'gear' | 'services' | 'premium-routes'
 
 export type MarketplaceCondition = 'new' | 'used_like_new' | 'used_good' | 'used_fair' | 'service' | 'digital'
 

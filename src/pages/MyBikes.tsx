@@ -161,7 +161,6 @@ const marketplaceCategoryLabels: Record<MarketplacePurchase['category'], string>
   gear: 'Equipamiento',
   services: 'Servicios de tienda',
   'premium-routes': 'Rutas Premium',
-  packs: 'Packs',
 }
 
 type BikeTab = 'reminders' | 'history' | 'reports' | 'documents'
