@@ -270,10 +270,13 @@ export function MyBikes() {
 
   useEffect(() => {
     setActiveTab(routeTab ?? tabFromHash(location.hash))
-    if (location.hash || section) {
+    const shouldFocusTabs = Boolean(location.hash || (section && section !== 'overview'))
+    if (shouldFocusTabs) {
       window.requestAnimationFrame(() => {
         document.getElementById('bike-sections')?.scrollIntoView({ block: 'start', behavior: 'smooth' })
       })
+    } else {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
     }
   }, [location.hash, routeTab, section])
 

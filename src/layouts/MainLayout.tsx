@@ -84,8 +84,8 @@ const garageQuickActions = [
 ] satisfies Array<NavigationItem>
 
 const activityQuickActions = [
+  { label: 'Crear publicación', path: '/app/messages?action=post', icon: MessageCircle },
   { label: 'Crear ruta', path: '/app/map?action=create', icon: MapIcon },
-  { label: 'Publicar experiencia', path: '/app/messages?action=post', icon: MessageCircle },
 ] satisfies Array<NavigationItem>
 
 function initials(name: string | null | undefined, email: string | undefined) {
