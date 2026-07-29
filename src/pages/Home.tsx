@@ -1,4 +1,4 @@
-import { ArrowRight, Bike, MapPinned, MessageCircle, ShoppingBag } from 'lucide-react'
+import { ArrowRight, Bike, MapPinned, MessageCircle, ShoppingBag, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -31,7 +31,17 @@ const ecosystemBlocks = [
     iconClass: 'bg-violet-400/15 text-violet-300',
     linkClass: 'text-violet-300 hover:text-violet-200',
     description: 'Espacios para conectar y compartir con otros moteros.',
-    items: ['Actividad', 'Clubes', 'Mis clubes', 'Moteros'],
+    items: ['Actividad', 'Publicaciones', 'Experiencias', 'Moteros'],
+  },
+  {
+    title: 'Clubes',
+    icon: Users,
+    to: '/app/clubs',
+    cardClass: 'border-t-amber-400',
+    iconClass: 'bg-amber-400/15 text-amber-300',
+    linkClass: 'text-amber-300 hover:text-amber-200',
+    description: 'Gestión y descubrimiento de grupos organizados de moteros.',
+    items: ['Descubrir clubes', 'Mis clubes', 'Miembros', 'Invitaciones'],
   },
   {
     title: 'Tienda',
@@ -62,7 +72,7 @@ export function Home() {
           <h2 id="ecosystem-title" className="mt-1 text-2xl font-bold">¿Qué quieres gestionar hoy?</h2>
         </div>
 
-        <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {ecosystemBlocks.map((block) => (
             <article key={block.title} className={`flex flex-col rounded-3xl border border-t-4 border-white/5 bg-moto-darker p-5 shadow-lg shadow-black/10 ${block.cardClass}`}>
               <div className={`grid h-12 w-12 place-items-center rounded-2xl ${block.iconClass}`}>
