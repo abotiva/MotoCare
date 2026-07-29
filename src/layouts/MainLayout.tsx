@@ -127,6 +127,10 @@ export function MainLayout() {
   const isPaidPlan = effectivePlan === 'pro' || effectivePlan === 'premium' || effectivePlan === 'business'
 
   useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+  }, [location.pathname])
+
+  useEffect(() => {
     if (!supabase || !userId) return
     const client = supabase
     const loadNotifications = async () => {
