@@ -1,28 +1,33 @@
-import { Bike, MapPinned, MessageCircle, ShoppingBag } from 'lucide-react'
+import { ArrowRight, Bike, MapPinned, MessageCircle, ShoppingBag } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 
 const ecosystemBlocks = [
   {
     title: 'Mi Garage',
     icon: Bike,
+    to: '/app/garage',
     description: 'Todo lo relacionado con el cuidado y la hoja de vida de tus motos.',
     items: ['Resumen', 'Historial', 'Agenda', 'Documentos', 'Gastos'],
   },
   {
     title: 'Rutas',
     icon: MapPinned,
+    to: '/app/explore',
     description: 'Herramientas para descubrir, preparar y administrar tus recorridos.',
     items: ['Descubrir rutas', 'Mis rutas', 'Crear ruta', 'Rutas guardadas'],
   },
   {
     title: 'Comunidad',
     icon: MessageCircle,
+    to: '/app/messages',
     description: 'Espacios para conectar y compartir con otros moteros.',
     items: ['Actividad', 'Clubes', 'Mis clubes', 'Moteros'],
   },
   {
     title: 'Tienda',
     icon: ShoppingBag,
+    to: '/app/marketplace',
     description: 'Productos, servicios y experiencias para vivir la moto.',
     items: ['Motos', 'Repuestos', 'Equipamiento', 'Servicios', 'Rutas Premium'],
   },
@@ -47,7 +52,7 @@ export function Home() {
 
         <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {ecosystemBlocks.map((block) => (
-            <article key={block.title} className="rounded-3xl border border-white/5 bg-moto-darker p-5">
+            <article key={block.title} className="flex flex-col rounded-3xl border border-white/5 bg-moto-darker p-5">
               <div className="grid h-12 w-12 place-items-center rounded-2xl bg-moto-orange/15">
                 <block.icon className="h-6 w-6 text-moto-orange" aria-hidden="true" />
               </div>
@@ -56,6 +61,13 @@ export function Home() {
               <ul className="mt-5 divide-y divide-white/5 border-t border-white/5 text-sm text-gray-300">
                 {block.items.map((item) => <li key={item} className="py-2.5">{item}</li>)}
               </ul>
+              <Link
+                to={block.to}
+                className="mt-auto inline-flex min-h-11 items-center justify-between rounded-xl bg-moto-orange/10 px-4 font-semibold text-moto-orange transition-colors hover:bg-moto-orange hover:text-moto-darker focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-moto-orange"
+              >
+                Abrir {block.title}
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
             </article>
           ))}
         </div>
