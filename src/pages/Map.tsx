@@ -1,8 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Bike, Calendar, CheckCircle2, Clock, Edit3, Eye, EyeOff, Flag, Loader2, Lock, MapPin, Navigation, PackageCheck, PlayCircle, Plus, Route, Save, Trash2 } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
+import { Bike, Calendar, CheckCircle2, Clock, Edit3, Eye, EyeOff, Flag, Loader2, Lock, MapPin, PackageCheck, PlayCircle, Plus, Route, Save, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -229,52 +228,6 @@ function RouteCard({
 }
 
 type RouteMetric = 'routes' | 'kilometers' | 'shared' | 'completed'
-
-function CompactMetricCard({
-  icon: Icon,
-  label,
-  mobileLabel,
-  value,
-  tone,
-  onClick,
-}: {
-  icon: LucideIcon
-  label: string
-  mobileLabel?: string
-  value: string | number
-  tone: 'orange' | 'yellow' | 'green'
-  onClick: () => void
-}) {
-  const tones = {
-    orange: 'bg-moto-orange/20 text-moto-orange',
-    yellow: 'bg-yellow-500/20 text-yellow-300',
-    green: 'bg-green-500/20 text-green-300',
-  }
-
-  return (
-    <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0 transition-colors hover:border-moto-orange/40 hover:bg-white/[0.04]">
-      <CardContent className="p-0">
-        <button
-          type="button"
-          className="flex w-full min-w-0 flex-col items-center gap-1.5 p-2 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-moto-orange sm:flex-row sm:gap-4 sm:p-4 sm:text-left"
-          onClick={onClick}
-          aria-label={`Ver detalle de ${label}`}
-        >
-          <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg sm:h-12 sm:w-12 sm:rounded-xl ${tones[tone]}`}>
-            <Icon className="h-4 w-4 sm:h-6 sm:w-6" />
-          </div>
-          <div className="min-w-0">
-            <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">
-              <span className="sm:hidden">{mobileLabel ?? label}</span>
-              <span className="hidden sm:inline">{label}</span>
-            </p>
-            <p className="truncate text-base font-bold leading-tight sm:text-xl">{value}</p>
-          </div>
-        </button>
-      </CardContent>
-    </Card>
-  )
-}
 
 export function Map() {
   const { user } = useAuth()
@@ -699,12 +652,20 @@ export function Map() {
         </Button>
       </div>
 
-      <div className="mb-4 grid grid-cols-4 gap-2 sm:mb-5 sm:gap-4">
-        <CompactMetricCard icon={Route} label="Mis rutas" mobileLabel="Rutas" value={myRoutes.length} tone="orange" onClick={() => setSelectedMetric('routes')} />
-        <CompactMetricCard icon={Navigation} label="Km planeados" mobileLabel="Km" value={`${totalKm.toLocaleString()} km`} tone="green" onClick={() => setSelectedMetric('kilometers')} />
-        <CompactMetricCard icon={Eye} label="Mis compartidas" mobileLabel="Compart." value={sharedCount} tone="yellow" onClick={() => setSelectedMetric('shared')} />
-        <CompactMetricCard icon={CheckCircle2} label="Realizadas" mobileLabel="Hechas" value={completedCount} tone="green" onClick={() => setSelectedMetric('completed')} />
-      </div>
+      <Card className="relative mb-5 overflow-hidden border-moto-orange/30 bg-moto-darker py-0">
+        <div className="absolute inset-0 bg-[url('/feature-gps.jpg')] bg-cover bg-center opacity-25" />
+        <div className="absolute inset-0 bg-gradient-to-r from-moto-darker via-moto-darker/90 to-moto-darker/40" />
+        <CardContent className="relative flex min-h-44 flex-col justify-center gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-7">
+          <div className="max-w-2xl">
+            <Badge className="mb-3 bg-moto-orange text-moto-darker">Rutas Premium</Badge>
+            <h2 className="text-xl font-bold sm:text-2xl">Descubre rutas seleccionadas para tu próxima aventura</h2>
+            <p className="mt-2 text-sm leading-6 text-gray-300">Explora recorridos con información detallada y archivos GPX listos para usar.</p>
+          </div>
+          <Button asChild className="shrink-0 bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
+            <Link to="/app/premium-routes">Ver rutas Premium</Link>
+          </Button>
+        </CardContent>
+      </Card>
 
       {!canUseRoutes && (
         <Card className="mb-5 border-yellow-500/30 bg-yellow-500/10 py-0">
