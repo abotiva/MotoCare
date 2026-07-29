@@ -309,7 +309,7 @@ export function MainLayout() {
         <div className="min-w-0 flex-1 overflow-x-hidden pb-20 lg:pb-0"><Outlet /></div>
 
         <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-moto-darker/98 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden" aria-label="Navegación móvil">
-          <div className="grid h-[4.5rem] grid-cols-5">
+          <div className="grid h-[4.5rem] grid-cols-6">
             <NavLink to="/app/home" className={`flex min-h-11 flex-col items-center justify-center gap-1 text-[10px] font-medium ${isItemActive('/app/home') ? 'text-moto-orange' : 'text-gray-400'}`}><Home className="h-5 w-5" />Inicio</NavLink>
             <NavLink to="/app/garage" className={`flex min-h-11 flex-col items-center justify-center gap-1 text-[10px] font-medium ${location.pathname.includes('/garage') || location.pathname.includes('/bikes') || location.pathname === '/app/my-bikes' ? 'text-moto-orange' : 'text-gray-400'}`}><Bike className="h-5 w-5" />Mi Garage</NavLink>
             <button type="button" onClick={() => setIsQuickActionsOpen(true)} aria-label="Abrir acciones para registrar" aria-expanded={isQuickActionsOpen} className="relative flex min-h-11 flex-col items-center justify-center gap-1 text-[10px] font-bold text-moto-orange">
@@ -318,6 +318,7 @@ export function MainLayout() {
             </button>
             <NavLink to="/app/explore" className={`flex min-h-11 flex-col items-center justify-center gap-1 text-[10px] font-medium ${location.pathname === '/app/explore' || location.pathname === '/app/map' || location.pathname.startsWith('/app/routes/') ? 'text-moto-orange' : 'text-gray-400'}`}><MapIcon className="h-5 w-5" />Rutas</NavLink>
             <NavLink to="/app/messages" className={`flex min-h-11 flex-col items-center justify-center gap-1 text-[10px] font-medium ${location.pathname === '/app/messages' || location.pathname === '/app/clubs' ? 'text-moto-orange' : 'text-gray-400'}`}><MessageCircle className="h-5 w-5" />Comunidad</NavLink>
+            <NavLink to="/app/marketplace" className={`flex min-h-11 flex-col items-center justify-center gap-1 text-[10px] font-medium ${location.pathname.startsWith('/app/marketplace') ? 'text-moto-orange' : 'text-gray-400'}`}><ShoppingBag className="h-5 w-5" />Tienda</NavLink>
           </div>
         </nav>
       </main>

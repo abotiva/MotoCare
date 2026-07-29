@@ -347,6 +347,18 @@ export type ClubPostWithAuthor = ClubPost & {
   }>
 }
 
+export type MarketplacePurchase = {
+  id: string
+  listing_id: string
+  buyer_id: string
+  seller_id: string
+  category: MarketplaceCategory
+  title: string
+  amount: number
+  currency: 'COP'
+  purchased_at: string
+}
+
 export type Post = {
   id: string
   author_id: string

@@ -587,10 +587,41 @@ export function Marketplace() {
 
   const markListingAsSold = async (listing: StoreListing) => {
     if (!supabase || !user || listing.sellerId !== user.id) return
-    if (!window.confirm(`¿Confirmas que "${listing.title}" ya fue vendido?`)) return
+    const { data: saleMessages } = await supabase
+      .from('marketplace_messages')
+      .select('sender_id, recipient_id, sender:sender_id(full_name, username), recipient:recipient_id(full_name, username)')
+      .eq('listing_id', listing.id)
+
+    const buyers = new Map<string, string>()
+    ;(saleMessages ?? []).forEach((message) => {
+      const sender = Array.isArray(message.sender) ? message.sender[0] : message.sender
+      const recipient = Array.isArray(message.recipient) ? message.recipient[0] : message.recipient
+      if (message.sender_id !== user.id) buyers.set(message.sender_id, sender?.full_name || sender?.username || 'Usuario MotoCare')
+      if (message.recipient_id !== user.id) buyers.set(message.recipient_id, recipient?.full_name || recipient?.username || 'Usuario MotoCare')
+    })
+
+    const buyerOptions = [...buyers.entries()]
+    let buyerId: string | null = null
+    if (buyerOptions.length > 0) {
+      const choice = window.prompt(
+        `¿Quién compró "${listing.title}"?\n${buyerOptions.map(([, name], index) => `${index + 1}. ${name}`).join('\n')}\n0. Venta externa / no registrar comprador`,
+        '1'
+      )
+      if (choice === null) return
+      const selectedIndex = Number(choice)
+      if (!Number.isInteger(selectedIndex) || selectedIndex < 0 || selectedIndex > buyerOptions.length) {
+        toast.error('Seleccione una opción válida')
+        return
+      }
+      buyerId = selectedIndex === 0 ? null : buyerOptions[selectedIndex - 1][0]
+    } else if (!window.confirm(`¿Confirmas que "${listing.title}" ya fue vendido? No hay compradores con conversaciones para asociar.`)) {
+      return
+    }
+
     setIsMarkingSold(true)
     const { error } = await supabase.rpc('mark_marketplace_listing_sold', {
       target_listing_id: listing.id,
+      target_buyer_id: buyerId,
     })
     setIsMarkingSold(false)
     if (error) {

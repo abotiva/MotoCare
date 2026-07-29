@@ -10,6 +10,7 @@ import {
   CheckCircle,
   Clock,
   DollarSign,
+  Download,
   ExternalLink,
   Gauge,
   ImageUp,
@@ -45,7 +46,8 @@ import {
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
-import type { MaintenanceRecord, MaintenanceSuggestion, Motorcycle, MotorcycleDocument, Reminder } from '@/types/database'
+import { downloadExpenseReportPdf } from '@/lib/expenseReportPdf'
+import type { MaintenanceRecord, MaintenanceSuggestion, MarketplacePurchase, Motorcycle, MotorcycleDocument, Reminder } from '@/types/database'
 
 type StarterReminder = {
   owner_id: string
@@ -154,6 +156,15 @@ function formatMoney(value: number) {
   })
 }
 
+const marketplaceCategoryLabels: Record<MarketplacePurchase['category'], string> = {
+  motorcycles: 'Motos',
+  parts: 'Repuestos',
+  gear: 'Equipamiento',
+  services: 'Servicios de tienda',
+  'premium-routes': 'Rutas Premium',
+  packs: 'Packs',
+}
+
 type BikeTab = 'reminders' | 'history' | 'reports' | 'documents'
 
 const sectionToTab = {
@@ -212,6 +223,7 @@ export function MyBikes() {
   const [activeTab, setActiveTab] = useState<BikeTab>(() => routeTab ?? tabFromHash(location.hash))
   const [motorcycles, setMotorcycles] = useState<Motorcycle[]>([])
   const [records, setRecords] = useState<MaintenanceRecord[]>([])
+  const [marketplacePurchases, setMarketplacePurchases] = useState<MarketplacePurchase[]>([])
   const [reminders, setReminders] = useState<Reminder[]>([])
   const [documents, setDocuments] = useState<MotorcycleDocument[]>([])
   const [maintenanceSuggestions, setMaintenanceSuggestions] = useState<MaintenanceSuggestion[]>([])
@@ -391,6 +403,54 @@ export function MyBikes() {
     }
   }, [selectedRecords])
 
+  const purchaseReport = useMemo(() => {
+    const byCategory = marketplacePurchases.reduce<Record<string, number>>((totals, purchase) => {
+      const label = marketplaceCategoryLabels[purchase.category]
+      totals[label] = (totals[label] ?? 0) + Number(purchase.amount)
+      return totals
+    }, {})
+    return {
+      total: marketplacePurchases.reduce((sum, purchase) => sum + Number(purchase.amount), 0),
+      byCategory: Object.entries(byCategory).sort(([, a], [, b]) => b - a),
+    }
+  }, [marketplacePurchases])
+
+  const exportExpenseReport = () => {
+    if (!selectedBike || !canViewMaintenanceReports) return
+    downloadExpenseReportPdf({
+      ownerName: profile?.full_name || user?.email || 'Usuario MotoCare',
+      motorcycleName: `${selectedBike.brand} ${selectedBike.model}${selectedBike.plate ? ` - ${selectedBike.plate}` : ''}`,
+      generatedAt: new Date().toLocaleString('es-CO'),
+      sections: [
+        {
+          title: 'Servicios y mantenimientos',
+          items: [...selectedRecords]
+            .filter((record) => record.cost !== null)
+            .sort((a, b) => b.service_date.localeCompare(a.service_date))
+            .map((record) => ({
+              date: record.service_date,
+              description: record.service_type,
+              category: 'Servicio',
+              amount: Number(record.cost),
+              detail: `${record.mileage.toLocaleString()} km${record.notes ? ` - ${record.notes}` : ''}`,
+            })),
+        },
+        ...purchaseReport.byCategory.map(([category]) => ({
+          title: `Compras en Tienda - ${category}`,
+          items: marketplacePurchases
+            .filter((purchase) => marketplaceCategoryLabels[purchase.category] === category)
+            .sort((a, b) => b.purchased_at.localeCompare(a.purchased_at))
+            .map((purchase) => ({
+              date: purchase.purchased_at.slice(0, 10),
+              description: purchase.title,
+              category,
+              amount: Number(purchase.amount),
+            })),
+        })),
+      ],
+    })
+  }
+
   const healthScore = useMemo(() => {
     if (!selectedBike) return 0
     const soatDays = daysUntil(selectedBike.soat_expires_on)
@@ -441,6 +501,25 @@ export function MyBikes() {
 
     loadGarage()
   }, [user, profile?.primary_motorcycle_id])
+
+  useEffect(() => {
+    if (!supabase || !user || !canViewMaintenanceReports) {
+      setMarketplacePurchases([])
+      return
+    }
+    void supabase
+      .from('marketplace_purchases')
+      .select('*')
+      .eq('buyer_id', user.id)
+      .order('purchased_at', { ascending: false })
+      .then(({ data, error: purchasesError }) => {
+        if (purchasesError) {
+          toast.error('No pudimos cargar las compras de Tienda', { description: purchasesError.message })
+        } else {
+          setMarketplacePurchases((data ?? []) as MarketplacePurchase[])
+        }
+      })
+  }, [canViewMaintenanceReports, user])
 
   useEffect(() => {
     if (!supabase || !user || !selectedBike?.id) {
@@ -1503,6 +1582,16 @@ export function MyBikes() {
                         </div>
                       ) : canViewMaintenanceReports ? (
                         <>
+                          <div className="flex flex-col justify-between gap-3 rounded-xl border border-white/5 bg-moto-darker p-4 sm:flex-row sm:items-center">
+                            <div>
+                              <h3 className="font-semibold">Informe detallado de gastos</h3>
+                              <p className="text-sm text-gray-400">Servicios de esta moto y compras realizadas en Tienda, separadas por categoría.</p>
+                            </div>
+                            <Button type="button" className="shrink-0 bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={exportExpenseReport}>
+                              <Download className="mr-2 h-4 w-4" />
+                              Exportar PDF
+                            </Button>
+                          </div>
                           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                             <ReportCard icon={DollarSign} label="Gasto total" value={formatMoney(maintenanceReport.totalSpent)} detail={`${maintenanceReport.totalServices} servicios`} />
                             <ReportCard icon={CalendarClock} label="Este año" value={formatMoney(maintenanceReport.yearSpent)} detail={`Este mes: ${formatMoney(maintenanceReport.monthSpent)}`} />
@@ -1539,6 +1628,40 @@ export function MyBikes() {
                                 ) : (
                                   <p className="text-sm text-gray-400">Agrega costos a tus mantenimientos para ver este informe.</p>
                                 )}
+                              </CardContent>
+                            </Card>
+                          </div>
+
+                          <div className="grid gap-4 lg:grid-cols-2">
+                            <Card className="border-white/5 bg-moto-darker py-0">
+                              <CardContent className="p-4">
+                                <h3 className="mb-3 font-semibold">Servicios detallados</h3>
+                                {selectedRecords.filter((record) => record.cost !== null).length > 0 ? (
+                                  <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+                                    {selectedRecords.filter((record) => record.cost !== null).map((record) => (
+                                      <div key={record.id} className="rounded-lg bg-moto-gray p-3">
+                                        <div className="flex justify-between gap-3"><p className="font-medium">{record.service_type}</p><p className="shrink-0 font-semibold">{formatMoney(Number(record.cost))}</p></div>
+                                        <p className="mt-1 text-xs text-gray-500">{record.service_date} · {record.mileage.toLocaleString()} km</p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : <p className="text-sm text-gray-400">No hay servicios con costo registrado.</p>}
+                              </CardContent>
+                            </Card>
+
+                            <Card className="border-white/5 bg-moto-darker py-0">
+                              <CardContent className="p-4">
+                                <div className="mb-3 flex items-center justify-between gap-3">
+                                  <h3 className="font-semibold">Compras en Tienda</h3>
+                                  <Badge className="bg-moto-orange/15 text-moto-orange">{formatMoney(purchaseReport.total)}</Badge>
+                                </div>
+                                {purchaseReport.byCategory.length > 0 ? (
+                                  <div className="space-y-3">
+                                    {purchaseReport.byCategory.map(([category, total]) => (
+                                      <ReportLine key={category} label={category} value={formatMoney(total)} />
+                                    ))}
+                                  </div>
+                                ) : <p className="text-sm text-gray-400">Las compras confirmadas por vendedores aparecerán aquí.</p>}
                               </CardContent>
                             </Card>
                           </div>
