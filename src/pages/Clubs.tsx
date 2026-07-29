@@ -281,16 +281,11 @@ export function Clubs() {
 
     setIsSaving(true)
 
-    const { data: club, error } = await supabase
-      .from('clubs')
-      .insert({
-        owner_id: user.id,
-        name: createForm.name.trim(),
-        city: createForm.city.trim() || null,
-        description: createForm.description.trim() || null,
-      })
-      .select('*')
-      .single()
+    const { data: club, error } = await supabase.rpc('create_club', {
+      club_name: createForm.name.trim(),
+      club_city: createForm.city.trim() || null,
+      club_description: createForm.description.trim() || null,
+    })
 
     if (error || !club) {
       toast.error('No pudimos crear el club', { description: error?.message })
@@ -299,24 +294,14 @@ export function Clubs() {
     }
 
     const createdClub = club as Club
-    const { error: memberError } = await supabase.from('club_members').insert({
-      club_id: createdClub.id,
-      user_id: user.id,
-      role: 'owner',
-    })
-
-    if (memberError) {
-      toast.error('El club se creo, pero no pudimos agregarte como miembro', { description: memberError.message })
-    } else {
-      setClubs((current) => [createdClub, ...current])
-      setHasManualSelection(true)
-      setSelectedClubId(createdClub.id)
-      if (!profile?.primary_club_id) {
-        await setPrimaryClub(createdClub)
-      }
-      setCreateForm(emptyClubForm)
-      toast.success('Club creado', { description: 'Ya puedes invitar miembros.' })
+    setClubs((current) => [createdClub, ...current])
+    setHasManualSelection(true)
+    setSelectedClubId(createdClub.id)
+    if (!profile?.primary_club_id) {
+      await setPrimaryClub(createdClub)
     }
+    setCreateForm(emptyClubForm)
+    toast.success('Club creado', { description: 'Ya puedes invitar miembros.' })
 
     setIsSaving(false)
   }
