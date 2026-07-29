@@ -28,7 +28,7 @@ La diferencia principal no debe ser solo "mas funciones", sino el tipo de usuari
 | Rutas | Uso limitado | Rutas guardadas ilimitadas | Rutas y gestion para grupos/clubes |
 | Comunidad | Ver y participar | Participacion completa | Visibilidad destacada |
 | Clubes | Unirse a clubes | Crear y administrar clubes pequenos | Gestion avanzada de clubes grandes |
-| Marketplace | Ver publicaciones y comprar | Publicar como persona natural | Publicar como negocio, aliado o perfil comercial |
+| Tienda | Ver publicaciones y comprar | Publicar como persona natural | Publicar como negocio, aliado o perfil comercial |
 | Perfil | Basico | Perfil mejorado | Perfil comercial/profesional |
 | Publicidad | Puede tener | Sin publicidad | Sin publicidad |
 | Soporte | Estandar | Prioritario | Prioritario/comercial |
@@ -47,7 +47,7 @@ Para usuarios que quieren probar MotoCare sin pagar.
 - Recordatorios basicos de mantenimiento.
 - Acceso a comunidad.
 - Ver rutas compartidas.
-- Ver marketplace.
+- Ver la tienda.
 - Unirse a clubes.
 - Perfil basico.
 
@@ -56,7 +56,7 @@ Para usuarios que quieren probar MotoCare sin pagar.
 - No permitir mas de 1 moto.
 - Limitar historial visible o cantidad de registros activos.
 - Limitar rutas guardadas.
-- No permitir publicaciones de venta, pero si permitir ver y comprar en marketplace.
+- No permitir publicaciones de venta, pero sí permitir ver y comprar en la tienda.
 - Mostrar invitacion a mejorar plan cuando el usuario llegue a un limite.
 - Puede incluir publicidad o mensajes promocionales internos.
 
@@ -79,7 +79,7 @@ Para el motero individual que quiere controlar bien sus motos, mantenimientos, r
 - Estadisticas de kilometraje, servicios y costos.
 - Rutas guardadas ilimitadas.
 - Crear y administrar clubes pequenos.
-- Publicaciones en marketplace como persona natural.
+- Publicaciones en la tienda como persona natural.
 - Perfil publico mejorado.
 - Sin publicidad.
 - Respaldo completo en la nube.
@@ -112,7 +112,7 @@ Para talleres, clubes, negocios, marcas, aliados o usuarios que administran moto
 - Reportes por moto, cliente, club o negocio.
 - Recordatorios de mantenimiento para varias motos/personas.
 - Historial completo por cliente o miembro.
-- Publicaciones comerciales en marketplace.
+- Publicaciones comerciales en la tienda.
 - Perfil comercial o profesional verificado.
 - Gestion de clubes grandes.
 - Mayor visibilidad dentro de la app.
@@ -124,7 +124,7 @@ Para talleres, clubes, negocios, marcas, aliados o usuarios que administran moto
 - Premium es para administrar mis motos.
 - Business es para administrar motos, clientes, miembros o servicios de terceros, y para vender como negocio.
 - Incluye herramientas de negocio, reportes y roles de equipo.
-- Puede tener beneficios comerciales dentro de marketplace.
+- Puede tener beneficios comerciales dentro de la tienda.
 
 ### Mensaje comercial
 
@@ -148,7 +148,7 @@ Funciones que conviene reservar:
 - estadisticas completas;
 - historial ilimitado;
 - multiples motos;
-- publicar ventas en marketplace;
+- publicar ventas en la tienda;
 - gestion de clubes;
 - reportes.
 

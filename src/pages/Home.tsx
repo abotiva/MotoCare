@@ -20,12 +20,34 @@ import { supabase } from '@/lib/supabase'
 import type { Club, MaintenanceRecord, Motorcycle, PostWithAuthor, Reminder, RoutePlan } from '@/types/database'
 import { formatCurrency, formatShortDate, getMotorcycleHealth } from '@/features/motorcycles/utils/motorcycleHealth'
 
-const exploreItems = [
-  { label: 'Rutas', description: 'Planea tu próxima salida.', to: '/app/map', icon: MapPinned },
-  { label: 'Clubes', description: 'Conecta con grupos moteros.', to: '/app/clubs', icon: Bike },
-  { label: 'Comunidad', description: 'Comparte experiencias.', to: '/app/messages', icon: MessageCircle },
-  { label: 'Marketplace', description: 'Motos, repuestos y servicios.', to: '/app/marketplace', icon: ShoppingBag },
+const ecosystemBlocks = [
+  { title: 'Mi Garage', icon: Bike, items: ['Resumen', 'Historial', 'Agenda', 'Documentos', 'Gastos'] },
+  { title: 'Rutas', icon: MapPinned, items: ['Descubrir rutas', 'Mis rutas', 'Crear ruta', 'Rutas guardadas'] },
+  { title: 'Comunidad', icon: MessageCircle, items: ['Actividad', 'Clubes', 'Mis clubes', 'Moteros'] },
+  { title: 'Tienda', icon: ShoppingBag, items: ['Motos', 'Repuestos', 'Equipamiento', 'Servicios', 'Rutas Premium'] },
 ]
+
+function EcosystemOverview() {
+  return (
+    <section aria-labelledby="ecosystem-title">
+      <div className="mb-3">
+        <p className="text-sm text-gray-500">Todo el ecosistema, de un vistazo</p>
+        <h2 id="ecosystem-title" className="text-xl font-bold">MotoCare</h2>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {ecosystemBlocks.map((block) => (
+          <article key={block.title} className="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
+            <block.icon className="h-6 w-6 text-moto-orange" aria-hidden="true" />
+            <h3 className="mt-5 font-semibold">{block.title}</h3>
+            <ul className="mt-3 space-y-2 text-sm text-gray-400">
+              {block.items.map((item) => <li key={item} className="border-t border-white/5 pt-2 first:border-0 first:pt-0">{item}</li>)}
+            </ul>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
 
 export function Home() {
   const { user, profile } = useAuth()
@@ -129,6 +151,7 @@ export function Home() {
           <Link to="/app/explore" className="rounded-3xl border border-white/5 bg-moto-darker p-6 hover:border-moto-orange/40"><MapPinned className="h-7 w-7 text-moto-orange" /><h2 className="mt-5 text-xl font-bold">Tu próxima aventura está por comenzar</h2><p className="mt-2 text-sm text-gray-400">Descubre rutas creadas por la comunidad o diseña tu propio recorrido.</p><span className="mt-5 inline-flex items-center gap-2 font-semibold text-moto-orange">Explorar rutas <ArrowRight className="h-4 w-4" /></span></Link>
           <Link to="/app/clubs" className="rounded-3xl border border-white/5 bg-moto-darker p-6 hover:border-moto-orange/40"><MessageCircle className="h-7 w-7 text-moto-orange" /><h2 className="mt-5 text-xl font-bold">Encuentra tu comunidad</h2><p className="mt-2 text-sm text-gray-400">Descubre clubes, conoce otros moteros y participa en sus experiencias.</p><span className="mt-5 inline-flex items-center gap-2 font-semibold text-moto-orange">Explorar clubes <ArrowRight className="h-4 w-4" /></span></Link>
         </div>
+        <EcosystemOverview />
       </div>
     )
   }
@@ -258,15 +281,7 @@ export function Home() {
         </div>
       </section>
 
-      <section aria-labelledby="explore-title">
-        <div className="mb-3">
-          <p className="text-sm text-gray-500">Cuando tengas tu moto al día</p>
-          <h2 id="explore-title" className="text-xl font-bold">Explorar MotoCare</h2>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {exploreItems.map((item) => <Link key={item.label} to={item.to} className="rounded-2xl border border-white/5 bg-white/[0.03] p-4 hover:border-white/15"><item.icon className="h-6 w-6 text-gray-400" /><h3 className="mt-5 font-semibold">{item.label}</h3><p className="mt-1 text-sm text-gray-500">{item.description}</p></Link>)}
-        </div>
-      </section>
+      <EcosystemOverview />
     </div>
   )
 }

@@ -63,7 +63,7 @@ const communityItems: NavigationItem[] = [
 ]
 
 const marketplaceItems: NavigationItem[] = [
-  { path: '/app/marketplace', label: 'Marketplace', icon: ShoppingBag },
+  { path: '/app/marketplace', label: 'Tienda', icon: ShoppingBag },
 ]
 
 const accountItems: NavigationItem[] = [
@@ -231,7 +231,7 @@ export function MainLayout() {
             <div className="space-y-1">{communityItems.map(sidebarLink)}</div>
           </section>
           <section aria-labelledby="nav-marketplace">
-            <h2 id="nav-marketplace" className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Marketplace</h2>
+            <h2 id="nav-marketplace" className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Tienda</h2>
             <div className="space-y-1">{marketplaceItems.map(sidebarLink)}</div>
           </section>
           <section aria-labelledby="nav-account">

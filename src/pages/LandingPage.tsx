@@ -42,7 +42,7 @@ const ecosystem = [
   { icon: MapPinned, title: 'Rutas', description: 'Planea recorridos y descubre nuevas experiencias.' },
   { icon: Users, title: 'Clubes', description: 'Conecta con grupos que comparten tu pasión.' },
   { icon: MessageCircle, title: 'Comunidad', description: 'Comparte historias, aprendizajes y recomendaciones.' },
-  { icon: ShoppingBag, title: 'Marketplace', description: 'Encuentra motos, repuestos, equipamiento y servicios.' },
+  { icon: ShoppingBag, title: 'Tienda', description: 'Encuentra motos, repuestos, equipamiento y servicios.' },
 ]
 
 const plans = [
@@ -60,7 +60,7 @@ const plans = [
   {
     name: 'Business',
     description: 'Para negocios que publican en el ecosistema.',
-    features: ['Perfil comercial', 'Publicaciones comerciales', 'Gestión orientada al marketplace', 'Identificación visible como negocio'],
+    features: ['Perfil comercial', 'Publicaciones comerciales', 'Gestión orientada a la tienda', 'Identificación visible como negocio'],
   },
 ]
 

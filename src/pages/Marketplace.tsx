@@ -673,7 +673,7 @@ export function Marketplace() {
       {/* Header */}
       <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold mb-2">Marketplace</h1>
+          <h1 className="text-2xl font-bold mb-2">Tienda</h1>
           <p className="text-gray-400">Compra motos, repuestos, equipamiento, servicios y rutas premium. Publicar exige una licencia activa.</p>
         </div>
         <div className="flex flex-wrap gap-2">
