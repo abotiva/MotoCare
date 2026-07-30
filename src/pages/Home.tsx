@@ -1,5 +1,6 @@
 import { ArrowRight, Bike, MapPinned, MessageCircle, ShoppingBag, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { useSubscription } from '@/hooks/useSubscription'
 
 const homeSections = [
   {
@@ -45,14 +46,24 @@ const homeSections = [
 ] as const
 
 export function Home() {
+  const { effectivePlan } = useSubscription()
+  const hasPremiumGarage = effectivePlan === 'pro' || effectivePlan === 'premium'
+
   return (
     <div className="mx-auto flex min-h-[calc(100dvh-4rem)] max-w-7xl flex-col p-4 pb-24 sm:p-6 lg:pb-6">
       <h1 className="sr-only">Inicio de MotoCare</h1>
 
       <div className="grid flex-1 gap-4 sm:grid-cols-2">
-        {homeSections.map((section) => (
+        {homeSections.map((section) => {
+          const isMotorcycleSection = section.to === '/app/my-bikes'
+          const title = isMotorcycleSection && hasPremiumGarage ? 'Mi Garaje' : section.title
+          const description = isMotorcycleSection && hasPremiumGarage
+            ? 'Administra tus motos, mantenimientos, documentos y recordatorios desde un solo lugar.'
+            : section.description
+
+          return (
           <Link
-            key={section.title}
+            key={section.to}
             to={section.to}
             className={`group relative flex min-h-52 flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br ${section.accent} p-6 transition duration-200 hover:-translate-y-0.5 hover:border-white/20 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-moto-orange focus:ring-offset-2 focus:ring-offset-moto-dark sm:p-8`}
           >
@@ -67,13 +78,14 @@ export function Home() {
             </div>
 
             <div className="mt-8">
-              <h2 className="text-2xl font-bold sm:text-3xl">{section.title}</h2>
+              <h2 className="text-2xl font-bold sm:text-3xl">{title}</h2>
               <p className="mt-3 max-w-md text-sm leading-6 text-gray-300 sm:text-base">
-                {section.description}
+                {description}
               </p>
             </div>
           </Link>
-        ))}
+          )
+        })}
       </div>
 
       <div className="pt-6 text-center">

@@ -134,9 +134,14 @@ export function MainLayout() {
   const avatarFallback = initials(profile?.full_name, user?.email)
   const isPremiumProfile = effectivePlan === 'pro' || effectivePlan === 'premium'
   const isBusinessProfile = effectivePlan === 'business'
+  const motorcycleSectionLabel = isPremiumProfile ? 'Mi garaje' : 'Mi moto'
+  const itemLabel = (item: { path: string; label: string }) => (
+    item.path === '/app/my-bikes' ? motorcycleSectionLabel : item.label
+  )
 
   const pageTitle =
     (location.pathname.startsWith('/app/routes/') ? 'Detalle de ruta' : null) ||
+    (location.pathname === '/app/my-bikes' ? motorcycleSectionLabel : null) ||
     [...navItems, ...maintenanceItems, ...documentItems, ...premiumItems].find((item) => item.path === `${location.pathname}${location.hash}`)?.label ||
     navItems.find((item) => item.path === location.pathname)?.label ||
     premiumItems.find((item) => item.path === location.pathname)?.label ||
@@ -266,7 +271,7 @@ export function MainLayout() {
               }
             >
               <item.icon className="h-5 w-5" />
-              <span className="flex-1">{item.label}</span>
+              <span className="flex-1">{itemLabel(item)}</span>
             </NavLink>
           ))}
 
@@ -520,7 +525,7 @@ export function MainLayout() {
                 <div className="relative">
                   <item.icon className="h-5 w-5" />
                 </div>
-                <span className="max-w-full truncate px-1 text-[10px] font-medium">{item.label}</span>
+                <span className="max-w-full truncate px-1 text-[10px] font-medium">{itemLabel(item)}</span>
               </NavLink>
             ))}
             <button
@@ -558,7 +563,7 @@ export function MainLayout() {
                   }
                 >
                   <item.icon className="h-6 w-6" />
-                  <span className="text-lg">{item.label}</span>
+                  <span className="text-lg">{itemLabel(item)}</span>
                 </NavLink>
               ))}
               <button
