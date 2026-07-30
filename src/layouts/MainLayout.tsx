@@ -46,8 +46,8 @@ const documentItems = [
 ]
 
 const premiumItems = [
-  { path: '/app/map', icon: MapIcon, label: 'Rutas' },
-  { path: '/app/messages', icon: MessageCircle, label: 'Comunidad' },
+  { path: '/app/routes', icon: MapIcon, label: 'Rutas' },
+  { path: '/app/community', icon: MessageCircle, label: 'Comunidad' },
   { path: '/app/clubs', icon: Users, label: 'Clubes' },
   { path: '/app/marketplace', icon: ShoppingBag, label: 'Tienda' },
 ]
@@ -61,8 +61,8 @@ const sidebarItems = [
 const mobileNavItems = [
   { path: '/app/home', icon: Home, label: 'Inicio' },
   { path: '/app/my-bikes', icon: Bike, label: 'Mi moto' },
-  { path: '/app/map', icon: MapIcon, label: 'Rutas' },
-  { path: '/app/messages', icon: MessageCircle, label: 'Comunidad' },
+  { path: '/app/routes', icon: MapIcon, label: 'Rutas' },
+  { path: '/app/community', icon: MessageCircle, label: 'Comunidad' },
 ]
 
 const mobileMoreItems = [
@@ -148,8 +148,9 @@ export function MainLayout() {
     const currentPath = `${location.pathname}${location.hash}`
     if (path.includes('#')) return currentPath === path
     if (path === '/app/my-bikes') return location.pathname === path && !location.hash
-    if (path === '/app/map' && location.pathname.startsWith('/app/routes/')) return true
-    if (path === '/app/messages' && location.pathname === '/app/community') return true
+    if (path === '/app/routes' && (location.pathname === '/app/map' || location.pathname.startsWith('/app/routes/'))) return true
+    if (path === '/app/community' && (location.pathname === '/app/messages' || location.pathname === '/app/explore')) return true
+    if (path === '/app/clubs' && location.pathname.startsWith('/app/clubs/')) return true
     return location.pathname === path
   }
 

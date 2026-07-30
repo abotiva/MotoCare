@@ -691,7 +691,7 @@ export function Community() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl p-3 pb-24 sm:p-4 lg:p-6">
+    <div className="mx-auto w-full min-w-0 max-w-6xl overflow-x-hidden p-3 pb-24 sm:p-4 lg:p-6">
       <div className="mb-5 flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
         <div className="min-w-0">
           <h1 className="text-xl font-bold sm:text-2xl">Comunidad</h1>
@@ -721,7 +721,7 @@ export function Community() {
                   <button
                     key={post.id}
                     type="button"
-                    className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/5 bg-moto-darker p-4 text-left transition-colors hover:border-moto-orange/40"
+                    className="flex w-full min-w-0 items-center justify-between gap-3 overflow-hidden rounded-xl border border-white/5 bg-moto-darker p-3 text-left transition-colors hover:border-moto-orange/40 sm:p-4"
                     onClick={() => {
                       setSelectedMetric(null)
                       window.setTimeout(() => document.getElementById(`post-${post.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150)
@@ -731,7 +731,7 @@ export function Community() {
                       <p className="truncate font-semibold">{authorName}</p>
                       <p className="mt-1 line-clamp-2 text-sm text-gray-400">{post.content || 'Publicación con contenido adjunto'}</p>
                     </div>
-                    <div className="shrink-0 text-right">
+                    <div className="max-w-24 shrink-0 text-right sm:max-w-32">
                       <p className="text-xs text-gray-400">{relativeDate(post.created_at)}</p>
                       {post.routes && <p className="mt-1 max-w-32 truncate text-xs font-medium text-moto-orange">{post.routes.title}</p>}
                     </div>
@@ -757,10 +757,10 @@ export function Community() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="public">
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="space-y-4">
-          <Card className="border-white/5 bg-moto-gray py-0">
+        <TabsContent value="public" className="min-w-0 overflow-x-hidden">
+          <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="min-w-0 space-y-4">
+          <Card className="min-w-0 overflow-hidden border-white/5 bg-moto-gray py-0">
             <CardContent className="p-3 sm:p-4">
               <form className="flex gap-3 sm:gap-4" onSubmit={handleCreatePost}>
                 <Avatar className="hidden h-11 w-11 sm:flex">
@@ -776,7 +776,7 @@ export function Community() {
                     placeholder="Comparte una ruta, un tip de mantenimiento o una salida..."
                   />
                   <select
-                    className="mt-3 w-full rounded-xl border border-white/10 bg-moto-darker p-3 text-sm text-white"
+                    className="mt-3 w-full min-w-0 max-w-full rounded-xl border border-white/10 bg-moto-darker p-3 text-sm text-white"
                     value={selectedRouteId}
                     onChange={(event) => setSelectedRouteId(event.target.value)}
                   >
@@ -852,7 +852,7 @@ export function Community() {
                   ? [post.image_url]
                   : []
               return (
-                <Card id={`post-${post.id}`} key={post.id} className="scroll-mt-24 overflow-hidden border-white/5 bg-moto-gray py-0">
+                <Card id={`post-${post.id}`} key={post.id} className="min-w-0 max-w-full scroll-mt-24 overflow-hidden border-white/5 bg-moto-gray py-0">
                   <CardHeader className="p-4 pb-0">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="flex min-w-0 items-center gap-3">
@@ -903,7 +903,7 @@ export function Community() {
                           maxLength={500}
                         />
                         <select
-                          className="w-full rounded-xl border border-white/10 bg-moto-darker p-3 text-sm text-white"
+                          className="w-full min-w-0 max-w-full rounded-xl border border-white/10 bg-moto-darker p-3 text-sm text-white"
                           value={editRouteId}
                           onChange={(event) => setEditRouteId(event.target.value)}
                         >
@@ -924,7 +924,7 @@ export function Community() {
                         </div>
                       </div>
                     ) : (
-                      <p className="whitespace-pre-wrap text-sm leading-6 text-gray-100">{post.content}</p>
+                      <p className="break-words whitespace-pre-wrap text-sm leading-6 text-gray-100 [overflow-wrap:anywhere]">{post.content}</p>
                     )}
                     {postImages.length > 0 && (
                       <div className="mt-4 grid gap-2" style={{ gridTemplateColumns: postImages.length === 1 ? '1fr' : 'repeat(auto-fit, minmax(160px, 1fr))' }}>
@@ -944,11 +944,11 @@ export function Community() {
                       <Link to={`/app/routes/${post.routes.id}`} className="mt-4 block rounded-xl border border-white/10 bg-moto-darker p-3 transition hover:border-moto-orange/50 hover:bg-moto-darker/80 sm:p-4">
                         <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div className="min-w-0">
-                            <p className="flex items-center gap-2 font-semibold">
-                              <RouteIcon className="h-4 w-4 text-moto-orange" />
-                              {post.routes.title}
+                            <p className="flex min-w-0 items-center gap-2 font-semibold">
+                              <RouteIcon className="h-4 w-4 shrink-0 text-moto-orange" />
+                              <span className="min-w-0 break-words [overflow-wrap:anywhere]">{post.routes.title}</span>
                             </p>
-                            <p className="mt-1 text-sm text-gray-400">
+                            <p className="mt-1 break-words text-sm text-gray-400 [overflow-wrap:anywhere]">
                               {post.routes.origin || 'Origen sin definir'} - {post.routes.destination || 'Destino sin definir'}
                             </p>
                           </div>
@@ -1002,7 +1002,7 @@ export function Community() {
                                     <span className="font-semibold text-white">{commentName}</span>
                                     <span className="text-gray-500">{relativeDate(comment.created_at)}</span>
                                   </div>
-                                  <p className="mt-1 whitespace-pre-wrap text-sm text-gray-300">{comment.content}</p>
+                                  <p className="mt-1 break-words whitespace-pre-wrap text-sm text-gray-300 [overflow-wrap:anywhere]">{comment.content}</p>
                                 </div>
                               </div>
                             )
@@ -1015,7 +1015,7 @@ export function Community() {
                             <AvatarImage src={profile?.avatar_url ?? undefined} />
                             <AvatarFallback>{initials(profile?.full_name, profile?.username)}</AvatarFallback>
                           </Avatar>
-                          <div className="flex flex-1 gap-2">
+                          <div className="flex min-w-0 flex-1 gap-2">
                             <input
                               className="min-w-0 flex-1 rounded-lg border border-white/10 bg-moto-darker px-3 py-2 text-sm text-white placeholder:text-gray-500"
                               value={commentDrafts[post.id] ?? ''}
@@ -1044,8 +1044,8 @@ export function Community() {
           )}
         </div>
 
-        <div className="space-y-4">
-          <Card className="border-white/5 bg-moto-gray py-0">
+        <div className="min-w-0 space-y-4">
+          <Card className="min-w-0 overflow-hidden border-white/5 bg-moto-gray py-0">
             <CardContent className="p-5">
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div>
@@ -1128,11 +1128,11 @@ export function Community() {
           </div>
         </TabsContent>
 
-        <TabsContent value="clubs">
+        <TabsContent value="clubs" className="min-w-0 overflow-x-hidden">
           {myClubs.length > 0 && selectedClub ? (
-            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-              <div className="space-y-4">
-                <Card className="border-white/5 bg-moto-gray py-0">
+            <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+              <div className="min-w-0 space-y-4">
+                <Card className="min-w-0 overflow-hidden border-white/5 bg-moto-gray py-0">
                   <CardContent className="p-4">
                     <div className="mb-4 flex flex-col justify-between gap-3 md:flex-row md:items-center">
                       <div className="flex min-w-0 items-center gap-3">
@@ -1146,7 +1146,7 @@ export function Community() {
                         </div>
                       </div>
                       <select
-                        className="w-full rounded-xl border border-white/10 bg-moto-darker p-3 text-sm text-white md:w-auto"
+                        className="w-full min-w-0 max-w-full rounded-xl border border-white/10 bg-moto-darker p-3 text-sm text-white md:w-auto"
                         value={selectedClubId}
                         onChange={(event) => setSelectedClubId(event.target.value)}
                       >
@@ -1172,7 +1172,7 @@ export function Community() {
                         />
                         <div className="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
                           <select
-                            className="w-full rounded-xl border border-white/10 bg-moto-darker p-3 text-sm text-white"
+                            className="w-full min-w-0 max-w-full rounded-xl border border-white/10 bg-moto-darker p-3 text-sm text-white"
                             value={selectedClubRouteId}
                             onChange={(event) => setSelectedClubRouteId(event.target.value)}
                           >
@@ -1212,7 +1212,7 @@ export function Community() {
                     const author = post.profiles
                     const authorName = author?.full_name || author?.username || 'Motero MotoCare Co'
                     return (
-                      <Card key={post.id} className="border-white/5 bg-moto-gray py-0">
+                      <Card key={post.id} className="min-w-0 max-w-full overflow-hidden border-white/5 bg-moto-gray py-0">
                         <CardContent className="p-4">
                           <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div className="flex min-w-0 items-center gap-3">
@@ -1232,7 +1232,7 @@ export function Community() {
                               </Button>
                             )}
                           </div>
-                          <p className="whitespace-pre-wrap text-sm leading-6 text-gray-100">{post.content}</p>
+                          <p className="break-words whitespace-pre-wrap text-sm leading-6 text-gray-100 [overflow-wrap:anywhere]">{post.content}</p>
                           {post.routes && (
                             <Link to={`/app/routes/${post.routes.id}`} className="mt-4 block rounded-xl border border-white/10 bg-moto-darker p-3 transition hover:border-moto-orange/50 hover:bg-moto-darker/80 sm:p-4">
                               <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -1273,8 +1273,8 @@ export function Community() {
                 )}
               </div>
 
-              <div className="space-y-4">
-                <Card className="border-white/5 bg-moto-gray py-0">
+              <div className="min-w-0 space-y-4">
+                <Card className="min-w-0 overflow-hidden border-white/5 bg-moto-gray py-0">
                   <CardContent className="p-5">
                     <h2 className="mb-3 font-semibold">Clubes disponibles</h2>
                     <div className="space-y-2">

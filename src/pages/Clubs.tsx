@@ -635,7 +635,7 @@ export function Clubs() {
             </CardContent>
           </Card>
 
-          <Card className="border-white/5 bg-moto-gray py-0">
+          <Card id="create" className="scroll-mt-20 border-white/5 bg-moto-gray py-0">
             <CardContent className="p-4">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                 <h2 className="font-semibold">Crear club</h2>

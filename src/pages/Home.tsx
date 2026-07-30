@@ -1,4 +1,4 @@
-import { ArrowRight, Bike, MapPinned, MessageCircle, ShoppingBag } from 'lucide-react'
+import { ArrowRight, Bike, MapPinned, MessageCircle, ShoppingBag, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 const homeSections = [
@@ -13,7 +13,7 @@ const homeSections = [
   {
     title: 'Rutas',
     description: 'Planea recorridos, explora destinos y guarda tus próximas aventuras.',
-    to: '/app/map',
+    to: '/app/routes',
     icon: MapPinned,
     accent: 'from-sky-500/20 to-sky-500/5',
     iconClass: 'bg-sky-400 text-sky-950',
@@ -21,10 +21,18 @@ const homeSections = [
   {
     title: 'Comunidad',
     description: 'Conversa con otros moteros, comparte experiencias y mantente cerca de tus clubes.',
-    to: '/app/messages',
+    to: '/app/community',
     icon: MessageCircle,
     accent: 'from-violet-500/20 to-violet-500/5',
     iconClass: 'bg-violet-400 text-violet-950',
+  },
+  {
+    title: 'Clubes',
+    description: 'Administra tus clubes, conoce sus miembros y organiza nuevas rodadas en grupo.',
+    to: '/app/clubs',
+    icon: Users,
+    accent: 'from-amber-500/20 to-amber-500/5',
+    iconClass: 'bg-amber-400 text-amber-950',
   },
   {
     title: 'Tienda',
