@@ -263,6 +263,7 @@ export function MyBikes() {
   const canUploadDocuments = effectivePlan === 'pro' || effectivePlan === 'premium'
   const isBusinessAccount = effectivePlan === 'business'
   const isPremiumRider = effectivePlan === 'pro' || effectivePlan === 'premium'
+  const motorcycleSectionLabel = isPremiumRider ? 'Mi Garage' : 'Mi Moto'
 
   useEffect(() => {
     setPrimaryMotorcycleId(profile?.primary_motorcycle_id ?? null)
@@ -1388,15 +1389,19 @@ export function MyBikes() {
     <div className="mx-auto max-w-6xl p-4 pb-24 lg:p-6">
       <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
         <div>
-          <h1 className="mb-1 text-2xl font-bold">Mi Garage</h1>
-          <p className="text-gray-400">Tus motos, mantenimientos y vencimientos en un solo lugar.</p>
+          <h1 className="mb-1 text-2xl font-bold">{motorcycleSectionLabel}</h1>
+          <p className="text-gray-400">
+            {isPremiumRider
+              ? 'Tus motos, mantenimientos y vencimientos en un solo lugar.'
+              : 'Tu moto, mantenimientos y vencimientos en un solo lugar.'}
+          </p>
         </div>
         <div className="grid w-full grid-cols-3 gap-2 sm:w-auto sm:flex sm:flex-wrap sm:gap-3">
           {!isBusinessAccount && (
             <Button className="min-w-0 bg-moto-orange px-2 text-xs text-moto-darker hover:bg-moto-orange-dark sm:px-4 sm:text-sm" onClick={openCreateBike}>
               <Plus className="mr-1 h-4 w-4 sm:mr-2 sm:h-5 sm:w-5" />
-              <span className="sm:hidden">Moto</span>
-              <span className="hidden sm:inline">Agregar moto</span>
+              <span className="sm:hidden">{motorcycles.length > 0 ? 'Premium' : 'Moto'}</span>
+              <span className="hidden sm:inline">{!isPremiumRider && motorcycles.length > 0 ? 'Ampliar con Premium' : 'Agregar moto'}</span>
             </Button>
           )}
           {selectedBike && (
@@ -1439,7 +1444,9 @@ export function MyBikes() {
               <div className="mx-auto grid h-20 w-20 place-items-center rounded-2xl bg-moto-orange/20">
                 <Bike className="h-10 w-10 text-moto-orange" />
               </div>
-              <h2 className="mt-6 text-2xl font-bold">Agrega tu primera moto a Mi Garage</h2>
+              <h2 className="mt-6 text-2xl font-bold">
+                {isPremiumRider ? 'Agrega tu primera moto a Mi Garage' : 'Registra tu moto en MotoCare Co'}
+              </h2>
               <p className="mx-auto mt-2 max-w-md text-gray-400">
                 Registra tu moto para empezar a controlar SOAT, tecnomecánica, kilometraje y mantenimientos.
               </p>

@@ -74,7 +74,7 @@ export function Login() {
             <p className="mt-2 text-sm text-gray-400">
               {mode === 'login'
                 ? 'Accede para gestionar tu moto y tus recordatorios.'
-                : 'Tu primer garaje digital queda listo en minutos.'}
+                : 'La hoja de vida digital de tu moto queda lista en minutos.'}
             </p>
 
             {!isConfigured && (

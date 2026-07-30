@@ -1,6 +1,7 @@
 import { ArrowRight, Bike, MapPinned, MessageCircle, ShoppingBag, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { useSubscription } from '@/hooks/useSubscription'
 
 const ecosystemBlocks = [
   {
@@ -57,7 +58,9 @@ const ecosystemBlocks = [
 
 export function Home() {
   const { profile } = useAuth()
+  const { effectivePlan } = useSubscription()
   const firstName = profile?.full_name?.trim().split(/\s+/)[0] ?? 'motero'
+  const hasPremiumGarage = effectivePlan === 'pro' || effectivePlan === 'premium'
 
   return (
     <div className="mx-auto max-w-7xl p-4 pb-24 sm:p-6 lg:pb-8">
@@ -73,18 +76,25 @@ export function Home() {
         </div>
 
         <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          {ecosystemBlocks.map((block) => (
-            <article key={block.title} className={`flex flex-col rounded-3xl border border-t-4 border-white/5 bg-moto-darker p-5 shadow-lg shadow-black/10 ${block.cardClass}`}>
+          {ecosystemBlocks.map((block) => {
+            const isMotorcycleBlock = block.to === '/app/garage'
+            const title = isMotorcycleBlock && !hasPremiumGarage ? 'Mi Moto' : block.title
+            const description = isMotorcycleBlock && !hasPremiumGarage
+              ? 'La hoja de vida, mantenimientos y vencimientos de tu moto.'
+              : block.description
+
+            return (
+            <article key={block.to} className={`flex flex-col rounded-3xl border border-t-4 border-white/5 bg-moto-darker p-5 shadow-lg shadow-black/10 ${block.cardClass}`}>
               <div className={`grid h-12 w-12 place-items-center rounded-2xl ${block.iconClass}`}>
                 <block.icon className="h-6 w-6" aria-hidden="true" />
               </div>
               <h3 className="mt-5 text-xl font-bold">
                 <Link to={block.to} className={`inline-flex items-center gap-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current ${block.linkClass}`}>
-                  {block.title}
+                  {title}
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
               </h3>
-              <p className="mt-2 min-h-12 text-sm leading-6 text-gray-400">{block.description}</p>
+              <p className="mt-2 min-h-12 text-sm leading-6 text-gray-400">{description}</p>
               <ul className="mt-5 divide-y divide-white/5 border-t border-white/5 text-sm text-gray-300">
                 {block.items.map((item) => <li key={item} className="py-2.5">{item}</li>)}
               </ul>
@@ -92,11 +102,12 @@ export function Home() {
                 to={block.to}
                 className="mt-auto inline-flex min-h-11 items-center justify-between rounded-xl bg-moto-orange/10 px-4 font-semibold text-moto-orange transition-colors hover:bg-moto-orange hover:text-moto-darker focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-moto-orange"
               >
-                Abrir {block.title}
+                Abrir {title}
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
             </article>
-          ))}
+            )
+          })}
         </div>
       </section>
     </div>

@@ -98,7 +98,7 @@ function initials(name: string | null | undefined, email: string | undefined) {
     .join('')
 }
 
-function navigationTitle(pathname: string) {
+function navigationTitle(pathname: string, motorcycleSectionLabel: string) {
   if (pathname.startsWith('/app/garage') || pathname.startsWith('/app/bikes')) {
     const section = pathname.split('/').at(-1)
     return {
@@ -107,7 +107,7 @@ function navigationTitle(pathname: string) {
       schedule: 'Agenda',
       documents: 'Documentos',
       expenses: 'Gastos',
-    }[section ?? ''] ?? 'Mi Garage'
+    }[section ?? ''] ?? motorcycleSectionLabel
   }
   if (pathname.startsWith('/app/routes/')) return 'Detalle de ruta'
   return [...motorcycleItems, ...routeItems, ...communityItems, ...marketplaceItems, ...accountItems].find((item) => item.path === pathname)?.label
@@ -179,6 +179,7 @@ export function MainLayout() {
   const userId = user?.id
   const avatarFallback = initials(profile?.full_name, user?.email)
   const isPaidPlan = effectivePlan === 'pro' || effectivePlan === 'premium' || effectivePlan === 'business'
+  const motorcycleSectionLabel = effectivePlan === 'pro' || effectivePlan === 'premium' ? 'Mi Garage' : 'Mi Moto'
   const mobileHomeItems: NavigationItem[] = [
     { path: '/app/home', label: 'Inicio', icon: Home },
     ...accountItems,
@@ -282,7 +283,7 @@ export function MainLayout() {
         <nav className="flex-1 space-y-6 overflow-y-auto p-4" aria-label="Navegación principal">
           <div>{sidebarLink({ path: '/app/home', label: 'Inicio', icon: Home })}</div>
           <section aria-labelledby="nav-motorcycle">
-            <h2 id="nav-motorcycle" className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Mi Garage</h2>
+            <h2 id="nav-motorcycle" className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">{motorcycleSectionLabel}</h2>
             <div className="space-y-1">{motorcycleItems.map(sidebarLink)}</div>
           </section>
           <section aria-labelledby="nav-routes">
@@ -325,7 +326,7 @@ export function MainLayout() {
           <div className="flex min-h-16 items-center justify-between gap-3 px-4 lg:px-6">
             <div className="flex min-w-0 items-center gap-3">
               <NavLink to="/app/home" className="lg:hidden" aria-label="Ir al inicio"><MotoCareLogo compact /></NavLink>
-              <h1 className="truncate text-base font-semibold lg:text-xl">{navigationTitle(location.pathname)}</h1>
+              <h1 className="truncate text-base font-semibold lg:text-xl">{navigationTitle(location.pathname, motorcycleSectionLabel)}</h1>
             </div>
             <div className="flex items-center gap-2">
               <DropdownMenu>
@@ -384,7 +385,7 @@ export function MainLayout() {
               align="start"
             />
             <MobileSectionMenu
-              label="Mi Garage"
+              label={motorcycleSectionLabel}
               icon={Bike}
               items={motorcycleItems}
               active={location.pathname.includes('/garage') || location.pathname.includes('/bikes') || location.pathname === '/app/my-bikes'}
@@ -417,7 +418,7 @@ export function MainLayout() {
             <SheetDescription>
               {quickActionBike
                 ? `Registrar para ${quickActionBike.brand} ${quickActionBike.model}, tu moto en foco.`
-                : 'Agrega una moto a Mi Garage para comenzar.'}
+                : `Agrega una moto a ${motorcycleSectionLabel} para comenzar.`}
             </SheetDescription>
           </SheetHeader>
           <div className="mt-5 grid gap-2">
