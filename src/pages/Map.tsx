@@ -67,12 +67,26 @@ function getRouteStatus(route: RoutePlan) {
   return routeStatusMeta[route.status ?? 'planned']
 }
 
+function isPremiumRouteExpired(route: RoutePlan) {
+  return route.route_source === 'premium'
+    && Boolean(route.premium_access_expires_at)
+    && new Date(route.premium_access_expires_at!).getTime() <= Date.now()
+}
+
 function formatDuration(minutes: number | null) {
   if (!minutes) return 'Sin duración'
   if (minutes < 60) return `${minutes} min`
   const hours = Math.floor(minutes / 60)
   const rest = minutes % 60
   return rest ? `${hours}h ${rest}m` : `${hours}h`
+}
+
+function formatMoney(value: number) {
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    maximumFractionDigits: 0,
+  }).format(value)
 }
 
 function formatRouteDates(route: RoutePlan) {
@@ -136,6 +150,7 @@ function RouteCard({
   onDelete,
   onToggleVisibility,
   onUpdateStatus,
+  onRenewAccess,
   motorcycleName,
 }: {
   route: RoutePlan
@@ -145,10 +160,12 @@ function RouteCard({
   onDelete?: (route: RoutePlan) => void
   onToggleVisibility?: (route: RoutePlan) => void
   onUpdateStatus?: (route: RoutePlan, status: RoutePlan['status']) => void
+  onRenewAccess?: (route: RoutePlan) => void
   motorcycleName?: string
 }) {
   const status = getRouteStatus(route)
   const StatusIcon = status.icon
+  const isExpired = isPremiumRouteExpired(route)
 
   return (
     <div className="rounded-xl border border-white/5 bg-moto-darker p-4">
@@ -160,6 +177,11 @@ function RouteCard({
           </p>
         </div>
         <div className="flex flex-wrap justify-end gap-2">
+          {route.route_source === 'premium' && (
+            <Badge className={isExpired ? 'bg-red-500/15 text-red-300' : 'bg-violet-500/15 text-violet-300'}>
+              {isExpired ? 'Premium vencida' : 'Premium activa'}
+            </Badge>
+          )}
           <Badge className={status.className}>
             <StatusIcon className="mr-1 h-3.5 w-3.5" />
             {status.label}
@@ -193,13 +215,13 @@ function RouteCard({
         <Button size="sm" variant="outline" className="w-full border-white/10 sm:w-auto" onClick={() => onOpen(route)}>
           Ver detalle
         </Button>
-        {isOwner && onToggleVisibility && (
+        {isOwner && onToggleVisibility && !isExpired && (
           <Button size="sm" variant="outline" className="hidden border-white/10 sm:inline-flex" onClick={() => onToggleVisibility(route)}>
             {route.visibility === 'community' ? <EyeOff className="mr-2 h-4 w-4" /> : <Eye className="mr-2 h-4 w-4" />}
             {route.visibility === 'community' ? 'Hacer privada' : 'Compartir'}
           </Button>
         )}
-        {isOwner && onEdit && (
+        {isOwner && onEdit && !isExpired && (
           <Button size="sm" variant="outline" className="hidden border-white/10 sm:inline-flex" onClick={() => onEdit(route)}>
             <Edit3 className="mr-2 h-4 w-4" />
             Editar
@@ -211,7 +233,7 @@ function RouteCard({
             Eliminar
           </Button>
         )}
-        {isOwner && onUpdateStatus && (
+        {isOwner && onUpdateStatus && !isExpired && (
           <select
             className="hidden min-h-10 rounded-md border border-white/10 bg-moto-gray px-3 text-sm text-white sm:block"
             value={route.status ?? 'planned'}
@@ -221,6 +243,11 @@ function RouteCard({
             <option value="in_progress">En curso</option>
             <option value="completed">Realizada</option>
           </select>
+        )}
+        {isExpired && onRenewAccess && (
+          <Button size="sm" className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark sm:w-auto" onClick={() => onRenewAccess(route)}>
+            Renovar acceso
+          </Button>
         )}
       </div>
     </div>
@@ -243,6 +270,9 @@ export function Map() {
   const [showCreateRoute, setShowCreateRoute] = useState(false)
   const [showRouteDetail, setShowRouteDetail] = useState(false)
   const [selectedMetric, setSelectedMetric] = useState<RouteMetric | null>(null)
+  const [renewingRoute, setRenewingRoute] = useState<RoutePlan | null>(null)
+  const [lifetimePrice, setLifetimePrice] = useState<number | null>(null)
+  const [isRequestingPurchase, setIsRequestingPurchase] = useState(false)
   const [routeStatusFilter, setRouteStatusFilter] = useState<'all' | RoutePlan['status']>('all')
   const [routeOriginSearch, setRouteOriginSearch] = useState('')
   const [isLoading, setIsLoading] = useState(true)
@@ -332,11 +362,21 @@ export function Map() {
 
   const loadRoutes = async () => {
     if (!supabase || !user) return
+    const client = supabase
     setIsLoading(true)
 
+    const syncResult = await client.rpc('sync_claimed_premium_routes')
+    if (syncResult.error && !syncResult.error.message.includes('Could not find the function')) {
+      toast.error('No pudimos sincronizar tus rutas Premium', { description: syncResult.error.message })
+    }
+    const reconcileResult = await client.rpc('reconcile_premium_route_access')
+    if (reconcileResult.error && !reconcileResult.error.message.includes('Could not find the function')) {
+      toast.error('No pudimos revisar la vigencia de tus rutas Premium', { description: reconcileResult.error.message })
+    }
+
     const [motorcyclesResult, myRoutesResult] = await Promise.all([
-      supabase.from('motorcycles').select('*').eq('owner_id', user.id).order('created_at', { ascending: false }),
-      supabase.from('routes').select('*').eq('owner_id', user.id).order('created_at', { ascending: false }),
+      client.from('motorcycles').select('*').eq('owner_id', user.id).order('created_at', { ascending: false }),
+      client.from('routes').select('*').eq('owner_id', user.id).order('created_at', { ascending: false }),
     ])
 
     if (motorcyclesResult.error) {
@@ -348,7 +388,49 @@ export function Map() {
     if (myRoutesResult.error) {
       toast.error('No pudimos cargar tus rutas', { description: myRoutesResult.error.message })
     } else {
-      const nextRoutes = (myRoutesResult.data ?? []) as RoutePlan[]
+      let nextRoutes = (myRoutesResult.data ?? []) as RoutePlan[]
+      const premiumRoutesWithoutTrack = nextRoutes.filter((route) => (
+        route.route_source === 'premium' && route.premium_route_id && !route.track_geojson
+      ))
+
+      if (premiumRoutesWithoutTrack.length) {
+        const premiumIds = premiumRoutesWithoutTrack
+          .map((route) => route.premium_route_id)
+          .filter((id): id is string => Boolean(id))
+        const { data: premiumMetadata } = await client
+          .from('premium_routes')
+          .select('id, track_geojson, gpx_storage_path')
+          .in('id', premiumIds)
+        const metadataById = new globalThis.Map((premiumMetadata ?? []).map((route) => [route.id, route]))
+
+        const hydrated = await Promise.all(premiumRoutesWithoutTrack.map(async (route) => {
+          const metadata = metadataById.get(route.premium_route_id!)
+          if (!metadata) return route
+          let track = metadata.track_geojson as RouteTrack | null
+          if (!track && metadata.gpx_storage_path) {
+            const { data: gpxFile } = await client.storage
+              .from('premium-route-files')
+              .download(metadata.gpx_storage_path)
+            if (gpxFile) {
+              try {
+                track = parseGpx(await gpxFile.text(), `${route.title}.gpx`)
+              } catch {
+                track = null
+              }
+            }
+          }
+          if (!track) return route
+          const { error } = await client
+            .from('routes')
+            .update({ track_geojson: track })
+            .eq('id', route.id)
+            .eq('owner_id', user.id)
+          return error ? route : { ...route, track_geojson: track }
+        }))
+        const hydratedById = new globalThis.Map(hydrated.map((route) => [route.id, route]))
+        nextRoutes = nextRoutes.map((route) => hydratedById.get(route.id) ?? route)
+      }
+
       setMyRoutes(nextRoutes)
       void Promise.all(nextRoutes.map((route) => syncRouteNotifications(route)))
     }
@@ -389,6 +471,10 @@ export function Map() {
   }, [isLoading, searchParams, setSearchParams])
 
   const openEditRoute = (route: RoutePlan) => {
+    if (isPremiumRouteExpired(route)) {
+      setRenewingRoute(route)
+      return
+    }
     if (!canUseRoutes) {
       toast.error('Rutas no disponible', { description: 'La licencia Business es para negocios y no permite operar como motero.' })
       return
@@ -408,6 +494,36 @@ export function Map() {
       track_geojson: route.track_geojson,
     })
     setShowCreateRoute(true)
+  }
+
+  const openRenewAccess = async (route: RoutePlan) => {
+    setRenewingRoute(route)
+    setLifetimePrice(null)
+    if (!supabase || !route.premium_route_id) return
+    const { data } = await supabase
+      .from('premium_routes')
+      .select('lifetime_price_cop')
+      .eq('id', route.premium_route_id)
+      .maybeSingle()
+    if (data) setLifetimePrice(Number(data.lifetime_price_cop))
+  }
+
+  const requestLifetimePurchase = async () => {
+    if (!supabase || !renewingRoute?.premium_route_id) return
+    setIsRequestingPurchase(true)
+    const { data, error } = await supabase.rpc('request_premium_route_lifetime_purchase', {
+      target_route_id: renewingRoute.premium_route_id,
+    })
+    setIsRequestingPurchase(false)
+    if (error) {
+      toast.error('No pudimos registrar la solicitud', { description: error.message })
+      return
+    }
+    const row = Array.isArray(data) ? data[0] : data
+    toast.success('Solicitud de compra registrada', {
+      description: `Precio reservado: ${formatMoney(Number(row?.quoted_price_cop ?? lifetimePrice ?? 0))}. El acceso se habilitará al confirmar el pago.`,
+    })
+    setRenewingRoute(null)
   }
 
   const applyGpx = (track: RouteTrack) => {
@@ -767,6 +883,7 @@ export function Map() {
                 onDelete={deleteRoute}
                 onToggleVisibility={canShareRoutes || route.visibility === 'community' ? toggleRouteVisibility : undefined}
                 onUpdateStatus={updateRouteStatus}
+                onRenewAccess={(route) => void openRenewAccess(route)}
                 motorcycleName={motorcycleNameFor(route)}
               />
             ))
@@ -794,6 +911,50 @@ export function Map() {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={renewingRoute !== null} onOpenChange={(open) => !open && setRenewingRoute(null)}>
+        <DialogContent className="max-w-md border-white/10 bg-moto-gray text-white">
+          <DialogHeader>
+            <DialogTitle>Renovar acceso Premium</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              {renewingRoute?.title} permanece en tu historial, pero su mapa, GPX y edición están bloqueados.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-3 grid gap-3">
+            <Card className="border-moto-orange/30 bg-moto-darker py-0">
+              <CardContent className="p-4">
+                <p className="font-semibold">Compra definitiva</p>
+                <p className="mt-1 text-sm leading-6 text-gray-400">
+                  Conserva el mapa, el GPX y todas las opciones de esta ruta sin vencimiento.
+                </p>
+                <p className="mt-3 text-xl font-black text-moto-orange">
+                  {lifetimePrice === null ? 'Consultando precio…' : formatMoney(lifetimePrice)}
+                </p>
+                <Button
+                  className="mt-4 w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark"
+                  disabled={lifetimePrice === null || isRequestingPurchase}
+                  onClick={() => void requestLifetimePurchase()}
+                >
+                  {isRequestingPurchase && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Solicitar compra definitiva
+                </Button>
+                <p className="mt-2 text-xs text-gray-500">La solicitud no genera un cobro automático. El acceso se activa cuando MotoCare confirma el pago.</p>
+              </CardContent>
+            </Card>
+            <Card className="border-white/10 bg-moto-darker py-0">
+              <CardContent className="p-4">
+                <p className="font-semibold">Esperar a que vuelva a estar gratis</p>
+                <p className="mt-1 text-sm leading-6 text-gray-400">
+                  La ruta seguirá visible como historial. Podrás elegirla de nuevo cuando aparezca incluida en el beneficio mensual.
+                </p>
+                <Button asChild variant="outline" className="mt-4 w-full border-white/10">
+                  <Link to="/app/premium-routes">Revisar catálogo Premium</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={selectedMetric !== null} onOpenChange={(open) => !open && setSelectedMetric(null)}>
         <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto border-white/10 bg-moto-gray text-white">

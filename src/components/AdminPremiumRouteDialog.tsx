@@ -25,6 +25,7 @@ export type CreatedPremiumRoute = {
   gpx_storage_path: string
   is_monthly_free: boolean
   track_geojson: RouteTrack | null
+  lifetime_price_cop: number
 }
 
 type FormState = {
@@ -35,6 +36,7 @@ type FormState = {
   terrain: string
   compatibility: string
   isMonthlyFree: boolean
+  lifetimePriceCop: string
 }
 
 const initialForm: FormState = {
@@ -45,6 +47,7 @@ const initialForm: FormState = {
   terrain: '',
   compatibility: '',
   isMonthlyFree: true,
+  lifetimePriceCop: '24900',
 }
 
 export function AdminPremiumRouteDialog({
@@ -76,6 +79,7 @@ export function AdminPremiumRouteDialog({
       terrain: initialRoute.terrain || '',
       compatibility: initialRoute.motorcycle_compatibility,
       isMonthlyFree: initialRoute.is_monthly_free,
+      lifetimePriceCop: String(initialRoute.lifetime_price_cop ?? 24900),
     } : initialForm)
     setFile(null)
     setAnalysis(null)
@@ -128,6 +132,10 @@ export function AdminPremiumRouteDialog({
       toast.error('Completa el nombre, la descripción y la compatibilidad')
       return
     }
+    if (!Number.isFinite(Number(form.lifetimePriceCop)) || Number(form.lifetimePriceCop) < 0) {
+      toast.error('Define un precio válido para la compra definitiva')
+      return
+    }
 
     setIsSaving(true)
     const routeId = initialRoute?.id ?? crypto.randomUUID()
@@ -161,6 +169,7 @@ export function AdminPremiumRouteDialog({
       gpx_storage_path: storagePath,
       track_geojson: analysis ? analysis.track : initialRoute!.track_geojson,
       is_monthly_free: form.isMonthlyFree,
+      lifetime_price_cop: Number(form.lifetimePriceCop),
     }
     const query = isEditing
       ? supabase.from('premium_routes').update(payload).eq('id', routeId)
@@ -241,6 +250,9 @@ export function AdminPremiumRouteDialog({
           <Field label="Compatibilidad con la moto">
             <Textarea className="min-h-20" value={form.compatibility} onChange={(event) => setField('compatibility', event.target.value)} />
             <p className="mt-1 flex gap-1 text-xs text-gray-500"><Sparkles className="h-3.5 w-3.5 shrink-0" />Es una sugerencia por exigencia; confirma el terreno real antes de publicar.</p>
+          </Field>
+          <Field label="Precio de compra definitiva (COP)">
+            <Input type="number" min={0} step={100} value={form.lifetimePriceCop} onChange={(event) => setField('lifetimePriceCop', event.target.value)} />
           </Field>
           <div className="flex items-center justify-between gap-4 rounded-xl border border-white/10 p-4">
             <div>

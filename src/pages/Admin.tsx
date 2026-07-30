@@ -12,6 +12,14 @@ import { supabase, supabaseUrl } from '@/lib/supabase'
 import type { AdminClubRow, AdminMaintenanceSuggestionRow, AdminMarketplaceListing, AdminModerationReportRow, AdminOverview, AdminReviewCounts, AdminUserRow, ModerationActionType } from '@/types/database'
 
 type AdminTab = 'usuarios' | 'clubes' | 'tienda' | 'moderacion' | 'catalogos'
+type PremiumRoutePurchaseRequest = {
+  id: string
+  quoted_price_cop: number
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled'
+  requested_at: string
+  premium_routes: { title: string } | null
+  profiles: { full_name: string | null; username: string | null } | null
+}
 type UserPlan = AdminUserRow['plan']
 type UserPlanStatus = AdminUserRow['plan_status']
 type SuggestionForm = {
@@ -91,6 +99,7 @@ export function Admin() {
   const [clubs, setClubs] = useState<AdminClubRow[]>([])
   const [moderationReports, setModerationReports] = useState<AdminModerationReportRow[]>([])
   const [marketplaceListings, setMarketplaceListings] = useState<AdminMarketplaceListing[]>([])
+  const [premiumPurchaseRequests, setPremiumPurchaseRequests] = useState<PremiumRoutePurchaseRequest[]>([])
   const [reviewCounts, setReviewCounts] = useState<AdminReviewCounts>({ marketplace_pending: 0, moderation_pending: 0 })
   const [suggestions, setSuggestions] = useState<AdminMaintenanceSuggestionRow[]>([])
   const [search, setSearch] = useState('')
@@ -179,7 +188,7 @@ export function Admin() {
       }
 
       setHasAccess(true)
-      const [overviewResult, usersResult, clubsResult, reportsResult, suggestionsResult, marketplaceResult, countsResult] = await Promise.all([
+      const [overviewResult, usersResult, clubsResult, reportsResult, suggestionsResult, marketplaceResult, countsResult, premiumPurchasesResult] = await Promise.all([
         supabase.rpc('admin_overview'),
         supabase.rpc('admin_users'),
         supabase.rpc('admin_clubs'),
@@ -191,6 +200,10 @@ export function Admin() {
           pending_only: false,
         }),
         supabase.rpc('admin_review_counts'),
+        supabase
+          .from('premium_route_purchase_requests')
+          .select('id, quoted_price_cop, status, requested_at, premium_routes(title), profiles:user_id(full_name, username)')
+          .order('requested_at', { ascending: false }),
       ])
 
       if (overviewResult.error) {
@@ -228,6 +241,9 @@ export function Admin() {
       } else {
         setMarketplaceListings((marketplaceResult.data ?? []) as AdminMarketplaceListing[])
       }
+      if (!premiumPurchasesResult.error) {
+        setPremiumPurchaseRequests((premiumPurchasesResult.data ?? []) as unknown as PremiumRoutePurchaseRequest[])
+      }
 
       if (!countsResult.error && countsResult.data) {
         setReviewCounts(countsResult.data as unknown as AdminReviewCounts)
@@ -238,6 +254,22 @@ export function Admin() {
 
     void loadAdminData()
   }, [])
+
+  const resolvePremiumPurchase = async (requestId: string, approve: boolean) => {
+    if (!supabase) return
+    const { error } = await supabase.rpc('admin_resolve_premium_route_purchase', {
+      target_request_id: requestId,
+      approve_purchase: approve,
+    })
+    if (error) {
+      toast.error('No pudimos resolver la compra', { description: error.message })
+      return
+    }
+    setPremiumPurchaseRequests((current) => current.map((request) => (
+      request.id === requestId ? { ...request, status: approve ? 'approved' : 'rejected' } : request
+    )))
+    toast.success(approve ? 'Compra definitiva aprobada' : 'Solicitud rechazada')
+  }
 
   const updateUserLicense = async (user: AdminUserRow, plan: UserPlan, status: UserPlanStatus = user.plan_status) => {
     if (!supabase || savingLicenseUserId) return
@@ -505,11 +537,17 @@ export function Admin() {
       {activeTab === 'usuarios' && <UsersTable users={filteredUsers} savingLicenseUserId={savingLicenseUserId} onUpdateLicense={updateUserLicense} />}
       {activeTab === 'clubes' && <ClubsTable clubs={filteredClubs} />}
       {activeTab === 'tienda' && (
-        <MarketplaceReviewTable
-          listings={filteredMarketplaceListings}
-          savingListingId={savingMarketplaceListingId}
-          onReview={reviewMarketplaceListing}
-        />
+        <div className="space-y-5">
+          <PremiumPurchaseRequests
+            requests={premiumPurchaseRequests}
+            onResolve={(requestId, approve) => void resolvePremiumPurchase(requestId, approve)}
+          />
+          <MarketplaceReviewTable
+            listings={filteredMarketplaceListings}
+            savingListingId={savingMarketplaceListingId}
+            onReview={reviewMarketplaceListing}
+          />
+        </div>
       )}
       {activeTab === 'moderacion' && (
         <ModerationTable
@@ -823,6 +861,47 @@ const marketplaceStatusLabels: Record<AdminMarketplaceListing['status'], string>
   sold: 'Vendida',
   rejected: 'Rechazada',
   archived: 'Archivada',
+}
+
+function PremiumPurchaseRequests({
+  requests,
+  onResolve,
+}: {
+  requests: PremiumRoutePurchaseRequest[]
+  onResolve: (requestId: string, approve: boolean) => void
+}) {
+  return (
+    <AdminTable
+      title="Compras definitivas de rutas Premium"
+      description="Aprueba únicamente después de confirmar el pago por el canal definido por MotoCare."
+    >
+      {requests.length ? requests.map((request) => {
+        const riderName = request.profiles?.full_name || request.profiles?.username || 'Usuario MotoCare'
+        return (
+          <div key={request.id} className="grid gap-4 border-t border-white/5 p-4 md:grid-cols-[minmax(0,1fr)_180px_210px] md:items-center">
+            <div className="min-w-0">
+              <p className="font-semibold">{request.premium_routes?.title || 'Ruta Premium'}</p>
+              <p className="mt-1 text-sm text-gray-400">{riderName} · {formatDate(request.requested_at)}</p>
+            </div>
+            <div>
+              <p className="font-bold text-moto-orange">{new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(Number(request.quoted_price_cop))}</p>
+              <Badge className={request.status === 'pending' ? 'mt-2 bg-yellow-500/15 text-yellow-300' : request.status === 'approved' ? 'mt-2 bg-green-500/15 text-green-300' : 'mt-2 bg-red-500/15 text-red-300'}>
+                {request.status === 'pending' ? 'Pendiente' : request.status === 'approved' ? 'Aprobada' : 'Rechazada'}
+              </Badge>
+            </div>
+            {request.status === 'pending' ? (
+              <div className="flex gap-2">
+                <Button className="flex-1 bg-green-600 text-white hover:bg-green-500" onClick={() => onResolve(request.id, true)}>Confirmar pago</Button>
+                <Button variant="outline" className="border-red-500/30 text-red-300" onClick={() => onResolve(request.id, false)}>Rechazar</Button>
+              </div>
+            ) : <p className="text-sm text-gray-500">Solicitud resuelta</p>}
+          </div>
+        )
+      }) : (
+        <div className="border-t border-white/5 p-6 text-center text-sm text-gray-400">No hay solicitudes de compra definitiva.</div>
+      )}
+    </AdminTable>
+  )
 }
 
 function MarketplaceReviewTable({

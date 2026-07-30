@@ -213,6 +213,9 @@ export type RoutePlan = {
   visibility: 'private' | 'community'
   status: 'planned' | 'in_progress' | 'completed'
   track_geojson: import('@/lib/gpx').RouteTrack | null
+  premium_route_id?: string | null
+  route_source?: 'personal' | 'premium'
+  premium_access_expires_at?: string | null
   created_at: string
 }
 

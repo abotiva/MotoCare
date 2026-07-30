@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Bike, Calendar, CheckCircle2, Clock, ExternalLink, Flag, Loader2, MapPin, Navigation, PlayCircle, Route as RouteIcon, UserRound } from 'lucide-react'
+import { ArrowLeft, Bike, Calendar, CheckCircle2, Clock, ExternalLink, Flag, Loader2, Lock, MapPin, Navigation, PlayCircle, Route as RouteIcon, UserRound } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { GpxMap } from '@/components/GpxMap'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import type { RouteWithOwner } from '@/types/database'
@@ -95,6 +96,7 @@ export function RouteDetail() {
       if (!supabase || !user || !routeId) return
 
       setIsLoading(true)
+      await supabase.rpc('reconcile_premium_route_access')
       const { data, error } = await supabase
         .from('routes')
         .select('*, profiles:owner_id(full_name, username, city, avatar_url, is_premium), motorcycles:motorcycle_id(id, brand, model, plate)')
@@ -145,6 +147,9 @@ export function RouteDetail() {
   const owner = route.profiles
   const ownerName = owner?.full_name || owner?.username || 'Motero MotoCare Co'
   const mapEmbedUrl = googleMapsEmbedUrl(route)
+  const isPremiumExpired = route.route_source === 'premium'
+    && Boolean(route.premium_access_expires_at)
+    && new Date(route.premium_access_expires_at!).getTime() <= Date.now()
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-4 pb-24 lg:p-6">
@@ -155,7 +160,7 @@ export function RouteDetail() {
         </Button>
         {route.owner_id === user?.id && (
           <Button asChild className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark sm:w-auto">
-            <Link to="/app/map">Editar en Mis rutas</Link>
+            <Link to="/app/map">{isPremiumExpired ? 'Renovar en Mis rutas' : 'Editar en Mis rutas'}</Link>
           </Button>
         )}
       </div>
@@ -172,6 +177,11 @@ export function RouteDetail() {
                 <Badge className={route.visibility === 'community' ? 'bg-moto-orange text-moto-darker' : 'bg-white/10 text-gray-300'}>
                   {route.visibility === 'community' ? 'Comunidad' : 'Privada'}
                 </Badge>
+                {route.route_source === 'premium' && (
+                  <Badge className={isPremiumExpired ? 'bg-red-500/15 text-red-300' : 'bg-violet-500/15 text-violet-300'}>
+                    {isPremiumExpired ? 'Premium vencida' : 'Premium activa'}
+                  </Badge>
+                )}
               </div>
               <div>
                 <h1 className="break-words text-2xl font-bold text-white md:text-4xl">{route.title}</h1>
@@ -250,15 +260,28 @@ export function RouteDetail() {
             <Navigation className="h-5 w-5 text-moto-orange" />
             Mapa de la ruta
           </CardTitle>
-          <Button asChild variant="outline" className="w-full border-white/10 sm:w-auto">
-            <a href={googleMapsUrl(route)} target="_blank" rel="noreferrer">
-              <ExternalLink className="mr-2 h-4 w-4" />
-              Abrir en Google Maps
-            </a>
-          </Button>
+          {!isPremiumExpired && (
+            <Button asChild variant="outline" className="w-full border-white/10 sm:w-auto">
+              <a href={googleMapsUrl(route)} target="_blank" rel="noreferrer">
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Abrir en Google Maps
+              </a>
+            </Button>
+          )}
         </CardHeader>
         <CardContent className="p-5 pt-0">
-          {mapEmbedUrl ? (
+          {isPremiumExpired ? (
+            <div className="rounded-xl border border-moto-orange/20 bg-moto-orange/5 p-8 text-center">
+              <Lock className="mx-auto h-9 w-9 text-moto-orange" />
+              <p className="mt-3 font-semibold">El acceso a esta ruta venció</p>
+              <p className="mt-2 text-sm text-gray-400">Conservamos tu historial. Renueva el acceso en “Mis rutas” para recuperar el mapa, el GPX y la edición.</p>
+              <Button asChild className="mt-4 bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
+                <Link to="/app/map">Ver opciones de renovación</Link>
+              </Button>
+            </div>
+          ) : route.track_geojson ? (
+            <GpxMap track={route.track_geojson} className="h-80 sm:h-[420px]" />
+          ) : mapEmbedUrl ? (
             <iframe
               title={`Mapa de ${route.title}`}
               src={mapEmbedUrl}
