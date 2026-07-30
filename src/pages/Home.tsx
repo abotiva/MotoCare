@@ -16,7 +16,7 @@ const ecosystemBlocks = [
   {
     title: 'Rutas',
     icon: MapPinned,
-    to: '/app/explore',
+    to: '/app/routes',
     cardClass: 'border-t-sky-400',
     iconClass: 'bg-sky-400/15 text-sky-300',
     linkClass: 'text-sky-300 hover:text-sky-200',
@@ -26,7 +26,7 @@ const ecosystemBlocks = [
   {
     title: 'Comunidad',
     icon: MessageCircle,
-    to: '/app/messages',
+    to: '/app/community',
     cardClass: 'border-t-violet-400',
     iconClass: 'bg-violet-400/15 text-violet-300',
     linkClass: 'text-violet-300 hover:text-violet-200',

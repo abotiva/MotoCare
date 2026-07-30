@@ -54,13 +54,14 @@ const motorcycleItems: NavigationItem[] = [
 ]
 
 const routeItems: NavigationItem[] = [
+  { path: '/app/routes', label: 'Rutas', icon: MapIcon },
   { path: '/app/explore', label: 'Descubrir rutas', icon: MapIcon },
   { path: '/app/map', label: 'Mis rutas', icon: MapIcon },
   { path: '/app/premium-routes', label: 'Rutas Premium', icon: Crown },
 ]
 
 const communityItems: NavigationItem[] = [
-  { path: '/app/messages', label: 'Comunidad', icon: MessageCircle },
+  { path: '/app/community', label: 'Comunidad', icon: MessageCircle },
   { path: '/app/clubs', label: 'Clubes', icon: Users },
 ]
 
@@ -252,6 +253,9 @@ export function MainLayout() {
       return location.pathname.endsWith(`/${section}`)
     }
     if (path === '/app/map') return location.pathname === path || location.pathname.startsWith('/app/routes/')
+    if (path === '/app/routes') return location.pathname === path
+    if (path === '/app/community') return location.pathname === path || location.pathname === '/app/messages'
+    if (path === '/app/clubs') return location.pathname === path || location.pathname.startsWith('/app/clubs/')
     if (path === '/app/explore') return location.pathname === path
     return location.pathname === path
   }

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Camera, ChevronDown, Crown, Edit3, Flag, Loader2, MapPinned, MessageCircle, Plus, Save, Send, Shield, Trash2, UserPlus, Users } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -74,6 +74,7 @@ function roleLabel(role: ClubMemberWithProfile['role']) {
 }
 
 export function Clubs() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const { user, profile, refreshProfile } = useAuth()
   const userId = user?.id
   const { effectivePlan, isLoadingSubscription } = useSubscription()
@@ -133,6 +134,13 @@ export function Clubs() {
       description: 'Free solo puede unirse por invitación y pertenecer a un club.',
     })
   }
+
+  useEffect(() => {
+    if (searchParams.get('action') !== 'create' || isLoadingSubscription) return
+    if (canCreateClub) setShowCreateClub(true)
+    else showUpgradeForClubCreation()
+    setSearchParams({}, { replace: true })
+  }, [canCreateClub, isLoadingSubscription, searchParams, setSearchParams])
 
   const loadMembers = useCallback(async (clubId: string) => {
     if (!supabase) return

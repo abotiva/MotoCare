@@ -10,6 +10,7 @@ const MainLayout = lazy(() => import('./layouts/MainLayout').then((module) => ({
 const LandingPage = lazy(() => import('./pages/LandingPage').then((module) => ({ default: module.LandingPage })))
 const Login = lazy(() => import('./pages/Login').then((module) => ({ default: module.Login })))
 const Home = lazy(() => import('./pages/Home').then((module) => ({ default: module.Home })))
+const SectionMenu = lazy(() => import('./pages/SectionMenu').then((module) => ({ default: module.SectionMenu })))
 const Explore = lazy(() => import('./pages/Explore').then((module) => ({ default: module.Explore })))
 const Map = lazy(() => import('./pages/Map').then((module) => ({ default: module.Map })))
 const RouteDetail = lazy(() => import('./pages/RouteDetail').then((module) => ({ default: module.RouteDetail })))
@@ -42,14 +43,16 @@ function App() {
           <Route path="/app" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
             <Route index element={<Navigate to="/app/home" replace />} />
             <Route path="home" element={<Home />} />
+            <Route path="routes" element={<SectionMenu kind="routes" />} />
+            <Route path="community" element={<SectionMenu kind="community" />} />
+            <Route path="clubs" element={<SectionMenu kind="clubs" />} />
             <Route path="explore" element={<Explore />} />
             <Route path="map" element={<Map />} />
             <Route path="routes/:routeId" element={<RouteDetail />} />
             <Route path="premium-routes" element={<PremiumRoutes />} />
             <Route path="marketplace" element={<Marketplace />} />
             <Route path="messages" element={<Messages />} />
-            <Route path="community" element={<Navigate to="/app/messages" replace />} />
-            <Route path="clubs" element={<Clubs />} />
+            <Route path="clubs/manage" element={<Clubs />} />
             <Route path="profile" element={<Profile />} />
             <Route path="garage" element={<MyBikes />} />
             <Route path="garage/:section" element={<MyBikes />} />
