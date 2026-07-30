@@ -66,7 +66,7 @@ const sectionMenus: Record<SectionMenuKind, MenuContent> = {
   community: {
     eyebrow: 'Conecta con otros moteros',
     title: 'Comunidad',
-    description: 'Comparte experiencias, descubre publicaciones y participa en los espacios de tus clubes.',
+    description: 'Comparte experiencias, descubre publicaciones y conecta con otros moteros.',
     icon: MessageCircle,
     options: [
       {
@@ -84,14 +84,6 @@ const sectionMenus: Record<SectionMenuKind, MenuContent> = {
         icon: Compass,
         iconClass: 'bg-sky-400 text-sky-950',
         accent: 'from-sky-500/20 to-sky-500/5',
-      },
-      {
-        title: 'Clubes',
-        description: 'Entra a tus grupos, revisa sus miembros y organiza rodadas privadas.',
-        to: '/app/clubs',
-        icon: Users,
-        iconClass: 'bg-emerald-400 text-emerald-950',
-        accent: 'from-emerald-500/20 to-emerald-500/5',
       },
     ],
   },
