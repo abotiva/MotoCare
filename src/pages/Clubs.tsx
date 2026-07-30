@@ -121,7 +121,7 @@ export function Clubs() {
   const ownedClubsCount = useMemo(() => clubs.filter((club) => club.owner_id === user?.id).length, [clubs, user?.id])
   const canCreateClub = effectivePlan === 'premium' && ownedClubsCount < 3
 
-  const showUpgradeForClubCreation = () => {
+  const showUpgradeForClubCreation = useCallback(() => {
     if (effectivePlan === 'business') {
       toast.info('Clubes para moteros', { description: 'La licencia Business es para negocios y no permite crear clubes.' })
       return
@@ -133,14 +133,14 @@ export function Clubs() {
     toast.info('Actualice su cuenta para poder crear un club', {
       description: 'Free solo puede unirse por invitación y pertenecer a un club.',
     })
-  }
+  }, [effectivePlan, ownedClubsCount])
 
   useEffect(() => {
     if (searchParams.get('action') !== 'create' || isLoadingSubscription) return
     if (canCreateClub) setShowCreateClub(true)
     else showUpgradeForClubCreation()
     setSearchParams({}, { replace: true })
-  }, [canCreateClub, isLoadingSubscription, searchParams, setSearchParams])
+  }, [canCreateClub, isLoadingSubscription, searchParams, setSearchParams, showUpgradeForClubCreation])
 
   const loadMembers = useCallback(async (clubId: string) => {
     if (!supabase) return
