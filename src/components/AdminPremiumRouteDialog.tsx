@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { FileUp, Loader2, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -50,16 +50,34 @@ export function AdminPremiumRouteDialog({
   onOpenChange,
   userId,
   onCreated,
+  initialRoute = null,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   userId: string
   onCreated: (route: CreatedPremiumRoute) => void
+  initialRoute?: CreatedPremiumRoute | null
 }) {
   const [form, setForm] = useState(initialForm)
   const [file, setFile] = useState<File | null>(null)
   const [analysis, setAnalysis] = useState<GpxAnalysis | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const isEditing = Boolean(initialRoute)
+
+  useEffect(() => {
+    if (!open) return
+    setForm(initialRoute ? {
+      title: initialRoute.title,
+      description: initialRoute.description,
+      location: initialRoute.location || '',
+      level: initialRoute.level,
+      terrain: initialRoute.terrain || '',
+      compatibility: initialRoute.motorcycle_compatibility,
+      isMonthlyFree: initialRoute.is_monthly_free,
+    } : initialForm)
+    setFile(null)
+    setAnalysis(null)
+  }, [initialRoute, open])
 
   const setField = <K extends keyof FormState>(field: K, value: FormState[K]) => {
     setForm((current) => ({ ...current, [field]: value }))
@@ -100,7 +118,7 @@ export function AdminPremiumRouteDialog({
   }
 
   const save = async () => {
-    if (!supabase || !file || !analysis) {
+    if (!supabase || (!isEditing && (!file || !analysis))) {
       toast.error('Debes cargar un GPX válido')
       return
     }
@@ -110,17 +128,20 @@ export function AdminPremiumRouteDialog({
     }
 
     setIsSaving(true)
-    const routeId = crypto.randomUUID()
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '-')
-    const storagePath = `${routeId}/${safeName}`
-    const { error: uploadError } = await supabase.storage
-      .from('premium-route-files')
-      .upload(storagePath, file, { contentType: file.type || 'application/gpx+xml', upsert: false })
+    const routeId = initialRoute?.id ?? crypto.randomUUID()
+    let storagePath = initialRoute?.gpx_storage_path ?? ''
+    if (file) {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '-')
+      storagePath = `${routeId}/${Date.now()}-${safeName}`
+      const { error: uploadError } = await supabase.storage
+        .from('premium-route-files')
+        .upload(storagePath, file, { contentType: file.type || 'application/gpx+xml', upsert: false })
 
-    if (uploadError) {
-      setIsSaving(false)
-      toast.error('No pudimos subir el GPX', { description: uploadError.message })
-      return
+      if (uploadError) {
+        setIsSaving(false)
+        toast.error('No pudimos subir el GPX', { description: uploadError.message })
+        return
+      }
     }
 
     const payload = {
@@ -130,39 +151,47 @@ export function AdminPremiumRouteDialog({
       description: form.description.trim(),
       location: form.location.trim() || null,
       level: form.level,
-      distance_km: Number(analysis.distanceKm.toFixed(2)),
-      duration_minutes: analysis.durationMinutes,
-      elevation_gain_m: analysis.elevationGainM,
+      distance_km: analysis ? Number(analysis.distanceKm.toFixed(2)) : initialRoute!.distance_km,
+      duration_minutes: analysis ? analysis.durationMinutes : initialRoute!.duration_minutes,
+      elevation_gain_m: analysis ? analysis.elevationGainM : initialRoute!.elevation_gain_m,
       terrain: form.terrain.trim() || null,
       motorcycle_compatibility: form.compatibility.trim(),
       gpx_storage_path: storagePath,
       is_monthly_free: form.isMonthlyFree,
     }
-    const { data, error } = await supabase.from('premium_routes').insert(payload).select().single()
+    const query = isEditing
+      ? supabase.from('premium_routes').update(payload).eq('id', routeId)
+      : supabase.from('premium_routes').insert(payload)
+    const { data, error } = await query.select().single()
 
     if (error) {
-      await supabase.storage.from('premium-route-files').remove([storagePath])
+      if (file) await supabase.storage.from('premium-route-files').remove([storagePath])
       setIsSaving(false)
       toast.error('No pudimos publicar la ruta', { description: error.message })
       return
     }
 
+    if (file && initialRoute?.gpx_storage_path && initialRoute.gpx_storage_path !== storagePath) {
+      await supabase.storage.from('premium-route-files').remove([initialRoute.gpx_storage_path])
+    }
     setIsSaving(false)
     setForm(initialForm)
     setFile(null)
     setAnalysis(null)
     onCreated(data as CreatedPremiumRoute)
     onOpenChange(false)
-    toast.success('Ruta Premium publicada')
+    toast.success(isEditing ? 'Ruta Premium actualizada' : 'Ruta Premium publicada')
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="inset-0 h-dvh w-screen max-w-none translate-x-0 translate-y-0 overflow-y-auto rounded-none border-white/10 bg-moto-gray text-white sm:left-1/2 sm:top-1/2 sm:h-auto sm:max-h-[92dvh] sm:max-w-2xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl">
         <DialogHeader>
-          <DialogTitle>Crear ruta Premium</DialogTitle>
+          <DialogTitle>{isEditing ? 'Editar ruta Premium' : 'Crear ruta Premium'}</DialogTitle>
           <DialogDescription>
-            Solo administradores pueden publicar. Los datos calculados desde el GPX quedan disponibles para revisión.
+            {isEditing
+              ? 'Actualiza la presentación o reemplaza el GPX. Si conservas el archivo, sus métricas actuales no cambian.'
+              : 'Solo administradores pueden publicar. Los datos calculados desde el GPX quedan disponibles para revisión.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -170,7 +199,7 @@ export function AdminPremiumRouteDialog({
           <label className="grid min-h-28 cursor-pointer place-items-center rounded-xl border border-dashed border-moto-orange/40 bg-moto-orange/5 p-5 text-center hover:bg-moto-orange/10">
             <span>
               <FileUp className="mx-auto mb-2 h-6 w-6 text-moto-orange" />
-              <span className="block font-semibold">{file?.name || 'Seleccionar archivo GPX'}</span>
+              <span className="block font-semibold">{file?.name || (isEditing ? 'Reemplazar archivo GPX (opcional)' : 'Seleccionar archivo GPX')}</span>
               <span className="mt-1 block text-xs text-gray-400">Máximo 10 MB</span>
             </span>
             <input className="sr-only" type="file" accept=".gpx,application/gpx+xml,application/xml,text/xml" onChange={(event) => void handleFile(event.target.files?.[0])} />
@@ -219,7 +248,7 @@ export function AdminPremiumRouteDialog({
           </div>
           <Button disabled={isSaving} className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => void save()}>
             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Publicar ruta Premium
+            {isEditing ? 'Guardar cambios' : 'Publicar ruta Premium'}
           </Button>
         </div>
       </DialogContent>

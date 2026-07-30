@@ -11,6 +11,7 @@ import {
   MapPin,
   Mountain,
   PackageCheck,
+  Pencil,
   Plus,
   Route,
   Trophy,
@@ -44,6 +45,7 @@ type PremiumRoute = {
   gpxPath?: string
   isMonthlyFree?: boolean
   isManaged?: boolean
+  managedData?: CreatedPremiumRoute
 }
 
 const premiumRoutes: PremiumRoute[] = [
@@ -164,7 +166,7 @@ function mapManagedRoute(route: CreatedPremiumRoute): PremiumRoute {
     compatibility: route.motorcycle_compatibility,
     image: '/feature-gps.jpg',
     progress: 0,
-    badge: 'Ruta administrada',
+    badge: 'Ruta verificada',
     includes: [
       'Archivo GPX',
       route.elevation_gain_m === null ? 'Perfil de elevación no disponible' : `${route.elevation_gain_m} m de ascenso acumulado`,
@@ -175,6 +177,7 @@ function mapManagedRoute(route: CreatedPremiumRoute): PremiumRoute {
     gpxPath: route.gpx_storage_path,
     isMonthlyFree: route.is_monthly_free,
     isManaged: true,
+    managedData: route,
   }
 }
 
@@ -199,6 +202,7 @@ export function PremiumRoutes() {
   const [claimingRouteId, setClaimingRouteId] = useState<string | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [editingRoute, setEditingRoute] = useState<CreatedPremiumRoute | null>(null)
   const hasPremiumPlan = effectivePlan === 'premium' || effectivePlan === 'pro'
 
   const filteredRoutes = useMemo(() => {
@@ -377,7 +381,7 @@ export function PremiumRoutes() {
             <div className="mt-5 flex flex-wrap gap-3">
               <Button className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => { setSelectedRoute(routes[0]); setActiveTab('detail') }}>
                 <Route className="mr-2 h-4 w-4" />
-                Ver Nevado del Ruiz
+                Ver {routes[0].title}
               </Button>
               <Button variant="outline" className="border-white/10 bg-white/5">
                 <PackageCheck className="mr-2 h-4 w-4" />
@@ -452,6 +456,10 @@ export function PremiumRoutes() {
               setActiveTab('catalog')
               setSearchParams({})
             }}
+            onEdit={isAdmin && selectedRoute.managedData ? () => {
+              setEditingRoute(selectedRoute.managedData ?? null)
+              setIsCreateOpen(true)
+            } : undefined}
           />
         </TabsContent>
 
@@ -506,11 +514,17 @@ export function PremiumRoutes() {
       {user?.id && (
         <AdminPremiumRouteDialog
           open={isCreateOpen}
-          onOpenChange={setIsCreateOpen}
+          onOpenChange={(open) => {
+            setIsCreateOpen(open)
+            if (!open) setEditingRoute(null)
+          }}
           userId={user.id}
+          initialRoute={editingRoute}
           onCreated={(createdRoute) => {
             const routeItem = mapManagedRoute(createdRoute)
-            setRoutes((current) => [routeItem, ...current])
+            setRoutes((current) => editingRoute
+              ? current.map((currentRoute) => currentRoute.id === routeItem.id ? routeItem : currentRoute)
+              : [routeItem, ...current])
             setSelectedRoute(routeItem)
             setActiveTab('detail')
             setSearchParams({ route: routeItem.id, tab: 'detail' })
@@ -572,15 +586,23 @@ function RouteCard({
   )
 }
 
-function RouteDetailPanel({ routeItem, owned, disabled, onBuy, onBack }: { routeItem: PremiumRoute; owned: boolean; disabled: boolean; onBuy: () => void; onBack: () => void }) {
+function RouteDetailPanel({ routeItem, owned, disabled, onBuy, onBack, onEdit }: { routeItem: PremiumRoute; owned: boolean; disabled: boolean; onBuy: () => void; onBack: () => void; onEdit?: () => void }) {
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
       <section className="overflow-hidden rounded-xl border border-white/5 bg-moto-gray">
         <div className="min-h-80 bg-cover bg-center p-5" style={{ backgroundImage: `linear-gradient(rgba(8,17,26,0.1), rgba(8,17,26,0.84)), url(${routeItem.image})` }}>
-          <Button variant="outline" className="border-white/10 bg-moto-darker/80" onClick={onBack}>
-            <ChevronLeft className="mr-2 h-4 w-4" />
-            Catálogo
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" className="border-white/10 bg-moto-darker/80" onClick={onBack}>
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Catálogo
+            </Button>
+            {onEdit && (
+              <Button className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={onEdit}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Editar ruta
+              </Button>
+            )}
+          </div>
           <div className="mt-28 max-w-3xl">
             <Badge className="mb-3 bg-moto-orange text-moto-darker">{levelLabel(routeItem.level)}</Badge>
             <h2 className="text-3xl font-black">{routeItem.title}</h2>
