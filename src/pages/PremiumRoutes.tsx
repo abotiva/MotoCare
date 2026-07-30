@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
+  ArrowLeft,
   Bike,
   CheckCircle2,
   ChevronLeft,
@@ -10,6 +11,7 @@ import {
   MapPin,
   Mountain,
   PackageCheck,
+  Plus,
   Route,
   Trophy,
 } from 'lucide-react'
@@ -18,6 +20,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { AdminPremiumRouteDialog, type CreatedPremiumRoute } from '@/components/AdminPremiumRouteDialog'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
@@ -38,6 +41,9 @@ type PremiumRoute = {
   includes: string[]
   pois: string[]
   checklist: string[]
+  gpxPath?: string
+  isMonthlyFree?: boolean
+  isManaged?: boolean
 }
 
 const premiumRoutes: PremiumRoute[] = [
@@ -142,6 +148,36 @@ type MonthlyQuota = {
   expires_at: string
 }
 
+function mapManagedRoute(route: CreatedPremiumRoute): PremiumRoute {
+  const duration = route.duration_minutes
+    ? `${Math.floor(route.duration_minutes / 60)} h ${route.duration_minutes % 60} min`
+    : 'Tiempo por definir'
+  return {
+    id: route.id,
+    title: route.title,
+    subtitle: route.description,
+    location: route.location || 'Ubicación por definir',
+    level: route.level,
+    distance: `${Number(route.distance_km).toFixed(1)} km`,
+    duration,
+    terrain: route.terrain || 'Terreno por confirmar',
+    compatibility: route.motorcycle_compatibility,
+    image: '/feature-gps.jpg',
+    progress: 0,
+    badge: 'Ruta administrada',
+    includes: [
+      'Archivo GPX',
+      route.elevation_gain_m === null ? 'Perfil de elevación no disponible' : `${route.elevation_gain_m} m de ascenso acumulado`,
+      'Datos técnicos verificados por MotoCare',
+    ],
+    pois: ['Los puntos de interés se completan en la descripción de la ruta.'],
+    checklist: ['Revisar estado de la vía', 'Confirmar combustible y autonomía', 'Descargar el GPX antes de salir'],
+    gpxPath: route.gpx_storage_path,
+    isMonthlyFree: route.is_monthly_free,
+    isManaged: true,
+  }
+}
+
 function levelLabel(level: PremiumRoute['level']) {
   if (level === 3) return 'Nivel 3 - Adventure Light'
   if (level === 4) return 'Nivel 4 - Adventure'
@@ -151,28 +187,31 @@ function levelLabel(level: PremiumRoute['level']) {
 export function PremiumRoutes() {
   const { user } = useAuth()
   const { effectivePlan, isLoadingSubscription } = useSubscription()
-  const [searchParams] = useSearchParams()
-  const requestedRoute = premiumRoutes.find((routeItem) => routeItem.id === searchParams.get('route'))
+  const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [filter, setFilter] = useState<'all' | 'level-3' | 'level-4'>('all')
-  const [selectedRoute, setSelectedRoute] = useState<PremiumRoute>(requestedRoute ?? premiumRoutes[0])
+  const [routes, setRoutes] = useState<PremiumRoute[]>(premiumRoutes)
+  const [selectedRoute, setSelectedRoute] = useState<PremiumRoute>(premiumRoutes[0])
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') === 'detail' ? 'detail' : 'catalog')
   const [claims, setClaims] = useState<MonthlyClaim[]>([])
   const [quota, setQuota] = useState<MonthlyQuota | null>(null)
   const [isLoadingClaims, setIsLoadingClaims] = useState(true)
   const [claimingRouteId, setClaimingRouteId] = useState<string | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
   const hasPremiumPlan = effectivePlan === 'premium' || effectivePlan === 'pro'
 
   const filteredRoutes = useMemo(() => {
-    return premiumRoutes.filter((routeItem) => {
+    return routes.filter((routeItem) => {
       if (filter === 'all') return true
       if (filter === 'level-3') return routeItem.level === 3
       if (filter === 'level-4') return routeItem.level === 4
       return true
     })
-  }, [filter])
+  }, [filter, routes])
 
   const claimedRouteIds = claims.map((claim) => claim.route_id)
-  const ownedRoutes = premiumRoutes.filter((routeItem) => claimedRouteIds.includes(routeItem.id))
+  const ownedRoutes = routes.filter((routeItem) => claimedRouteIds.includes(routeItem.id))
   const isSelectedOwned = claimedRouteIds.includes(selectedRoute.id)
 
   useEffect(() => {
@@ -211,6 +250,37 @@ export function PremiumRoutes() {
     void loadMonthlyAccess()
   }, [user?.id])
 
+  useEffect(() => {
+    if (!supabase || !user?.id) return
+    const client = supabase
+    const loadCatalogue = async () => {
+      const [adminResult, routesResult] = await Promise.all([
+        client.rpc('is_current_user_admin'),
+        client.from('premium_routes').select('*').eq('is_active', true).order('created_at', { ascending: false }),
+      ])
+      setIsAdmin(Boolean(adminResult.data))
+      if (!routesResult.error && routesResult.data) {
+        const managedRoutes = (routesResult.data as CreatedPremiumRoute[]).map(mapManagedRoute)
+        if (managedRoutes.length) setRoutes(managedRoutes)
+      }
+    }
+    void loadCatalogue()
+  }, [user?.id])
+
+  useEffect(() => {
+    const routeId = searchParams.get('route')
+    const requestedRoute = routes.find((routeItem) => routeItem.id === routeId)
+    if (requestedRoute) {
+      setSelectedRoute(requestedRoute)
+      setActiveTab(searchParams.get('tab') === 'detail' ? 'detail' : 'catalog')
+      return
+    }
+    if (!routeId && !searchParams.get('tab')) {
+      setActiveTab('catalog')
+      setSelectedRoute(routes[0])
+    }
+  }, [routes, searchParams])
+
   const claimRoute = async (routeItem: PremiumRoute) => {
     setSelectedRoute(routeItem)
     if (claimedRouteIds.includes(routeItem.id)) {
@@ -219,6 +289,10 @@ export function PremiumRoutes() {
     }
     if (!hasPremiumPlan) {
       toast.error('Esta opción requiere licencia Premium')
+      return
+    }
+    if (routeItem.isManaged && !routeItem.isMonthlyFree) {
+      toast.info('Esta ruta no está incluida gratis para Premium este mes')
       return
     }
     if (!supabase) return
@@ -247,9 +321,16 @@ export function PremiumRoutes() {
 
   const downloadGpx = async (routeItem: PremiumRoute) => {
     try {
-      const response = await fetch('/demo-guatavita.gpx')
-      if (!response.ok) throw new Error('No pudimos preparar el archivo GPX.')
-      const blob = await response.blob()
+      let blob: Blob
+      if (routeItem.gpxPath && supabase) {
+        const { data, error } = await supabase.storage.from('premium-route-files').download(routeItem.gpxPath)
+        if (error) throw error
+        blob = data
+      } else {
+        const response = await fetch('/demo-guatavita.gpx')
+        if (!response.ok) throw new Error('No pudimos preparar el archivo GPX.')
+        blob = await response.blob()
+      }
       const url = URL.createObjectURL(blob)
       const anchor = document.createElement('a')
       anchor.href = url
@@ -266,6 +347,18 @@ export function PremiumRoutes() {
 
   return (
     <div className="mx-auto max-w-7xl p-4 pb-24 lg:p-6">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <Button variant="outline" className="border-white/10 bg-white/5" onClick={() => navigate(-1)}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Volver
+        </Button>
+        {isAdmin && (
+          <Button className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => setIsCreateOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Crear ruta Premium
+          </Button>
+        )}
+      </div>
       <section className="mb-6 overflow-hidden rounded-xl border border-moto-orange/20 bg-moto-darker">
         <div className="relative grid min-h-[360px] gap-6 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:p-8">
           <div className="absolute inset-0 bg-[url('/feature-gps.jpg')] bg-cover bg-center opacity-20" />
@@ -282,7 +375,7 @@ export function PremiumRoutes() {
               puntos de interés y checklist. El acceso se renueva al iniciar cada mes.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
-              <Button className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => setSelectedRoute(premiumRoutes[0])}>
+              <Button className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => { setSelectedRoute(routes[0]); setActiveTab('detail') }}>
                 <Route className="mr-2 h-4 w-4" />
                 Ver Nevado del Ruiz
               </Button>
@@ -337,10 +430,11 @@ export function PremiumRoutes() {
                 key={routeItem.id}
                 routeItem={routeItem}
                 owned={claimedRouteIds.includes(routeItem.id)}
-                disabled={isLoadingClaims || isLoadingSubscription || claimingRouteId === routeItem.id || (!claimedRouteIds.includes(routeItem.id) && (quota?.remaining === 0 || !hasPremiumPlan))}
+                disabled={isLoadingClaims || isLoadingSubscription || claimingRouteId === routeItem.id || (routeItem.isManaged && !routeItem.isMonthlyFree) || (!claimedRouteIds.includes(routeItem.id) && (quota?.remaining === 0 || !hasPremiumPlan))}
                 onDetail={() => {
                   setSelectedRoute(routeItem)
                   setActiveTab('detail')
+                  setSearchParams({ route: routeItem.id, tab: 'detail' })
                 }}
                 onBuy={() => void claimRoute(routeItem)}
               />
@@ -352,8 +446,12 @@ export function PremiumRoutes() {
           <RouteDetailPanel
             routeItem={selectedRoute}
             owned={isSelectedOwned}
-            disabled={isLoadingClaims || isLoadingSubscription || claimingRouteId === selectedRoute.id || (!isSelectedOwned && (quota?.remaining === 0 || !hasPremiumPlan))}
+            disabled={isLoadingClaims || isLoadingSubscription || claimingRouteId === selectedRoute.id || (selectedRoute.isManaged && !selectedRoute.isMonthlyFree) || (!isSelectedOwned && (quota?.remaining === 0 || !hasPremiumPlan))}
             onBuy={() => void claimRoute(selectedRoute)}
+            onBack={() => {
+              setActiveTab('catalog')
+              setSearchParams({})
+            }}
           />
         </TabsContent>
 
@@ -405,6 +503,20 @@ export function PremiumRoutes() {
         </TabsContent>
       </Tabs>
 
+      {user?.id && (
+        <AdminPremiumRouteDialog
+          open={isCreateOpen}
+          onOpenChange={setIsCreateOpen}
+          userId={user.id}
+          onCreated={(createdRoute) => {
+            const routeItem = mapManagedRoute(createdRoute)
+            setRoutes((current) => [routeItem, ...current])
+            setSelectedRoute(routeItem)
+            setActiveTab('detail')
+            setSearchParams({ route: routeItem.id, tab: 'detail' })
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -460,12 +572,12 @@ function RouteCard({
   )
 }
 
-function RouteDetailPanel({ routeItem, owned, disabled, onBuy }: { routeItem: PremiumRoute; owned: boolean; disabled: boolean; onBuy: () => void }) {
+function RouteDetailPanel({ routeItem, owned, disabled, onBuy, onBack }: { routeItem: PremiumRoute; owned: boolean; disabled: boolean; onBuy: () => void; onBack: () => void }) {
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
       <section className="overflow-hidden rounded-xl border border-white/5 bg-moto-gray">
         <div className="min-h-80 bg-cover bg-center p-5" style={{ backgroundImage: `linear-gradient(rgba(8,17,26,0.1), rgba(8,17,26,0.84)), url(${routeItem.image})` }}>
-          <Button variant="outline" className="border-white/10 bg-moto-darker/80">
+          <Button variant="outline" className="border-white/10 bg-moto-darker/80" onClick={onBack}>
             <ChevronLeft className="mr-2 h-4 w-4" />
             Catálogo
           </Button>
@@ -487,10 +599,10 @@ function RouteDetailPanel({ routeItem, owned, disabled, onBuy }: { routeItem: Pr
         <Card className="border-moto-orange/20 bg-moto-darker py-0">
           <CardContent className="p-5">
             <p className="text-sm text-gray-400">Beneficio mensual Premium</p>
-            <p className="mt-1 text-2xl font-black text-moto-orange">Sin costo adicional</p>
+            <p className="mt-1 text-2xl font-black text-moto-orange">{routeItem.isManaged && !routeItem.isMonthlyFree ? 'No incluida este mes' : 'Sin costo adicional'}</p>
             <Button disabled={disabled} className="mt-5 w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={onBuy}>
               {disabled && !owned ? <Lock className="mr-2 h-4 w-4" /> : null}
-              {owned ? 'Abrir en Mis rutas' : 'Obtener ruta gratis'}
+              {owned ? 'Abrir en Mis rutas' : routeItem.isManaged && !routeItem.isMonthlyFree ? 'No disponible gratis' : 'Obtener ruta gratis'}
             </Button>
           </CardContent>
         </Card>
