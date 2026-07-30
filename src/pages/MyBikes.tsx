@@ -1398,7 +1398,11 @@ export function MyBikes() {
         </div>
         <div className="grid w-full grid-cols-3 gap-2 sm:w-auto sm:flex sm:flex-wrap sm:gap-3">
           {!isBusinessAccount && (
-            <Button className="min-w-0 bg-moto-orange px-2 text-xs text-moto-darker hover:bg-moto-orange-dark sm:px-4 sm:text-sm" onClick={openCreateBike}>
+            <Button
+              variant={!isPremiumRider && motorcycles.length > 0 ? 'premium' : 'default'}
+              className="min-w-0 px-2 text-xs sm:px-4 sm:text-sm"
+              onClick={openCreateBike}
+            >
               <Plus className="mr-1 h-4 w-4 sm:mr-2 sm:h-5 sm:w-5" />
               <span className="sm:hidden">{motorcycles.length > 0 ? 'Premium' : 'Moto'}</span>
               <span className="hidden sm:inline">{!isPremiumRider && motorcycles.length > 0 ? 'Ampliar con Premium' : 'Agregar moto'}</span>
