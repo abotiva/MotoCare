@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { analyzeGpx, type GpxAnalysis } from '@/lib/gpx'
+import type { RouteTrack } from '@/lib/gpx'
 import { supabase } from '@/lib/supabase'
 
 export type CreatedPremiumRoute = {
@@ -23,6 +24,7 @@ export type CreatedPremiumRoute = {
   motorcycle_compatibility: string
   gpx_storage_path: string
   is_monthly_free: boolean
+  track_geojson: RouteTrack | null
 }
 
 type FormState = {
@@ -157,6 +159,7 @@ export function AdminPremiumRouteDialog({
       terrain: form.terrain.trim() || null,
       motorcycle_compatibility: form.compatibility.trim(),
       gpx_storage_path: storagePath,
+      track_geojson: analysis ? analysis.track : initialRoute!.track_geojson,
       is_monthly_free: form.isMonthlyFree,
     }
     const query = isEditing

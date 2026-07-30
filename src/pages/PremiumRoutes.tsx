@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft,
   Bike,
   CheckCircle2,
   ChevronLeft,
+  Download,
+  ExternalLink,
   Filter,
   Gauge,
   Lock,
@@ -22,9 +24,11 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AdminPremiumRouteDialog, type CreatedPremiumRoute } from '@/components/AdminPremiumRouteDialog'
+import { GpxMap } from '@/components/GpxMap'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
+import { parseGpx, type RouteTrack } from '@/lib/gpx'
 
 type PremiumRoute = {
   id: string
@@ -46,6 +50,7 @@ type PremiumRoute = {
   isMonthlyFree?: boolean
   isManaged?: boolean
   managedData?: CreatedPremiumRoute
+  track?: RouteTrack | null
 }
 
 const premiumRoutes: PremiumRoute[] = [
@@ -178,6 +183,7 @@ function mapManagedRoute(route: CreatedPremiumRoute): PremiumRoute {
     isMonthlyFree: route.is_monthly_free,
     isManaged: true,
     managedData: route,
+    track: route.track_geojson,
   }
 }
 
@@ -323,24 +329,29 @@ export function PremiumRoutes() {
     })
   }
 
+  const getGpxBlob = async (routeItem: PremiumRoute) => {
+    if (routeItem.gpxPath && supabase) {
+      const { data, error } = await supabase.storage.from('premium-route-files').download(routeItem.gpxPath)
+      if (error) throw error
+      return data
+    }
+    const response = await fetch('/demo-guatavita.gpx')
+    if (!response.ok) throw new Error('No pudimos preparar el archivo GPX.')
+    return response.blob()
+  }
+
+  const saveGpxBlob = (routeItem: PremiumRoute, blob: Blob) => {
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `${routeItem.id}.gpx`
+    anchor.click()
+    URL.revokeObjectURL(url)
+  }
+
   const downloadGpx = async (routeItem: PremiumRoute) => {
     try {
-      let blob: Blob
-      if (routeItem.gpxPath && supabase) {
-        const { data, error } = await supabase.storage.from('premium-route-files').download(routeItem.gpxPath)
-        if (error) throw error
-        blob = data
-      } else {
-        const response = await fetch('/demo-guatavita.gpx')
-        if (!response.ok) throw new Error('No pudimos preparar el archivo GPX.')
-        blob = await response.blob()
-      }
-      const url = URL.createObjectURL(blob)
-      const anchor = document.createElement('a')
-      anchor.href = url
-      anchor.download = `${routeItem.id}.gpx`
-      anchor.click()
-      URL.revokeObjectURL(url)
+      saveGpxBlob(routeItem, await getGpxBlob(routeItem))
       toast.success('Descarga GPX iniciada')
     } catch (error) {
       toast.error('No pudimos descargar la ruta', {
@@ -349,8 +360,37 @@ export function PremiumRoutes() {
     }
   }
 
+  const openWithExternalApp = async (routeItem: PremiumRoute) => {
+    try {
+      const blob = await getGpxBlob(routeItem)
+      const file = new File([blob], `${routeItem.id}.gpx`, { type: 'application/gpx+xml' })
+      if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+        await navigator.share({
+          title: routeItem.title,
+          text: `Abrir la ruta ${routeItem.title} con una aplicación compatible con GPX.`,
+          files: [file],
+        })
+        return
+      }
+      saveGpxBlob(routeItem, blob)
+      toast.info('GPX descargado', {
+        description: 'Tu navegador no permite elegir una aplicación directamente. Abre el archivo descargado con tu aplicación de rutas.',
+      })
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return
+      toast.error('No pudimos abrir la ruta', {
+        description: error instanceof Error ? error.message : 'Intenta nuevamente.',
+      })
+    }
+  }
+
+  const loadRouteTrack = async (routeItem: PremiumRoute) => {
+    if (routeItem.track) return routeItem.track
+    return parseGpx(await (await getGpxBlob(routeItem)).text(), `${routeItem.id}.gpx`)
+  }
+
   return (
-    <div className="mx-auto max-w-7xl p-4 pb-24 lg:p-6">
+    <div className="mx-auto w-full min-w-0 max-w-7xl overflow-x-hidden p-4 pb-24 lg:p-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <Button variant="outline" className="border-white/10 bg-white/5" onClick={() => navigate(-1)}>
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -460,6 +500,10 @@ export function PremiumRoutes() {
               setEditingRoute(selectedRoute.managedData ?? null)
               setIsCreateOpen(true)
             } : undefined}
+            canOpenFile={isAdmin || isSelectedOwned}
+            onDownload={() => void downloadGpx(selectedRoute)}
+            onOpenExternal={() => void openWithExternalApp(selectedRoute)}
+            loadTrack={() => loadRouteTrack(selectedRoute)}
           />
         </TabsContent>
 
@@ -586,11 +630,60 @@ function RouteCard({
   )
 }
 
-function RouteDetailPanel({ routeItem, owned, disabled, onBuy, onBack, onEdit }: { routeItem: PremiumRoute; owned: boolean; disabled: boolean; onBuy: () => void; onBack: () => void; onEdit?: () => void }) {
+function RouteDetailPanel({
+  routeItem,
+  owned,
+  disabled,
+  canOpenFile,
+  onBuy,
+  onBack,
+  onEdit,
+  onDownload,
+  onOpenExternal,
+  loadTrack,
+}: {
+  routeItem: PremiumRoute
+  owned: boolean
+  disabled: boolean
+  canOpenFile: boolean
+  onBuy: () => void
+  onBack: () => void
+  onEdit?: () => void
+  onDownload: () => void
+  onOpenExternal: () => void
+  loadTrack: () => Promise<RouteTrack>
+}) {
+  const [mapTrack, setMapTrack] = useState<RouteTrack | null>(routeItem.track ?? null)
+  const [mapError, setMapError] = useState<string | null>(null)
+  const loadTrackRef = useRef(loadTrack)
+
+  useEffect(() => {
+    loadTrackRef.current = loadTrack
+  }, [loadTrack])
+
+  useEffect(() => {
+    let cancelled = false
+    setMapTrack(routeItem.track ?? null)
+    setMapError(null)
+    if (routeItem.track) return
+
+    void loadTrackRef.current()
+      .then((track) => {
+        if (!cancelled) setMapTrack(track)
+      })
+      .catch((error) => {
+        if (!cancelled) setMapError(error instanceof Error ? error.message : 'No pudimos cargar el trazado.')
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [routeItem.id, routeItem.track])
+
   return (
-    <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-      <section className="overflow-hidden rounded-xl border border-white/5 bg-moto-gray">
-        <div className="min-h-80 bg-cover bg-center p-5" style={{ backgroundImage: `linear-gradient(rgba(8,17,26,0.1), rgba(8,17,26,0.84)), url(${routeItem.image})` }}>
+    <div className="grid min-w-0 max-w-full gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <section className="min-w-0 overflow-hidden rounded-xl border border-white/5 bg-moto-gray">
+        <div className="min-h-72 bg-cover bg-center p-4 sm:min-h-80 sm:p-5" style={{ backgroundImage: `linear-gradient(rgba(8,17,26,0.1), rgba(8,17,26,0.84)), url(${routeItem.image})` }}>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" className="border-white/10 bg-moto-darker/80" onClick={onBack}>
               <ChevronLeft className="mr-2 h-4 w-4" />
@@ -603,13 +696,13 @@ function RouteDetailPanel({ routeItem, owned, disabled, onBuy, onBack, onEdit }:
               </Button>
             )}
           </div>
-          <div className="mt-28 max-w-3xl">
+          <div className="mt-20 min-w-0 max-w-3xl sm:mt-28">
             <Badge className="mb-3 bg-moto-orange text-moto-darker">{levelLabel(routeItem.level)}</Badge>
-            <h2 className="text-3xl font-black">{routeItem.title}</h2>
-            <p className="mt-2 text-gray-300">{routeItem.subtitle}</p>
+            <h2 className="break-words text-2xl font-black sm:text-3xl">{routeItem.title}</h2>
+            <p className="mt-2 break-words text-sm leading-6 text-gray-300 sm:text-base">{routeItem.subtitle}</p>
           </div>
         </div>
-        <div className="grid gap-4 p-5 md:grid-cols-2">
+        <div className="grid min-w-0 gap-4 p-4 sm:p-5 md:grid-cols-2">
           <InfoBlock icon={Route} title="Distancia y duración" value={`${routeItem.distance} - ${routeItem.duration}`} />
           <InfoBlock icon={Mountain} title="Terreno" value={routeItem.terrain} />
           <InfoBlock icon={Bike} title="Compatibilidad con la moto" value={routeItem.compatibility} />
@@ -617,7 +710,7 @@ function RouteDetailPanel({ routeItem, owned, disabled, onBuy, onBack, onEdit }:
         </div>
       </section>
 
-      <aside className="space-y-5">
+      <aside className="min-w-0 space-y-5">
         <Card className="border-moto-orange/20 bg-moto-darker py-0">
           <CardContent className="p-5">
             <p className="text-sm text-gray-400">Beneficio mensual Premium</p>
@@ -641,7 +734,39 @@ function RouteDetailPanel({ routeItem, owned, disabled, onBuy, onBack, onEdit }:
         </Card>
       </aside>
 
-      <section className="grid gap-5 lg:col-span-2 md:grid-cols-2">
+      <section className="min-w-0 lg:col-span-2">
+        <Card className="min-w-0 overflow-hidden border-white/5 bg-moto-gray py-0">
+          <CardContent className="p-4 sm:p-5">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <h3 className="font-semibold">Mapa y trazado GPX</h3>
+                <p className="mt-1 text-sm text-gray-400">La línea naranja muestra el recorrido cargado por MotoCare.</p>
+              </div>
+              <div className="grid w-full gap-2 sm:flex sm:w-auto">
+                <Button variant="outline" disabled={!canOpenFile} className="min-w-0 border-white/10" onClick={onDownload}>
+                  <Download className="mr-2 h-4 w-4 shrink-0" />
+                  Descargar GPX
+                </Button>
+                <Button disabled={!canOpenFile} className="min-w-0 bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={onOpenExternal}>
+                  <ExternalLink className="mr-2 h-4 w-4 shrink-0" />
+                  Abrir con otra app
+                </Button>
+              </div>
+            </div>
+            <GpxMap track={mapTrack} className="h-72 sm:h-96" />
+            {mapError && (
+              <p className="mt-3 rounded-lg bg-red-950/40 p-3 text-sm text-red-200">
+                No pudimos cargar el trazado: {mapError}
+              </p>
+            )}
+            {!canOpenFile && (
+              <p className="mt-3 text-xs text-gray-500">Obtén la ruta para descargarla o abrirla en una aplicación GPX.</p>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="grid min-w-0 gap-5 lg:col-span-2 md:grid-cols-2">
         <Card className="border-white/5 bg-moto-gray py-0">
           <CardContent className="p-5">
             <h3 className="font-semibold">Puntos de interes</h3>

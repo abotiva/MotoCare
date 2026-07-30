@@ -13,11 +13,15 @@ create table if not exists public.premium_routes (
   terrain text,
   motorcycle_compatibility text not null,
   gpx_storage_path text not null unique,
+  track_geojson jsonb,
   is_monthly_free boolean not null default true,
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.premium_routes
+  add column if not exists track_geojson jsonb;
 
 create index if not exists premium_routes_active_created_idx
   on public.premium_routes (is_active, created_at desc);
