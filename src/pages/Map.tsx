@@ -1102,7 +1102,7 @@ export function Map() {
       </Dialog>
 
       <Dialog open={showRouteDetail} onOpenChange={setShowRouteDetail}>
-        <DialogContent className="max-w-md border-white/10 bg-moto-gray text-white">
+        <DialogContent className="max-h-[calc(100dvh-1rem)] max-w-md overflow-x-hidden overflow-y-auto overscroll-contain border-white/10 bg-moto-gray p-4 text-white sm:max-h-[90vh] sm:p-6">
           <DialogHeader>
             <DialogTitle>{selectedRoute?.title ?? 'Detalle de ruta'}</DialogTitle>
             <DialogDescription className="text-gray-400">
