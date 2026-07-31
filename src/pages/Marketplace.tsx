@@ -575,7 +575,7 @@ export function Marketplace() {
     toast.success(status === 'draft' ? 'Borrador guardado' : 'Publicación enviada a revisión', {
       description: status === 'draft'
         ? 'El borrador no consume tu cupo mensual.'
-        : 'MotoCare revisará la publicación antes de mostrarla.',
+        : 'MotoCare la revisará. El cupo solo se descontará si la publicación es aprobada.',
     })
   }
 
@@ -1381,7 +1381,7 @@ export function Marketplace() {
             <DialogDescription className="text-gray-400">
               {effectivePlan === 'business'
                 ? 'Publica productos o servicios de tu negocio. Las publicaciones Business no tienen límite mensual.'
-                : 'Publica una sola unidad: moto, repuesto o accesorio. Guardar como borrador no consume cupo; enviarla a revisión sí.'}
+                : 'Publica una sola unidad: moto, repuesto o accesorio. Los borradores y las publicaciones en revisión no consumen cupo; solo se descuenta cuando un administrador la aprueba.'}
             </DialogDescription>
           </DialogHeader>
 
