@@ -168,15 +168,15 @@ function RouteCard({
   const isExpired = isPremiumRouteExpired(route)
 
   return (
-    <div className="rounded-xl border border-white/5 bg-moto-darker p-4">
-      <div className="mb-3 flex items-start justify-between gap-3">
+    <div className="min-w-0 max-w-full overflow-hidden rounded-xl border border-white/5 bg-moto-darker p-4">
+      <div className="mb-3 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h3 className="truncate font-semibold">{route.title}</h3>
-          <p className="mt-1 text-sm text-gray-400">
+          <p className="mt-1 break-words text-sm text-gray-400">
             {route.origin || 'Origen sin definir'}{' -> '}{route.destination || 'Destino sin definir'}
           </p>
         </div>
-        <div className="flex flex-wrap justify-end gap-2">
+        <div className="flex min-w-0 flex-wrap gap-2 sm:justify-end">
           {route.route_source === 'premium' && (
             <Badge className={isExpired ? 'bg-red-500/15 text-red-300' : 'bg-violet-500/15 text-violet-300'}>
               {isExpired ? 'Premium vencida' : 'Premium activa'}
@@ -365,14 +365,10 @@ export function Map() {
     const client = supabase
     setIsLoading(true)
 
-    const syncResult = await client.rpc('sync_claimed_premium_routes')
-    if (syncResult.error && !syncResult.error.message.includes('Could not find the function')) {
-      toast.error('No pudimos sincronizar tus rutas Premium', { description: syncResult.error.message })
-    }
-    const reconcileResult = await client.rpc('reconcile_premium_route_access')
-    if (reconcileResult.error && !reconcileResult.error.message.includes('Could not find the function')) {
-      toast.error('No pudimos revisar la vigencia de tus rutas Premium', { description: reconcileResult.error.message })
-    }
+    const maintenancePromise = Promise.all([
+      client.rpc('sync_claimed_premium_routes'),
+      client.rpc('reconcile_premium_route_access'),
+    ])
 
     const [motorcyclesResult, myRoutesResult] = await Promise.all([
       client.from('motorcycles').select('*').eq('owner_id', user.id).order('created_at', { ascending: false }),
@@ -388,7 +384,11 @@ export function Map() {
     if (myRoutesResult.error) {
       toast.error('No pudimos cargar tus rutas', { description: myRoutesResult.error.message })
     } else {
-      let nextRoutes = (myRoutesResult.data ?? []) as RoutePlan[]
+      const nextRoutes = (myRoutesResult.data ?? []) as RoutePlan[]
+      setMyRoutes(nextRoutes)
+      setIsLoading(false)
+      void Promise.all(nextRoutes.map((route) => syncRouteNotifications(route)))
+
       const premiumRoutesWithoutTrack = nextRoutes.filter((route) => (
         route.route_source === 'premium' && route.premium_route_id && !route.track_geojson
       ))
@@ -428,14 +428,20 @@ export function Map() {
           return error ? route : { ...route, track_geojson: track }
         }))
         const hydratedById = new globalThis.Map(hydrated.map((route) => [route.id, route]))
-        nextRoutes = nextRoutes.map((route) => hydratedById.get(route.id) ?? route)
+        setMyRoutes((current) => current.map((route) => hydratedById.get(route.id) ?? route))
       }
-
-      setMyRoutes(nextRoutes)
-      void Promise.all(nextRoutes.map((route) => syncRouteNotifications(route)))
     }
 
-    setIsLoading(false)
+    if (myRoutesResult.error) setIsLoading(false)
+
+    void maintenancePromise.then(([syncResult, reconcileResult]) => {
+      if (syncResult.error && !syncResult.error.message.includes('Could not find the function')) {
+        toast.error('No pudimos sincronizar tus rutas Premium', { description: syncResult.error.message })
+      }
+      if (reconcileResult.error && !reconcileResult.error.message.includes('Could not find the function')) {
+        toast.error('No pudimos revisar la vigencia de tus rutas Premium', { description: reconcileResult.error.message })
+      }
+    })
   }
 
   useEffect(() => {
@@ -774,7 +780,7 @@ export function Map() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl p-4 pb-24 lg:p-6">
+    <div className="mx-auto w-full min-w-0 max-w-6xl overflow-x-hidden p-4 pb-24 lg:p-6">
       <div className="mb-5 flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
         <div>
           <h1 className="text-2xl font-bold">Rutas</h1>
@@ -846,7 +852,7 @@ export function Map() {
       </Card>
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="space-y-3">
+        <div className="min-w-0 space-y-3">
           <Card className="border-white/5 bg-moto-gray py-0">
             <CardContent className="grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_200px]">
               <label className="relative">

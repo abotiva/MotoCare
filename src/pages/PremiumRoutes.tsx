@@ -430,12 +430,12 @@ export function PremiumRoutes() {
             </div>
           </div>
 
-          <Card className="relative self-end border-moto-orange/30 bg-moto-dark/90 py-0 shadow-glow">
+          <Card className="relative min-w-0 self-end overflow-hidden border-moto-orange/30 bg-moto-dark/90 py-0 shadow-glow">
             <CardContent className="p-5">
               <Badge className="mb-3 bg-white/10 text-gray-200">{selectedRoute.badge}</Badge>
               <h2 className="text-xl font-bold">{selectedRoute.title}</h2>
               <p className="mt-1 text-sm text-gray-400">{selectedRoute.location}</p>
-              <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+              <div className="mt-4 grid min-w-0 gap-2 text-sm sm:grid-cols-2">
                 <Metric icon={Gauge} label={levelLabel(selectedRoute.level)} />
                 <Metric icon={MapPin} label={selectedRoute.distance} />
               </div>
@@ -593,7 +593,7 @@ function RouteCard({
   onBuy: () => void
 }) {
   return (
-    <Card className="overflow-hidden border-white/5 bg-moto-gray py-0 transition hover:border-moto-orange/40">
+    <Card className="min-w-0 max-w-full overflow-hidden border-white/5 bg-moto-gray py-0 transition hover:border-moto-orange/40">
       <div className="relative min-h-44 bg-cover bg-center" style={{ backgroundImage: `linear-gradient(rgba(8,17,26,0.05), rgba(8,17,26,0.78)), url(${routeItem.image})` }}>
         <div className="absolute left-3 top-3 flex flex-wrap gap-2">
           <Badge className="bg-moto-darker/90 text-white">Ruta</Badge>
@@ -609,17 +609,17 @@ function RouteCard({
       <CardContent className="p-4">
         <h3 className="text-lg font-bold">{routeItem.title}</h3>
         <p className="mt-1 text-sm leading-6 text-gray-400">{routeItem.subtitle}</p>
-        <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+        <div className="mt-4 grid min-w-0 gap-2 text-xs sm:grid-cols-2">
           <Metric icon={MapPin} label={routeItem.location} />
           <Metric icon={Mountain} label={routeItem.terrain} />
         </div>
-        <div className="mt-4 flex items-center justify-between gap-3">
-          <span className="text-sm font-bold text-moto-orange">Incluida con Premium</span>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="border-white/10" onClick={onDetail}>
+        <div className="mt-4 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <span className="break-words text-sm font-bold text-moto-orange">Incluida con Premium</span>
+          <div className="grid min-w-0 grid-cols-2 gap-2 sm:flex">
+            <Button variant="outline" size="sm" className="min-w-0 border-white/10" onClick={onDetail}>
               Detalle
             </Button>
-            <Button size="sm" disabled={disabled} className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={onBuy}>
+            <Button size="sm" disabled={disabled} className="min-w-0 bg-moto-orange px-2 text-moto-darker hover:bg-moto-orange-dark" onClick={onBuy}>
               {disabled && !owned ? <Lock className="mr-1 h-3.5 w-3.5" /> : null}
               {owned ? 'Abrir' : 'Obtener gratis'}
             </Button>

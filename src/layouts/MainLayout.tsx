@@ -4,7 +4,6 @@ import {
   Bell,
   Bike,
   CalendarClock,
-  ChevronUp,
   CircleDollarSign,
   Crown,
   FileText,
@@ -114,57 +113,6 @@ function navigationTitle(pathname: string, motorcycleSectionLabel: string) {
     ?? (pathname === '/app/admin' ? 'Administración' : 'MotoCare')
 }
 
-function MobileSectionMenu({
-  label,
-  icon: Icon,
-  items,
-  active,
-  align = 'center',
-}: {
-  label: string
-  icon: LucideIcon
-  items: NavigationItem[]
-  active: boolean
-  align?: 'start' | 'center' | 'end'
-}) {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-medium ${
-            active ? 'text-moto-orange' : 'text-gray-400'
-          }`}
-          aria-label={`Abrir navegación de ${label}`}
-        >
-          <span className="relative">
-            <Icon className="h-5 w-5" />
-            <ChevronUp className="absolute -right-3 -top-1 h-3 w-3" />
-          </span>
-          <span className="max-w-full truncate">{label}</span>
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        side="top"
-        align={align}
-        sideOffset={12}
-        className="min-w-56 border-white/10 bg-moto-darker text-white shadow-2xl"
-      >
-        <DropdownMenuLabel>{label}</DropdownMenuLabel>
-        <DropdownMenuSeparator className="bg-white/10" />
-        {items.map((item) => (
-          <DropdownMenuItem key={item.path} asChild>
-            <Link to={item.path} className="min-h-11">
-              <item.icon className="mr-2 h-4 w-4 text-moto-orange" />
-              {item.label}
-            </Link>
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-}
-
 export function MainLayout() {
   const { user, profile, signOut } = useAuth()
   const { effectivePlan } = useSubscription()
@@ -180,12 +128,6 @@ export function MainLayout() {
   const avatarFallback = initials(profile?.full_name, user?.email)
   const isPaidPlan = effectivePlan === 'pro' || effectivePlan === 'premium' || effectivePlan === 'business'
   const motorcycleSectionLabel = effectivePlan === 'pro' || effectivePlan === 'premium' ? 'Mi Garage' : 'Mi Moto'
-  const mobileHomeItems: NavigationItem[] = [
-    { path: '/app/home', label: 'Inicio', icon: Home },
-    ...accountItems,
-    ...(isAdmin ? [{ path: '/app/admin', label: 'Administración', icon: ShieldCheck }] : []),
-  ]
-
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
   }, [location.pathname])
@@ -377,32 +319,19 @@ export function MainLayout() {
 
         <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-moto-darker/98 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden" aria-label="Navegación móvil">
           <div className="grid h-[4.5rem] grid-cols-6">
-            <MobileSectionMenu
-              label="Inicio"
-              icon={Home}
-              items={mobileHomeItems}
-              active={location.pathname === '/app/home' || accountItems.some((item) => isItemActive(item.path)) || location.pathname === '/app/admin'}
-              align="start"
-            />
-            <MobileSectionMenu
-              label={motorcycleSectionLabel}
-              icon={Bike}
-              items={motorcycleItems}
-              active={location.pathname.includes('/garage') || location.pathname.includes('/bikes') || location.pathname === '/app/my-bikes'}
-            />
-            <MobileSectionMenu
-              label="Rutas"
-              icon={MapIcon}
-              items={routeItems}
-              active={location.pathname === '/app/explore' || location.pathname === '/app/map' || location.pathname === '/app/premium-routes' || location.pathname.startsWith('/app/routes/')}
-            />
-            <MobileSectionMenu
-              label="Comunidad"
-              icon={MessageCircle}
-              items={communityItems}
-              active={location.pathname === '/app/messages' || location.pathname === '/app/clubs'}
-            />
-            <NavLink to="/app/marketplace" className={`flex min-h-11 flex-col items-center justify-center gap-1 text-[10px] font-medium ${location.pathname.startsWith('/app/marketplace') ? 'text-moto-orange' : 'text-gray-400'}`}><ShoppingBag className="h-5 w-5" />Tienda</NavLink>
+            <NavLink to="/app/home" className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium ${location.pathname === '/app/home' ? 'text-moto-orange' : 'text-gray-400'}`}>
+              <Home className="h-5 w-5" /><span className="max-w-full truncate">Inicio</span>
+            </NavLink>
+            <NavLink to="/app/garage" className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium ${location.pathname.includes('/garage') || location.pathname.includes('/bikes') || location.pathname === '/app/my-bikes' ? 'text-moto-orange' : 'text-gray-400'}`}>
+              <Bike className="h-5 w-5" /><span className="max-w-full truncate">{motorcycleSectionLabel}</span>
+            </NavLink>
+            <NavLink to="/app/routes" className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium ${location.pathname === '/app/routes' || location.pathname === '/app/explore' || location.pathname === '/app/map' || location.pathname === '/app/premium-routes' || location.pathname.startsWith('/app/routes/') ? 'text-moto-orange' : 'text-gray-400'}`}>
+              <MapIcon className="h-5 w-5" /><span className="max-w-full truncate">Rutas</span>
+            </NavLink>
+            <NavLink to="/app/community" className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium ${location.pathname === '/app/community' || location.pathname === '/app/messages' ? 'text-moto-orange' : 'text-gray-400'}`}>
+              <MessageCircle className="h-5 w-5" /><span className="max-w-full truncate">Comunidad</span>
+            </NavLink>
+            <NavLink to="/app/marketplace" className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium ${location.pathname.startsWith('/app/marketplace') ? 'text-moto-orange' : 'text-gray-400'}`}><ShoppingBag className="h-5 w-5" /><span className="max-w-full truncate">Tienda</span></NavLink>
             <button type="button" onClick={() => setIsQuickActionsOpen(true)} aria-label="Abrir acciones para registrar" aria-expanded={isQuickActionsOpen} className="relative flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-bold text-moto-orange">
               <span className="-mt-7 grid h-14 w-14 place-items-center rounded-full border-4 border-moto-darker bg-moto-orange text-moto-darker shadow-lg shadow-moto-orange/20"><Plus className="h-7 w-7" /></span>
               <span className="max-w-full truncate">Registrar</span>

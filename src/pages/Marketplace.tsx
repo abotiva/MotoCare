@@ -749,49 +749,6 @@ export function Marketplace() {
         </Card>
       ) : null}
 
-      <Card className="mb-6 overflow-hidden border-white/5 bg-moto-gray py-0">
-        <CardContent className="relative p-5">
-          <div className="absolute inset-0 bg-[url('/feature-marketplace.jpg')] bg-cover bg-center opacity-20" />
-          <div className="relative grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center">
-            <div>
-              <Badge className="mb-3 bg-white/10 text-gray-200">Tienda para todos</Badge>
-              <h2 className="text-2xl font-bold">Comprar es abierto para toda la comunidad</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-300">
-                Cualquier usuario podrá explorar publicaciones y contactar vendedores. Para publicar como persona natural se requiere licencia Premium; si la cuenta representa un negocio, taller, marca o aliado, debe tener licencia Business.
-              </p>
-            </div>
-            <div className="rounded-xl border border-white/10 bg-moto-darker/90 p-4">
-              <div className="mb-3 flex items-center gap-2 text-moto-orange">
-                <Store className="h-5 w-5" />
-                <span className="font-semibold">Regla para vender</span>
-              </div>
-              <div className="space-y-2 text-sm leading-6 text-gray-400">
-                <p>Ver y comprar: disponible para todos los usuarios.</p>
-                <p>Vender como usuario: requiere Premium.</p>
-                <p>Vender como negocio: requiere Business.</p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="mb-6 border-white/5 bg-moto-gray/70">
-        <CardContent className="grid gap-4 p-4 md:grid-cols-3">
-          <div className="rounded-lg border border-white/10 bg-moto-darker/60 p-4">
-            <p className="text-sm font-semibold text-white">Explorar y comprar</p>
-            <p className="mt-1 text-sm leading-6 text-gray-400">Disponible para toda la comunidad MotoCare Co.</p>
-          </div>
-          <div className="rounded-lg border border-white/10 bg-moto-darker/60 p-4">
-            <p className="text-sm font-semibold text-white">Publicar como motero</p>
-            <p className="mt-1 text-sm leading-6 text-gray-400">Requiere licencia Premium activa.</p>
-          </div>
-          <div className="rounded-lg border border-white/10 bg-moto-darker/60 p-4">
-            <p className="text-sm font-semibold text-white">Publicar como negocio</p>
-            <p className="mt-1 text-sm leading-6 text-gray-400">Requiere licencia Business activa.</p>
-          </div>
-        </CardContent>
-      </Card>
-
       <Card className="mb-6 overflow-hidden border-moto-orange/30 bg-moto-gray">
         <CardContent className="relative p-0">
           <div className="absolute inset-0 bg-[url('/feature-gps.jpg')] bg-cover bg-center opacity-20" />
@@ -1048,6 +1005,51 @@ export function Marketplace() {
           </div>
         ) : null}
       </div>
+
+      <section className="mt-8 space-y-4" aria-label="Información de la tienda">
+        <Card className="overflow-hidden border-white/5 bg-moto-gray py-0">
+          <CardContent className="relative p-5">
+            <div className="absolute inset-0 bg-[url('/feature-marketplace.jpg')] bg-cover bg-center opacity-20" />
+            <div className="relative grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center">
+              <div className="min-w-0">
+                <Badge className="mb-3 bg-white/10 text-gray-200">Tienda para todos</Badge>
+                <h2 className="break-words text-2xl font-bold">Comprar es abierto para toda la comunidad</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-300">
+                  Cualquier usuario podrá explorar publicaciones y contactar vendedores. Para publicar como persona natural se requiere licencia Premium; si la cuenta representa un negocio, taller, marca o aliado, debe tener licencia Business.
+                </p>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-moto-darker/90 p-4">
+                <div className="mb-3 flex items-center gap-2 text-moto-orange">
+                  <Store className="h-5 w-5" />
+                  <span className="font-semibold">Regla para vender</span>
+                </div>
+                <div className="space-y-2 text-sm leading-6 text-gray-400">
+                  <p>Ver y comprar: disponible para todos los usuarios.</p>
+                  <p>Vender como usuario: requiere Premium.</p>
+                  <p>Vender como negocio: requiere Business.</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-white/5 bg-moto-gray/70">
+          <CardContent className="grid gap-4 p-4 md:grid-cols-3">
+            <div className="rounded-lg border border-white/10 bg-moto-darker/60 p-4">
+              <p className="text-sm font-semibold text-white">Explorar y comprar</p>
+              <p className="mt-1 text-sm leading-6 text-gray-400">Disponible para toda la comunidad MotoCare Co.</p>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-moto-darker/60 p-4">
+              <p className="text-sm font-semibold text-white">Publicar como motero</p>
+              <p className="mt-1 text-sm leading-6 text-gray-400">Requiere licencia Premium activa.</p>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-moto-darker/60 p-4">
+              <p className="text-sm font-semibold text-white">Publicar como negocio</p>
+              <p className="mt-1 text-sm leading-6 text-gray-400">Requiere licencia Business activa.</p>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
 
       {/* Sell Button */}
       <div className="fixed bottom-20 right-4 z-40 flex items-center justify-end gap-2 lg:bottom-8 lg:right-8">
