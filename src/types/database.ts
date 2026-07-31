@@ -61,6 +61,7 @@ export type MarketplaceListing = {
   mileage_km: number | null
   city: string | null
   department: string | null
+  quantity: 1
   status: MarketplaceListingStatus
   is_featured: boolean
   published_at: string | null

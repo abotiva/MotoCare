@@ -158,7 +158,7 @@ function formatMoney(value: number) {
 const marketplaceCategoryLabels: Record<MarketplacePurchase['category'], string> = {
   motorcycles: 'Motos',
   parts: 'Repuestos',
-  gear: 'Equipamiento',
+  gear: 'Accesorios',
   services: 'Servicios de tienda',
   'premium-routes': 'Rutas Premium',
 }

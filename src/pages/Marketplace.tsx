@@ -36,10 +36,20 @@ const categories = [
   { id: 'all', name: 'Todo', icon: Grid3X3 },
   { id: 'motorcycles', name: 'Motos', icon: Bike },
   { id: 'parts', name: 'Repuestos', icon: Wrench },
-  { id: 'gear', name: 'Equipamiento', icon: Shirt },
-  { id: 'services', name: 'Servicios', icon: Store },
+  { id: 'gear', name: 'Accesorios', icon: Shirt },
   { id: 'premium-routes', name: 'Rutas Premium', icon: MapPinned },
 ]
+
+const personalSaleCategories = categories.filter((category) => (
+  category.id === 'motorcycles' || category.id === 'parts' || category.id === 'gear'
+))
+
+const physicalConditionEntries = [
+  ['new', 'Nuevo'],
+  ['used_like_new', 'Usado - Como nuevo'],
+  ['used_good', 'Usado - Buen estado'],
+  ['used_fair', 'Usado - Estado aceptable'],
+] satisfies Array<[MarketplaceCondition, string]>
 
 type StoreListing = {
   id: string
@@ -198,18 +208,6 @@ const demoListings: StoreListing[] = [
     featured: true,
     likes: 91,
     category: 'premium-routes'
-  },
-  {
-    id: 'demo-9',
-    title: 'Revisión pre-viaje Adventure',
-    price: 120000,
-    condition: 'Servicio',
-    location: 'Bogotá, Cundinamarca',
-    image: '/feature-maintenance.jpg',
-    seller: { name: 'Taller Aliado MotoCare', rating: 4.8, verified: true },
-    featured: false,
-    likes: 18,
-    category: 'services'
   },
 ]
 
@@ -409,8 +407,8 @@ export function Marketplace() {
     supabase
     && user
     && !isLoadingSubscription
-    && effectivePlan !== 'free'
-    && (effectivePlan === 'business' || quota?.remaining_publications !== 0)
+    && (effectivePlan === 'premium' || effectivePlan === 'pro')
+    && quota?.remaining_publications !== 0
   )
 
   const saveListing = async (status: 'draft' | 'pending_review') => {
@@ -418,6 +416,14 @@ export function Marketplace() {
 
     const price = Number(listingForm.price)
     const mileage = listingForm.mileage_km.trim() ? Number(listingForm.mileage_km) : null
+    if (!personalSaleCategories.some((category) => category.id === listingForm.category)) {
+      toast.error('Categoría no permitida', { description: 'La venta directa admite motos, repuestos o accesorios.' })
+      return
+    }
+    if (!physicalConditionEntries.some(([condition]) => condition === listingForm.condition)) {
+      toast.error('Estado no permitido', { description: 'Esta primera etapa solo permite artículos físicos.' })
+      return
+    }
     if (listingForm.title.trim().length < 5) {
       toast.error('Título muy corto', { description: 'Escribe al menos 5 caracteres.' })
       return
@@ -426,12 +432,16 @@ export function Marketplace() {
       toast.error('Descripción muy corta', { description: 'Escribe al menos 20 caracteres.' })
       return
     }
-    if (!Number.isFinite(price) || price < 0) {
+    if (!Number.isFinite(price) || price <= 0) {
       toast.error('Precio inválido', { description: 'Ingresa un precio válido en pesos colombianos.' })
       return
     }
     if (mileage !== null && (!Number.isInteger(mileage) || mileage < 0)) {
       toast.error('Kilometraje inválido')
+      return
+    }
+    if (listingImages.length === 0) {
+      toast.error('Agrega una imagen', { description: 'La venta directa requiere al menos una foto real del artículo.' })
       return
     }
 
@@ -440,7 +450,7 @@ export function Marketplace() {
       .from('marketplace_listings')
       .insert({
         seller_id: user.id,
-        seller_type: effectivePlan === 'business' ? 'business' : 'personal',
+        seller_type: 'personal',
         title: listingForm.title.trim(),
         description: listingForm.description.trim(),
         price,
@@ -449,6 +459,7 @@ export function Marketplace() {
         mileage_km: mileage,
         city: listingForm.city.trim() || null,
         department: listingForm.department.trim() || null,
+        quantity: 1,
         status: 'draft',
       })
       .select('id')
@@ -573,6 +584,7 @@ export function Marketplace() {
 
   const markListingAsSold = async (listing: StoreListing) => {
     if (!supabase || !user || listing.sellerId !== user.id) return
+    if (!window.confirm(`¿Confirmas la venta de "${listing.title}"? La publicación se cerrará definitivamente y no podrá reactivarse.`)) return
     const { data: saleMessages } = await supabase
       .from('marketplace_messages')
       .select('sender_id, recipient_id, sender:sender_id(full_name, username), recipient:recipient_id(full_name, username)')
@@ -600,8 +612,6 @@ export function Marketplace() {
         return
       }
       buyerId = selectedIndex === 0 ? null : buyerOptions[selectedIndex - 1][0]
-    } else if (!window.confirm(`¿Confirmas que "${listing.title}" ya fue vendido? No hay compradores con conversaciones para asociar.`)) {
-      return
     }
 
     setIsMarkingSold(true)
@@ -691,7 +701,7 @@ export function Marketplace() {
       <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold mb-2">Tienda</h1>
-          <p className="text-gray-400">Compra motos, repuestos, equipamiento, servicios y rutas premium. Publicar exige una licencia activa.</p>
+          <p className="text-gray-400">Compra motos, repuestos, accesorios y rutas premium. Los usuarios Premium pueden publicar hasta cinco artículos al mes.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {user && supabase ? (
@@ -721,10 +731,10 @@ export function Marketplace() {
         <Card className="mb-6 border-moto-orange/30 bg-moto-orange/10 py-0">
           <CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="font-semibold">Licencia {effectivePlan === 'business' ? 'Business' : 'Premium'}</p>
+              <p className="font-semibold">Venta directa con licencia {effectivePlan === 'business' ? 'Business' : 'Premium'}</p>
               <p className="text-sm text-gray-300">
                 {effectivePlan === 'business'
-                  ? 'Publicaciones nuevas mensuales ilimitadas.'
+                  ? 'En esta primera etapa, publicar artículos está disponible para usuarios Premium.'
                   : quota
                     ? `${quota.used_publications} de 5 publicaciones usadas este mes · ${quota.remaining_publications} disponibles.`
                     : 'Hasta 5 publicaciones nuevas por mes.'}
@@ -1041,11 +1051,11 @@ export function Marketplace() {
             </div>
             <div className="rounded-lg border border-white/10 bg-moto-darker/60 p-4">
               <p className="text-sm font-semibold text-white">Publicar como motero</p>
-              <p className="mt-1 text-sm leading-6 text-gray-400">Requiere licencia Premium activa.</p>
+              <p className="mt-1 text-sm leading-6 text-gray-400">Hasta 5 artículos al mes: moto, repuesto o accesorio.</p>
             </div>
             <div className="rounded-lg border border-white/10 bg-moto-darker/60 p-4">
               <p className="text-sm font-semibold text-white">Publicar como negocio</p>
-              <p className="mt-1 text-sm leading-6 text-gray-400">Requiere licencia Business activa.</p>
+              <p className="mt-1 text-sm leading-6 text-gray-400">Se preparará en una etapa posterior de la tienda.</p>
             </div>
           </CardContent>
         </Card>
@@ -1065,7 +1075,7 @@ export function Marketplace() {
           >
             <Lock className="mr-2 h-4 w-4" />
             {effectivePlan === 'business'
-              ? 'Publicar como negocio'
+              ? 'Disponible para Premium'
               : effectivePlan === 'premium' || effectivePlan === 'pro'
                 ? 'Crear publicación'
                 : 'Requiere Premium'}
@@ -1096,7 +1106,7 @@ export function Marketplace() {
         >
           <Lock className="mr-2 h-5 w-5" />
           {effectivePlan === 'business'
-            ? 'Publicar como negocio'
+            ? 'Disponible para Premium'
             : effectivePlan === 'premium' || effectivePlan === 'pro'
               ? 'Crear publicación'
               : 'Vender con Premium'}
@@ -1344,7 +1354,7 @@ export function Marketplace() {
           <DialogHeader>
             <DialogTitle>Crear publicación</DialogTitle>
             <DialogDescription className="text-gray-400">
-              Guardar como borrador no consume cupo. El cupo se utiliza cuando la envías a revisión.
+              Publica una sola unidad: moto, repuesto o accesorio. Guardar como borrador no consume cupo; enviarla a revisión sí.
             </DialogDescription>
           </DialogHeader>
 
@@ -1372,7 +1382,7 @@ export function Marketplace() {
                   }))}
                   className="h-9 w-full rounded-md border border-white/10 bg-moto-darker px-3 text-sm text-white"
                 >
-                  {categories.filter((category) => category.id !== 'all').map((category) => (
+                  {personalSaleCategories.map((category) => (
                     <option key={category.id} value={category.id}>{category.name}</option>
                   ))}
                 </select>
@@ -1388,7 +1398,7 @@ export function Marketplace() {
                   }))}
                   className="h-9 w-full rounded-md border border-white/10 bg-moto-darker px-3 text-sm text-white"
                 >
-                  {Object.entries(conditionLabels).map(([value, label]) => (
+                  {physicalConditionEntries.map(([value, label]) => (
                     <option key={value} value={value}>{label}</option>
                   ))}
                 </select>
@@ -1407,6 +1417,11 @@ export function Marketplace() {
                   placeholder="18500000"
                 />
               </label>
+
+              <div className="rounded-xl border border-white/10 bg-moto-darker px-4 py-3">
+                <p className="text-sm font-medium text-gray-200">Cantidad: 1 unidad</p>
+                <p className="mt-1 text-xs text-gray-500">Al confirmar la venta, el anuncio se cerrará definitivamente.</p>
+              </div>
 
               <label>
                 <span className="mb-1 block text-sm text-gray-300">Kilometraje (opcional)</span>

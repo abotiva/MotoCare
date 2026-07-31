@@ -52,7 +52,7 @@ const ecosystemBlocks = [
     iconClass: 'bg-emerald-400/15 text-emerald-300',
     linkClass: 'text-emerald-300 hover:text-emerald-200',
     description: 'Productos, servicios y experiencias para vivir la moto.',
-    items: ['Motos', 'Repuestos', 'Equipamiento', 'Servicios', 'Rutas Premium'],
+    items: ['Motos', 'Repuestos', 'Accesorios', 'Rutas Premium'],
   },
 ]
 

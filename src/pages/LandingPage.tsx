@@ -43,7 +43,7 @@ const ecosystem = [
   { icon: MapPinned, title: 'Rutas', description: 'Planea recorridos y descubre nuevas experiencias.' },
   { icon: Users, title: 'Clubes', description: 'Conecta con grupos que comparten tu pasión.' },
   { icon: MessageCircle, title: 'Comunidad', description: 'Comparte historias, aprendizajes y recomendaciones.' },
-  { icon: ShoppingBag, title: 'Tienda', description: 'Encuentra motos, repuestos, equipamiento y servicios.' },
+  { icon: ShoppingBag, title: 'Tienda', description: 'Encuentra motos, repuestos, accesorios y rutas premium.' },
 ]
 
 const plans = [
