@@ -37,11 +37,16 @@ const categories = [
   { id: 'motorcycles', name: 'Motos', icon: Bike },
   { id: 'parts', name: 'Repuestos', icon: Wrench },
   { id: 'gear', name: 'Accesorios', icon: Shirt },
+  { id: 'services', name: 'Servicios', icon: Store },
   { id: 'premium-routes', name: 'Rutas Premium', icon: MapPinned },
 ]
 
 const personalSaleCategories = categories.filter((category) => (
   category.id === 'motorcycles' || category.id === 'parts' || category.id === 'gear'
+))
+
+const businessSaleCategories = categories.filter((category) => (
+  category.id === 'motorcycles' || category.id === 'parts' || category.id === 'gear' || category.id === 'services'
 ))
 
 const physicalConditionEntries = [
@@ -208,6 +213,18 @@ const demoListings: StoreListing[] = [
     featured: true,
     likes: 91,
     category: 'premium-routes'
+  },
+  {
+    id: 'demo-9',
+    title: 'Revisión pre-viaje Adventure',
+    price: 120000,
+    condition: 'Servicio',
+    location: 'Bogotá, Cundinamarca',
+    image: '/feature-maintenance.jpg',
+    seller: { name: 'Taller Aliado MotoCare', rating: 4.8, verified: true },
+    featured: false,
+    likes: 18,
+    category: 'services'
   },
 ]
 
@@ -407,21 +424,29 @@ export function Marketplace() {
     supabase
     && user
     && !isLoadingSubscription
-    && (effectivePlan === 'premium' || effectivePlan === 'pro')
-    && quota?.remaining_publications !== 0
+    && effectivePlan !== 'free'
+    && (effectivePlan === 'business' || quota?.remaining_publications !== 0)
   )
+
+  const availableSaleCategories = effectivePlan === 'business' ? businessSaleCategories : personalSaleCategories
 
   const saveListing = async (status: 'draft' | 'pending_review') => {
     if (!supabase || !user || !canCreateListing) return
 
     const price = Number(listingForm.price)
     const mileage = listingForm.mileage_km.trim() ? Number(listingForm.mileage_km) : null
-    if (!personalSaleCategories.some((category) => category.id === listingForm.category)) {
-      toast.error('Categoría no permitida', { description: 'La venta directa admite motos, repuestos o accesorios.' })
+    if (!availableSaleCategories.some((category) => category.id === listingForm.category)) {
+      toast.error('Categoría no permitida', {
+        description: effectivePlan === 'business'
+          ? 'Business admite motos, repuestos, accesorios o servicios.'
+          : 'Premium admite motos, repuestos o accesorios.',
+      })
       return
     }
-    if (!physicalConditionEntries.some(([condition]) => condition === listingForm.condition)) {
-      toast.error('Estado no permitido', { description: 'Esta primera etapa solo permite artículos físicos.' })
+    const isService = listingForm.category === 'services'
+    if ((isService && listingForm.condition !== 'service')
+      || (!isService && !physicalConditionEntries.some(([condition]) => condition === listingForm.condition))) {
+      toast.error('Estado no permitido', { description: isService ? 'Selecciona el estado Servicio.' : 'Selecciona el estado real del artículo.' })
       return
     }
     if (listingForm.title.trim().length < 5) {
@@ -450,7 +475,7 @@ export function Marketplace() {
       .from('marketplace_listings')
       .insert({
         seller_id: user.id,
-        seller_type: 'personal',
+        seller_type: effectivePlan === 'business' ? 'business' : 'personal',
         title: listingForm.title.trim(),
         description: listingForm.description.trim(),
         price,
@@ -701,7 +726,7 @@ export function Marketplace() {
       <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold mb-2">Tienda</h1>
-          <p className="text-gray-400">Compra motos, repuestos, accesorios y rutas premium. Los usuarios Premium pueden publicar hasta cinco artículos al mes.</p>
+          <p className="text-gray-400">Compra motos, repuestos, accesorios, servicios y rutas premium. Premium vende hasta cinco artículos al mes; Business puede publicar productos y servicios.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {user && supabase ? (
@@ -734,7 +759,7 @@ export function Marketplace() {
               <p className="font-semibold">Venta directa con licencia {effectivePlan === 'business' ? 'Business' : 'Premium'}</p>
               <p className="text-sm text-gray-300">
                 {effectivePlan === 'business'
-                  ? 'En esta primera etapa, publicar artículos está disponible para usuarios Premium.'
+                  ? 'Publicaciones de productos y servicios sin límite mensual.'
                   : quota
                     ? `${quota.used_publications} de 5 publicaciones usadas este mes · ${quota.remaining_publications} disponibles.`
                     : 'Hasta 5 publicaciones nuevas por mes.'}
@@ -1055,7 +1080,7 @@ export function Marketplace() {
             </div>
             <div className="rounded-lg border border-white/10 bg-moto-darker/60 p-4">
               <p className="text-sm font-semibold text-white">Publicar como negocio</p>
-              <p className="mt-1 text-sm leading-6 text-gray-400">Se preparará en una etapa posterior de la tienda.</p>
+              <p className="mt-1 text-sm leading-6 text-gray-400">Puede publicar productos y servicios sin límite mensual.</p>
             </div>
           </CardContent>
         </Card>
@@ -1075,7 +1100,7 @@ export function Marketplace() {
           >
             <Lock className="mr-2 h-4 w-4" />
             {effectivePlan === 'business'
-              ? 'Disponible para Premium'
+              ? 'Publicar como negocio'
               : effectivePlan === 'premium' || effectivePlan === 'pro'
                 ? 'Crear publicación'
                 : 'Requiere Premium'}
@@ -1106,7 +1131,7 @@ export function Marketplace() {
         >
           <Lock className="mr-2 h-5 w-5" />
           {effectivePlan === 'business'
-            ? 'Disponible para Premium'
+            ? 'Publicar como negocio'
             : effectivePlan === 'premium' || effectivePlan === 'pro'
               ? 'Crear publicación'
               : 'Vender con Premium'}
@@ -1192,7 +1217,7 @@ export function Marketplace() {
                     <Button asChild className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
                       <Link to="/app/premium-routes" onClick={() => setSelectedListing(null)}>Explorar ruta</Link>
                     </Button>
-                  ) : selectedListing.sellerId === user?.id ? (
+                  ) : selectedListing.sellerId === user?.id && selectedListing.category !== 'services' ? (
                     <Button
                       type="button"
                       variant="outline"
@@ -1354,7 +1379,9 @@ export function Marketplace() {
           <DialogHeader>
             <DialogTitle>Crear publicación</DialogTitle>
             <DialogDescription className="text-gray-400">
-              Publica una sola unidad: moto, repuesto o accesorio. Guardar como borrador no consume cupo; enviarla a revisión sí.
+              {effectivePlan === 'business'
+                ? 'Publica productos o servicios de tu negocio. Las publicaciones Business no tienen límite mensual.'
+                : 'Publica una sola unidad: moto, repuesto o accesorio. Guardar como borrador no consume cupo; enviarla a revisión sí.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -1379,10 +1406,12 @@ export function Marketplace() {
                   onChange={(event) => setListingForm((current) => ({
                     ...current,
                     category: event.target.value as MarketplaceCategory,
+                    condition: event.target.value === 'services' ? 'service' : current.condition === 'service' ? 'used_good' : current.condition,
+                    mileage_km: event.target.value === 'services' ? '' : current.mileage_km,
                   }))}
                   className="h-9 w-full rounded-md border border-white/10 bg-moto-darker px-3 text-sm text-white"
                 >
-                  {personalSaleCategories.map((category) => (
+                  {availableSaleCategories.map((category) => (
                     <option key={category.id} value={category.id}>{category.name}</option>
                   ))}
                 </select>
@@ -1398,7 +1427,9 @@ export function Marketplace() {
                   }))}
                   className="h-9 w-full rounded-md border border-white/10 bg-moto-darker px-3 text-sm text-white"
                 >
-                  {physicalConditionEntries.map(([value, label]) => (
+                  {(listingForm.category === 'services'
+                    ? [['service', conditionLabels.service] as [MarketplaceCondition, string]]
+                    : physicalConditionEntries).map(([value, label]) => (
                     <option key={value} value={value}>{label}</option>
                   ))}
                 </select>
@@ -1419,8 +1450,8 @@ export function Marketplace() {
               </label>
 
               <div className="rounded-xl border border-white/10 bg-moto-darker px-4 py-3">
-                <p className="text-sm font-medium text-gray-200">Cantidad: 1 unidad</p>
-                <p className="mt-1 text-xs text-gray-500">Al confirmar la venta, el anuncio se cerrará definitivamente.</p>
+                <p className="text-sm font-medium text-gray-200">{listingForm.category === 'services' ? 'Publicación de servicio' : 'Cantidad: 1 unidad'}</p>
+                <p className="mt-1 text-xs text-gray-500">{listingForm.category === 'services' ? 'Los servicios solo pueden publicarse con licencia Business.' : 'Al confirmar la venta, el anuncio se cerrará definitivamente.'}</p>
               </div>
 
               <label>
