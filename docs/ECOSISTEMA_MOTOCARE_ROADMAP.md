@@ -11,6 +11,7 @@ Principio rector:
 - Comunidad: publicaciones, fotografías, comentarios, reacciones, rutas asociadas, actividad privada de clubes y personas.
 - Clubes: creación según licencia, membresías por invitación, roles actuales (`owner`, `admin`, `member`), publicaciones y rutas del club.
 - Seguridad: los datos de Mi Garage están separados de las publicaciones y solo se comparten mediante una acción explícita.
+- Tienda: catalogo en preparacion con ventas directas Premium de una sola unidad fisica, hasta 5 publicaciones aprobadas por mes, y publicaciones Business de productos o servicios sin limite mensual.
 
 ## Evolución futura que requiere modelo de datos y permisos
 

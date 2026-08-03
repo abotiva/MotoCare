@@ -1,13 +1,13 @@
 # Moderacion y convivencia MotoCare
 
-MotoCare no permite reacciones violentas, acoso, amenazas, intimidacion, spam ni promociones comerciales fuera de una licencia Business activa.
+MotoCare no permite reacciones violentas, acoso, amenazas, intimidacion ni spam. Las ventas directas deben publicarse en la Tienda: Premium puede vender una sola moto, repuesto o accesorio por aviso, mientras Business puede publicar productos y servicios comerciales.
 
 ## Conductas reportables
 
 - Violencia, amenazas o incitacion a dano.
 - Acoso, insultos, discriminacion o persecucion de otros usuarios.
 - Spam, mensajes repetitivos o enlaces abusivos.
-- Promociones, ventas o publicidad no cobijadas bajo licencia Business.
+- Promociones, ventas o publicidad fuera de la Tienda o que incumplan los limites de la licencia del vendedor.
 - Suplantacion, contenido enganoso u otra conducta que afecte la seguridad de la comunidad.
 
 ## Flujo implementado

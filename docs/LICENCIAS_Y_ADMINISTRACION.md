@@ -28,7 +28,7 @@ La diferencia principal no debe ser solo "mas funciones", sino el tipo de usuari
 | Rutas | Uso limitado | Rutas guardadas ilimitadas | Rutas y gestion para grupos/clubes |
 | Comunidad | Ver y participar | Participacion completa | Visibilidad destacada |
 | Clubes | Unirse a clubes | Crear y administrar clubes pequenos | Gestion avanzada de clubes grandes |
-| Tienda | Ver publicaciones y comprar | Publicar como persona natural | Publicar como negocio, aliado o perfil comercial |
+| Tienda | Ver publicaciones y contactar vendedores | Hasta 5 ventas directas aprobadas al mes | Productos y servicios comerciales sin limite mensual |
 | Perfil | Basico | Perfil mejorado | Perfil comercial/profesional |
 | Publicidad | Puede tener | Sin publicidad | Sin publicidad |
 | Soporte | Estandar | Prioritario | Prioritario/comercial |
@@ -79,7 +79,9 @@ Para el motero individual que quiere controlar bien sus motos, mantenimientos, r
 - Estadisticas de kilometraje, servicios y costos.
 - Rutas guardadas ilimitadas.
 - Crear y administrar clubes pequenos.
-- Publicaciones en la tienda como persona natural.
+- Hasta 5 publicaciones aprobadas por mes en la tienda como persona natural.
+- Venta directa de una sola unidad por publicacion: moto, repuesto o accesorio.
+- Borradores y publicaciones en revision sin consumo de cupo; el cupo se descuenta al aprobar.
 - Perfil publico mejorado.
 - Sin publicidad.
 - Respaldo completo en la nube.
@@ -112,7 +114,7 @@ Para talleres, clubes, negocios, marcas, aliados o usuarios que administran moto
 - Reportes por moto, cliente, club o negocio.
 - Recordatorios de mantenimiento para varias motos/personas.
 - Historial completo por cliente o miembro.
-- Publicaciones comerciales en la tienda.
+- Publicaciones comerciales de productos y servicios en la tienda, sin limite mensual.
 - Perfil comercial o profesional verificado.
 - Gestion de clubes grandes.
 - Mayor visibilidad dentro de la app.
@@ -125,6 +127,17 @@ Para talleres, clubes, negocios, marcas, aliados o usuarios que administran moto
 - Business es para administrar motos, clientes, miembros o servicios de terceros, y para vender como negocio.
 - Incluye herramientas de negocio, reportes y roles de equipo.
 - Puede tener beneficios comerciales dentro de la tienda.
+
+### Reglas vigentes de la tienda por licencia
+
+- Gratis puede consultar el catalogo y contactar al vendedor, pero no publicar.
+- Premium puede publicar una sola unidad fisica por aviso: moto, repuesto o accesorio. No puede publicar servicios.
+- Premium dispone de 5 cupos por mes calendario, contados por publicaciones aprobadas.
+- Guardar como borrador y enviar a revision no consumen cupo.
+- La aprobacion administrativa hace visible la publicacion y consume el cupo Premium.
+- El rechazo administrativo no consume ni libera cupo, porque la publicacion pendiente nunca lo utilizo.
+- Una venta Premium marcada como vendida se cierra y no puede reactivarse; una nueva unidad requiere una nueva publicacion.
+- Business puede publicar productos y servicios comerciales sin limite mensual. Los servicios no se marcan como vendidos.
 
 ### Mensaje comercial
 

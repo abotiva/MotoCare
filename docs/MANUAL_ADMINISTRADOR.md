@@ -392,6 +392,7 @@ El panel incluye:
 - administracion manual de licencias `Free` y `Premium`
 - listado de clubes con metricas
 - catalogo de mantenimientos sugeridos
+- revision de publicaciones de la tienda
 
 Las tarjetas superiores del panel son interactivas. Cada una abre la pestaña operativa relacionada y, cuando corresponde, aplica el filtro de licencia. Usuarios, motos y rutas llevan al detalle por usuario; clubes e invitaciones llevan a Clubes; catalogo lleva a la gestion de mantenimientos sugeridos.
 
@@ -414,7 +415,7 @@ Los planes de usuario disponibles son:
 
 El valor `pro` puede existir como dato heredado en bases antiguas y la UI lo trata como equivalente a `premium`.
 
-La licencia `business` queda reservada para tiendas y aliados. Su alcance esta por definir y no se aplica en el MVP actual.
+La licencia `business` esta destinada a tiendas y aliados. Permite publicaciones comerciales de productos y servicios sin limite mensual.
 
 Los estados disponibles son:
 
@@ -424,6 +425,19 @@ Los estados disponibles son:
 - `canceled`: licencia cancelada
 
 Desde `/app/admin`, en la vista **Usuarios**, un administrador puede cambiar plan y estado de forma manual. Esto no conecta pagos todavia; deja la estructura lista para que despues una pasarela como Wompi, Mercado Pago, PayU o Stripe actualice la misma tabla.
+
+### Revision administrativa de la tienda
+
+La pestana **Tienda** muestra primero las publicaciones con estado `pending_review`. El administrador puede aprobarlas o rechazarlas; el rechazo exige un motivo.
+
+- Aprobar cambia el estado a `active`, publica el aviso y consume un cupo mensual cuando el vendedor es Premium.
+- Rechazar cambia el estado a `rejected`, notifica al vendedor y no consume cupo.
+- Los borradores y las publicaciones pendientes no consumen cupo.
+- Premium tiene un maximo de 5 publicaciones aprobadas por mes calendario y solo puede ofrecer una moto, repuesto o accesorio por aviso.
+- Business puede publicar productos y servicios sin limite mensual.
+- Si Premium ya tiene 5 aprobaciones en el mes, la base de datos impide aprobar otra publicacion.
+
+Para instalaciones existentes, ejecutar las migraciones de Marketplace en orden y finalizar con `supabase/marketplace_quota_on_approval_migration.sql`. Esta ultima elimina registros de cupo creados por versiones anteriores para avisos que continuan como borrador o pendientes de revision.
 
 ## Pendiente futuro: modulo admin
 

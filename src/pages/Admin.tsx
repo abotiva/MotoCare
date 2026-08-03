@@ -916,7 +916,7 @@ function MarketplaceReviewTable({
   return (
     <AdminTable
       title="Revisión de tienda"
-      description="Las publicaciones pendientes aparecen primero. Aprobar las hace visibles; rechazar exige un motivo y libera el cupo del vendedor."
+      description="Las publicaciones pendientes aparecen primero. Aprobar las hace visibles y, para vendedores Premium, consume uno de sus 5 cupos mensuales. Rechazar exige un motivo y no consume cupo."
     >
       {listings.length > 0 ? (
         listings.map((listing) => {

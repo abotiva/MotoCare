@@ -15,15 +15,17 @@ Estado actual: **MVP Alpha**. No es una version publica 1.0.
 - Comunidad: publicaciones, imagenes, likes, comentarios y rutas adjuntas. Esta funcionalidad queda orientada a Premium.
 - Clubes: crear club, editar informacion, imagen, miembros y mensajes privados. Esta funcionalidad queda orientada a Premium.
 - Explorar: modulo retirado de la navegacion activa; las rutas comunitarias se reservaran para Premium.
-- Tienda/Marketplace: pantalla visual en estado proximamente.
+- Tienda/Marketplace: catalogo, busqueda, favoritos, contacto entre comprador y vendedor, publicaciones moderadas y cierre de ventas de una sola unidad.
 - Ajustes basicos de cuenta y preferencias locales.
 - Panel administrativo con gestion de licencias, moderacion y CRUD del catalogo de mantenimientos.
 
 ## Arquitectura de producto
 
 - Usuarios Free: hoja de vida de la moto, mantenimientos realizados, pendientes programados y documentos.
-- Usuarios Premium: informes de mantenimiento y modulos avanzados como rutas, comunidad, clubes y tienda.
-- Business: licencia futura para tiendas y aliados; el alcance queda por definir y no se aplica en el MVP actual.
+- Usuarios Premium: informes de mantenimiento y modulos avanzados como rutas, comunidad y clubes. En la tienda pueden publicar motos, repuestos o accesorios de una sola unidad, con hasta 5 publicaciones aprobadas por mes.
+- Business: licencia para tiendas y aliados que permite publicar productos y servicios comerciales sin limite mensual de publicaciones.
+
+En la tienda, guardar un borrador o enviarlo a revision no consume cupo. Para Premium, el cupo mensual se descuenta unicamente cuando un administrador aprueba la publicacion. Los servicios estan reservados para Business; las ventas directas Premium no admiten servicios.
 
 El menu principal prioriza Inicio, Hoja de vida, Mantenimientos, Programados, Documentos y Reportes. Rutas, Comunidad, Clubes y Tienda quedan agrupados como funciones Premium.
 
@@ -70,8 +72,16 @@ Para bases existentes, revisar y ejecutar las migraciones necesarias en `supabas
 - `storage_delete_policy_migration.sql`
 - `clubs_migration.sql`
 - `admin_catalog_crud_migration.sql`
+- `marketplace_migration.sql`
+- `marketplace_sales_contact_migration.sql`
+- `admin_marketplace_review_migration.sql`
+- `marketplace_personal_sales_phase_one_migration.sql`
+- `marketplace_personal_sales_phase_two_business_services_migration.sql`
+- `marketplace_quota_on_approval_migration.sql`
 
 La migracion `admin_catalog_crud_migration.sql` permite crear, editar, activar, desactivar y eliminar elementos del catalogo exclusivamente a usuarios registrados en `public.app_admins`.
+
+Las migraciones de Marketplace deben ejecutarse en el orden mostrado. `marketplace_quota_on_approval_migration.sql` corrige instalaciones anteriores: elimina cupos creados prematuramente para borradores o publicaciones pendientes y hace que el consumo ocurra al aprobar.
 
 ## Google Maps
 

@@ -1,7 +1,9 @@
-import { ArrowRight, Bike, MapPinned, MessageCircle, ShoppingBag, Users } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { ArrowRight, Bike, MapPinned, MessageCircle, ShieldCheck, ShoppingBag, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
+import { supabase } from '@/lib/supabase'
 
 const ecosystemBlocks = [
   {
@@ -56,11 +58,44 @@ const ecosystemBlocks = [
   },
 ]
 
+const administrationBlock = {
+  title: 'Administración',
+  icon: ShieldCheck,
+  to: '/app/admin',
+  cardClass: 'border-t-rose-400',
+  iconClass: 'bg-rose-400/15 text-rose-300',
+  linkClass: 'text-rose-300 hover:text-rose-200',
+  description: 'Control operativo de usuarios, licencias, contenidos y revisiones.',
+  items: ['Usuarios', 'Licencias', 'Tienda', 'Moderación', 'Catálogos'],
+}
+
 export function Home() {
-  const { profile } = useAuth()
+  const { profile, user } = useAuth()
   const { effectivePlan } = useSubscription()
+  const [isAdmin, setIsAdmin] = useState(false)
   const firstName = profile?.full_name?.trim().split(/\s+/)[0] ?? 'motero'
   const hasPremiumGarage = effectivePlan === 'pro' || effectivePlan === 'premium'
+
+  useEffect(() => {
+    let isActive = true
+
+    if (!supabase || !user?.id) {
+      setIsAdmin(false)
+      return () => {
+        isActive = false
+      }
+    }
+
+    void supabase.rpc('is_current_user_admin').then(({ data, error }) => {
+      if (isActive) setIsAdmin(!error && Boolean(data))
+    })
+
+    return () => {
+      isActive = false
+    }
+  }, [user?.id])
+
+  const visibleBlocks = isAdmin ? [...ecosystemBlocks, administrationBlock] : ecosystemBlocks
 
   return (
     <div className="mx-auto max-w-7xl p-4 pb-24 sm:p-6 lg:pb-8">
@@ -76,7 +111,7 @@ export function Home() {
         </div>
 
         <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          {ecosystemBlocks.map((block) => {
+          {visibleBlocks.map((block) => {
             const isMotorcycleBlock = block.to === '/app/garage'
             const title = isMotorcycleBlock && !hasPremiumGarage ? 'Mi Moto' : block.title
             const description = isMotorcycleBlock && !hasPremiumGarage
