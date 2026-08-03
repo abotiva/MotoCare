@@ -22,6 +22,7 @@ import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AdminPremiumRouteDialog, type CreatedPremiumRoute } from '@/components/AdminPremiumRouteDialog'
 import { GpxMap } from '@/components/GpxMap'
@@ -205,6 +206,7 @@ export function PremiumRoutes() {
   const [claims, setClaims] = useState<MonthlyClaim[]>([])
   const [quota, setQuota] = useState<MonthlyQuota | null>(null)
   const [isLoadingClaims, setIsLoadingClaims] = useState(true)
+  const [isExternalAppPromptOpen, setIsExternalAppPromptOpen] = useState(false)
   const [claimingRouteId, setClaimingRouteId] = useState<string | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
@@ -502,7 +504,7 @@ export function PremiumRoutes() {
             } : undefined}
             canOpenFile={isAdmin || isSelectedOwned}
             onDownload={() => void downloadGpx(selectedRoute)}
-            onOpenExternal={() => void openWithExternalApp(selectedRoute)}
+            onOpenExternal={() => setIsExternalAppPromptOpen(true)}
             loadTrack={() => loadRouteTrack(selectedRoute)}
           />
         </TabsContent>
@@ -575,6 +577,30 @@ export function PremiumRoutes() {
           }}
         />
       )}
+
+      <Dialog open={isExternalAppPromptOpen} onOpenChange={setIsExternalAppPromptOpen}>
+        <DialogContent className="border-white/10 bg-moto-gray text-white">
+          <DialogHeader>
+            <DialogTitle>Abrir navegación externa</DialogTitle>
+            <DialogDescription className="leading-6 text-gray-300">
+              MotoCare muestra el trazado y puede actualizar tu posición mientras esta pantalla permanezca abierta, pero no ofrece instrucciones giro a giro. Compartiremos el GPX para que elijas una aplicación compatible.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-xl border border-moto-orange/20 bg-moto-orange/5 p-3 text-sm text-gray-300">
+            Al salir, la ubicación de MotoCare puede pausarse. Cuando regreses, pulsa <strong className="text-white">Mostrar mi ubicación</strong> para recalcular el avance.
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="border-white/10" onClick={() => setIsExternalAppPromptOpen(false)}>Seguir en MotoCare</Button>
+            <Button className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => {
+              setIsExternalAppPromptOpen(false)
+              void openWithExternalApp(selectedRoute)
+            }}>
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Elegir aplicación
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -54,6 +54,28 @@ export function parseGpx(xml: string, source = 'archivo.gpx'): RouteTrack {
   }
 }
 
+export function serializeGpx(track: RouteTrack, fallbackName = 'Ruta MotoCare') {
+  const name = (track.properties.name || fallbackName)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&apos;')
+  const points = track.geometry.coordinates
+    .map(([longitude, latitude]) => `    <trkpt lat="${latitude}" lon="${longitude}" />`)
+    .join('\n')
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="MotoCare" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>${name}</name>
+    <trkseg>
+${points}
+    </trkseg>
+  </trk>
+</gpx>`
+}
+
 export function analyzeGpx(xml: string, source = 'archivo.gpx'): GpxAnalysis {
   const document = new DOMParser().parseFromString(xml, 'application/xml')
   if (document.querySelector('parsererror')) throw new Error('El archivo GPX no es XML válido.')

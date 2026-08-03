@@ -210,6 +210,18 @@ Funciones disponibles:
 Los bloques **Rutas**, **Km**, **Compartidas** y **Hechas** abren un detalle filtrado. Desde ese resumen se puede entrar al detalle completo de una ruta.
 - cambiar el estado de una ruta propia
 
+### Mapas y archivos GPX
+
+Los mapas de MotoCare son informativos y no reemplazan una aplicacion de navegacion giro a giro.
+
+- El trazado naranja representa el recorrido completo del GPX.
+- **Mostrar mi ubicacion** solicita permiso de GPS y actualiza la posicion mientras MotoCare permanece visible.
+- El tramo verde y el porcentaje indican un avance aproximado calculado contra el punto mas cercano del trazado.
+- MotoCare muestra una alerta cuando la ubicacion esta a mas de 500 metros del GPX.
+- **Abrir con otra app** muestra primero una explicacion y luego comparte el GPX con una aplicacion compatible.
+- Si el navegador no permite compartir archivos, MotoCare descarga el GPX para abrirlo manualmente.
+- Al cambiar a otra aplicacion, el seguimiento de MotoCare puede pausarse. Al regresar, se debe pulsar nuevamente **Mostrar mi ubicacion**.
+
 ## Comunidad
 
 El modulo **Comunidad** permite publicar mensajes cortos para otros moteros. En la arquitectura actual queda agrupado como funcionalidad Premium.

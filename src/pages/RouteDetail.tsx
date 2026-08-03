@@ -5,10 +5,12 @@ import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { GpxMap } from '@/components/GpxMap'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
+import { serializeGpx } from '@/lib/gpx'
 import type { RouteWithOwner } from '@/types/database'
 
 const routeStatusMeta: Record<RouteWithOwner['status'], { label: string; className: string; icon: typeof Flag }> = {
@@ -90,6 +92,7 @@ export function RouteDetail() {
   const { user } = useAuth()
   const [route, setRoute] = useState<RouteWithOwner | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isExternalAppPromptOpen, setIsExternalAppPromptOpen] = useState(false)
 
   useEffect(() => {
     const loadRoute = async () => {
@@ -150,6 +153,37 @@ export function RouteDetail() {
   const isPremiumExpired = route.route_source === 'premium'
     && Boolean(route.premium_access_expires_at)
     && new Date(route.premium_access_expires_at!).getTime() <= Date.now()
+
+  const openExternalNavigation = async () => {
+    setIsExternalAppPromptOpen(false)
+    if (!route.track_geojson) {
+      window.open(googleMapsUrl(route), '_blank', 'noopener,noreferrer')
+      return
+    }
+
+    const blob = new Blob([serializeGpx(route.track_geojson, route.title)], { type: 'application/gpx+xml' })
+    const file = new File([blob], `${route.id}.gpx`, { type: 'application/gpx+xml' })
+    try {
+      if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+        await navigator.share({
+          title: route.title,
+          text: `Abrir la ruta ${route.title} con una aplicación compatible con GPX.`,
+          files: [file],
+        })
+        return
+      }
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = `${route.id}.gpx`
+      anchor.click()
+      URL.revokeObjectURL(url)
+      toast.info('GPX descargado', { description: 'Abre el archivo con tu aplicación de rutas preferida.' })
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return
+      toast.error('No pudimos abrir la ruta', { description: error instanceof Error ? error.message : 'Intenta nuevamente.' })
+    }
+  }
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-4 pb-24 lg:p-6">
@@ -261,11 +295,9 @@ export function RouteDetail() {
             Mapa de la ruta
           </CardTitle>
           {!isPremiumExpired && (
-            <Button asChild variant="outline" className="w-full border-white/10 sm:w-auto">
-              <a href={googleMapsUrl(route)} target="_blank" rel="noreferrer">
-                <ExternalLink className="mr-2 h-4 w-4" />
-                Abrir en Google Maps
-              </a>
+            <Button variant="outline" className="w-full border-white/10 sm:w-auto" onClick={() => setIsExternalAppPromptOpen(true)}>
+              <ExternalLink className="mr-2 h-4 w-4" />
+              {route.track_geojson ? 'Abrir con otra app' : 'Abrir mapa externo'}
             </Button>
           )}
         </CardHeader>
@@ -296,6 +328,29 @@ export function RouteDetail() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={isExternalAppPromptOpen} onOpenChange={setIsExternalAppPromptOpen}>
+        <DialogContent className="border-white/10 bg-moto-gray text-white">
+          <DialogHeader>
+            <DialogTitle>Abrir navegación externa</DialogTitle>
+            <DialogDescription className="leading-6 text-gray-300">
+              MotoCare mantiene este mapa como referencia informativa. Para recibir instrucciones giro a giro debes continuar en una aplicación externa.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-xl border border-moto-orange/20 bg-moto-orange/5 p-3 text-sm text-gray-300">
+            {route.track_geojson
+              ? 'Compartiremos el archivo GPX para que elijas una aplicación compatible. La ubicación de MotoCare puede pausarse mientras usas otra app.'
+              : 'Abriremos la búsqueda de esta ruta en una aplicación de mapas externa.'}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="border-white/10" onClick={() => setIsExternalAppPromptOpen(false)}>Seguir en MotoCare</Button>
+            <Button className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => void openExternalNavigation()}>
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Continuar en otra app
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Card className="border-white/5 bg-moto-gray py-0">
         <CardContent className="grid gap-4 p-5 md:grid-cols-2">
