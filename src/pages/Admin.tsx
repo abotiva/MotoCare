@@ -796,19 +796,31 @@ function LicenseEditor({
   onUpdateLicense: (user: AdminUserRow, plan: UserPlan, status?: UserPlanStatus) => void
 }) {
   return (
-    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
-      <label className="min-w-0">
-        <span className="mb-1 block text-xs text-gray-500">Licencia</span>
-        <select
-          disabled={isSaving}
-          value={user.plan}
-          onChange={(event) => onUpdateLicense(user, event.target.value as UserPlan)}
-          className="w-full rounded-lg border border-white/10 bg-moto-darker px-3 py-2 text-sm text-white outline-none disabled:opacity-60"
-        >
-          <option value="free">Free</option>
-          <option value="premium">Premium</option>
-        </select>
-      </label>
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+      <fieldset className="min-w-0 sm:col-span-2 xl:col-span-1">
+        <legend className="mb-2 text-xs text-gray-500">Asignar licencia</legend>
+        <div className="grid grid-cols-3 gap-2">
+          {(['free', 'premium', 'business'] as UserPlan[]).map((plan) => {
+            const isCurrent = user.plan === plan && user.plan_status === 'active'
+            return (
+              <Button
+                key={plan}
+                type="button"
+                size="sm"
+                variant={isCurrent ? 'default' : 'outline'}
+                disabled={isSaving}
+                aria-pressed={isCurrent}
+                onClick={() => onUpdateLicense(user, plan, 'active')}
+                className={isCurrent
+                  ? 'min-w-0 bg-moto-orange px-2 text-moto-darker hover:bg-moto-orange-dark'
+                  : 'min-w-0 border-white/10 px-2'}
+              >
+                {planLabels[plan]}
+              </Button>
+            )
+          })}
+        </div>
+      </fieldset>
       <label className="min-w-0">
         <span className="mb-1 block text-xs text-gray-500">Estado</span>
         <select
