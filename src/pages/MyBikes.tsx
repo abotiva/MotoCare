@@ -202,8 +202,8 @@ function ReportCard({ icon: Icon, label, value, detail }: { icon: LucideIcon; la
 }
 
 export function MyBikes() {
-  const { user, profile } = useAuth()
-  const { hasPlan, effectivePlan, isLoadingSubscription } = useSubscription()
+  const { user, profile, refreshProfile } = useAuth()
+  const { effectivePlan, isLoadingSubscription } = useSubscription()
   const location = useLocation()
   const navigate = useNavigate()
   const { bikeId, section } = useParams<{ bikeId?: string; section?: string }>()
@@ -231,6 +231,7 @@ export function MyBikes() {
   const [showRecordDetail, setShowRecordDetail] = useState(false)
   const [reminderToCancel, setReminderToCancel] = useState<Reminder | null>(null)
   const [documentToDelete, setDocumentToDelete] = useState<MotorcycleDocument | null>(null)
+  const [bikeToDelete, setBikeToDelete] = useState<Motorcycle | null>(null)
   const [bikeToMakePrimary, setBikeToMakePrimary] = useState<Motorcycle | null>(null)
   const [showGarageLimit, setShowGarageLimit] = useState(false)
   const [editingBike, setEditingBike] = useState<Motorcycle | null>(null)
@@ -259,10 +260,10 @@ export function MyBikes() {
   }
 
   const isNegativeNumber = (value: string) => value.trim() !== '' && Number(value) < 0
-  const canViewMaintenanceReports = hasPlan('premium')
-  const canUploadDocuments = effectivePlan === 'pro' || effectivePlan === 'premium'
+  const canViewMaintenanceReports = effectivePlan === 'premium'
+  const canUploadDocuments = effectivePlan === 'premium'
   const isBusinessAccount = effectivePlan === 'business'
-  const isPremiumRider = effectivePlan === 'pro' || effectivePlan === 'premium'
+  const isPremiumRider = effectivePlan === 'premium'
   const motorcycleSectionLabel = isPremiumRider ? 'Mi Garage' : 'Mi Moto'
 
   useEffect(() => {
@@ -659,7 +660,7 @@ export function MyBikes() {
       notifyError('Garaje no disponible', 'La licencia Business es para negocios y no permite registrar motos.')
       return
     }
-    if (effectivePlan === 'free' && motorcycles.length >= 1) {
+    if ((effectivePlan === 'free' && motorcycles.length >= 1) || (effectivePlan === 'premium' && motorcycles.length >= 3)) {
       setShowGarageLimit(true)
       return
     }
@@ -787,6 +788,35 @@ export function MyBikes() {
       toast.success('Moto actualizada', { description: 'Los cambios quedaron guardados.' })
     }
 
+    setIsSaving(false)
+  }
+
+  const deleteMotorcycle = async () => {
+    if (!supabase || !user || !bikeToDelete) return
+    setIsSaving(true)
+    const motorcycle = bikeToDelete
+    const { error: deleteError } = await supabase
+      .from('motorcycles')
+      .delete()
+      .eq('id', motorcycle.id)
+      .eq('owner_id', user.id)
+
+    if (deleteError) {
+      notifyError('No pudimos eliminar la moto', deleteError.message)
+    } else {
+      const remaining = motorcycles.filter((bike) => bike.id !== motorcycle.id)
+      setMotorcycles(remaining)
+      setSelectedId((current) => current === motorcycle.id ? (remaining[0]?.id ?? null) : current)
+      setShowAddBike(false)
+      setEditingBike(null)
+      setBikeToDelete(null)
+      await refreshProfile()
+      toast.success('Moto eliminada', {
+        description: effectivePlan === 'premium'
+          ? 'Premium permite registrar una moto de reemplazo una vez por año calendario.'
+          : 'La moto y su historial dejaron de estar disponibles.',
+      })
+    }
     setIsSaving(false)
   }
 
@@ -1847,6 +1877,18 @@ export function MyBikes() {
               {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : editingBike ? <Pencil className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
               {editingBike ? 'Guardar cambios' : 'Agregar moto'}
             </Button>
+            {editingBike ? (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isSaving}
+                className="w-full border-red-500/30 text-red-300 hover:bg-red-500/10 hover:text-red-200"
+                onClick={() => setBikeToDelete(editingBike)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Eliminar moto
+              </Button>
+            ) : null}
           </form>
         </DialogContent>
       </Dialog>
@@ -2372,9 +2414,20 @@ export function MyBikes() {
         }}
       />
       <ConfirmActionDialog
+        open={Boolean(bikeToDelete)}
+        title="Eliminar moto"
+        description={bikeToDelete ? `Se eliminarán ${bikeToDelete.brand} ${bikeToDelete.model} y toda su hoja de vida. Si tu plan es Premium, solo podrás registrar una moto de reemplazo durante este año calendario.` : ''}
+        confirmLabel="Eliminar definitivamente"
+        isProcessing={isSaving}
+        onOpenChange={(open) => !open && setBikeToDelete(null)}
+        onConfirm={() => void deleteMotorcycle()}
+      />
+      <ConfirmActionDialog
         open={showGarageLimit}
-        title="Tu plan Free incluye una moto"
-        description="Ya tienes una moto en Mi Garage. Con Premium puedes administrar varias motos y elegir cuál será la principal."
+        title={effectivePlan === 'premium' ? 'Premium incluye hasta tres motos' : 'Tu plan Free incluye una moto'}
+        description={effectivePlan === 'premium'
+          ? 'Ya tienes tres motos registradas. Si eliminas una, podrás registrar una moto de reemplazo una sola vez durante el año calendario.'
+          : 'Ya tienes una moto en Mi Garage. Con Premium puedes administrar hasta tres motos y elegir cuál será la principal.'}
         confirmLabel="Conocer Premium"
         cancelLabel="Seguir con mi moto"
         destructive={false}

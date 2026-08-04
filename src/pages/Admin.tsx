@@ -49,7 +49,6 @@ const emptyOverview: AdminOverview = {
   public_users: 0,
   private_users: 0,
   free_users: 0,
-  pro_users: 0,
   premium_users: 0,
   business_users: 0,
   motorcycles: 0,
@@ -73,7 +72,6 @@ function shortId(id: string) {
 
 const planLabels: Record<UserPlan, string> = {
   free: 'Free',
-  pro: 'Premium',
   premium: 'Premium',
   business: 'Business',
 }
@@ -87,7 +85,6 @@ const planStatusLabels: Record<UserPlanStatus, string> = {
 
 const planBadgeClasses: Record<UserPlan, string> = {
   free: 'bg-white/10 text-gray-300',
-  pro: 'bg-moto-orange text-moto-darker',
   premium: 'bg-moto-orange text-moto-darker',
   business: 'bg-violet-500/15 text-violet-200',
 }
@@ -501,7 +498,7 @@ export function Admin() {
       <div className="mb-4 grid grid-cols-4 gap-2 sm:mb-5 sm:gap-4 xl:grid-cols-10">
         <MetricCard icon={Users} label="Usuarios" value={overview.users} detail={`${overview.private_users} privados`} onClick={() => openAdminDetail('usuarios')} />
         <MetricCard icon={CreditCard} label="Free" value={overview.free_users} detail="Usuarios base" onClick={() => openAdminDetail('usuarios', 'free')} />
-        <MetricCard icon={CreditCard} label="Premium" value={overview.premium_users + overview.pro_users} detail="Incluye Pro legado" onClick={() => openAdminDetail('usuarios', 'premium')} />
+        <MetricCard icon={CreditCard} label="Premium" value={overview.premium_users} detail="Motociclistas Premium" onClick={() => openAdminDetail('usuarios', 'premium')} />
         <MetricCard icon={Bike} label="Motos" value={overview.motorcycles} detail="Registradas" onClick={() => openAdminDetail('usuarios')} />
         <MetricCard icon={Route} label="Rutas" value={overview.routes} detail={`${overview.community_routes} comunidad`} onClick={() => openAdminDetail('usuarios')} />
         <MetricCard icon={Users} label="Clubes" value={overview.clubs} detail={`${overview.club_memberships} membresías`} onClick={() => openAdminDetail('clubes')} />
@@ -684,7 +681,7 @@ function UsersTable({
     ]
 
     users.forEach((user) => {
-      const normalizedPlan: UserPlan = user.plan === 'pro' ? 'premium' : user.plan
+      const normalizedPlan: UserPlan = user.plan
       const group = groups.find((item) => item.key === normalizedPlan)
       if (group) group.users.push(user)
     })
@@ -804,7 +801,7 @@ function LicenseEditor({
         <span className="mb-1 block text-xs text-gray-500">Licencia</span>
         <select
           disabled={isSaving}
-          value={user.plan === 'pro' ? 'premium' : user.plan}
+          value={user.plan}
           onChange={(event) => onUpdateLicense(user, event.target.value as UserPlan)}
           className="w-full rounded-lg border border-white/10 bg-moto-darker px-3 py-2 text-sm text-white outline-none disabled:opacity-60"
         >
@@ -916,7 +913,7 @@ function MarketplaceReviewTable({
   return (
     <AdminTable
       title="Revisión de tienda"
-      description="Las publicaciones pendientes aparecen primero. Aprobar las hace visibles y, para vendedores Premium, consume uno de sus 5 cupos mensuales. Rechazar exige un motivo y no consume cupo."
+      description="Los servicios Business pendientes aparecen primero. Aprobarlos los hace visibles en el directorio; rechazarlos exige un motivo. Las ventas directas permanecen deshabilitadas."
     >
       {listings.length > 0 ? (
         listings.map((listing) => {

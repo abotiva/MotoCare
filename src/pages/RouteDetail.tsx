@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Bike, Calendar, CheckCircle2, Clock, ExternalLink, Flag, Loader2, Lock, MapPin, Navigation, PlayCircle, Route as RouteIcon, UserRound } from 'lucide-react'
+import { ArrowLeft, Bike, Calendar, CheckCircle2, Clock, ExternalLink, Flag, Loader2, Lock, MapPin, Navigation, PlayCircle, Route as RouteIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -353,14 +353,7 @@ export function RouteDetail() {
       </Dialog>
 
       <Card className="border-white/5 bg-moto-gray py-0">
-        <CardContent className="grid gap-4 p-5 md:grid-cols-2">
-          <div>
-            <p className="flex items-center gap-2 text-sm text-gray-400">
-              <UserRound className="h-4 w-4" />
-              ID de ruta
-            </p>
-            <p className="mt-1 break-all font-mono text-sm text-gray-300">{route.id}</p>
-          </div>
+        <CardContent className="p-5">
           <div>
             <p className="text-sm text-gray-400">Creada</p>
             <p className="mt-1 font-semibold">{new Date(route.created_at).toLocaleDateString('es-CO')}</p>

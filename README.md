@@ -15,19 +15,19 @@ Estado actual: **MVP Alpha**. No es una version publica 1.0.
 - Comunidad: publicaciones, imagenes, likes, comentarios y rutas adjuntas. Esta funcionalidad queda orientada a Premium.
 - Clubes: crear club, editar informacion, imagen, miembros y mensajes privados. Esta funcionalidad queda orientada a Premium.
 - Explorar: modulo retirado de la navegacion activa; las rutas comunitarias se reservaran para Premium.
-- Tienda/Marketplace: catalogo, busqueda, favoritos, contacto entre comprador y vendedor, publicaciones moderadas y cierre de ventas de una sola unidad.
+- Directorio de servicios: busqueda y contacto con talleres, gruas, montallantas y otros proveedores; las publicaciones Business son moderadas.
 - Ajustes basicos de cuenta y preferencias locales.
 - Panel administrativo con gestion de licencias, moderacion y CRUD del catalogo de mantenimientos.
 
 ## Arquitectura de producto
 
-- Usuarios Free: hoja de vida de la moto, mantenimientos realizados, pendientes programados y documentos.
-- Usuarios Premium: informes de mantenimiento y modulos avanzados como rutas, comunidad y clubes. En la tienda pueden publicar motos, repuestos o accesorios de una sola unidad, con hasta 5 publicaciones aprobadas por mes.
-- Business: licencia para tiendas y aliados que permite publicar productos y servicios comerciales sin limite mensual de publicaciones.
+- Usuarios Free: una moto, mantenimiento basico, comunidad, acceso por invitacion a un club y consulta del directorio de servicios.
+- Usuarios Premium: hasta tres motos, documentos, informes, rutas/GPX, comunidad, hasta tres clubes y cinco rutas Premium mensuales. Una moto eliminada solo puede reemplazarse una vez por ano calendario.
+- Business: cuenta exclusivamente comercial. Publica servicios moderados en el directorio; no acumula garaje, rutas personales, comunidad, clubes, informes ni notificaciones Premium.
 
-En la tienda, guardar un borrador o enviarlo a revision no consume cupo. Para Premium, el cupo mensual se descuenta unicamente cuando un administrador aprueba la publicacion. Los servicios estan reservados para Business; las ventas directas Premium no admiten servicios.
+Las compras y ventas dentro de MotoCare estan deshabilitadas en esta etapa. La contratacion y el pago de servicios se acuerdan directamente con el proveedor.
 
-El menu principal prioriza Inicio, Hoja de vida, Mantenimientos, Programados, Documentos y Reportes. Rutas, Comunidad, Clubes y Tienda quedan agrupados como funciones Premium.
+El menu de moteros prioriza Inicio, Hoja de vida, Mantenimientos, Programados, Documentos y Reportes. Business muestra una experiencia comercial separada centrada en el directorio de servicios.
 
 ## Stack
 
@@ -55,6 +55,7 @@ Para una base nueva, ejecutar:
 
 ```txt
 supabase/schema.sql
+supabase/license_definition_consolidation_migration.sql
 ```
 
 Para bases existentes, revisar y ejecutar las migraciones necesarias en `supabase/`:
@@ -78,10 +79,11 @@ Para bases existentes, revisar y ejecutar las migraciones necesarias en `supabas
 - `marketplace_personal_sales_phase_one_migration.sql`
 - `marketplace_personal_sales_phase_two_business_services_migration.sql`
 - `marketplace_quota_on_approval_migration.sql`
+- `license_definition_consolidation_migration.sql` (ejecutar al final)
 
 La migracion `admin_catalog_crud_migration.sql` permite crear, editar, activar, desactivar y eliminar elementos del catalogo exclusivamente a usuarios registrados en `public.app_admins`.
 
-Las migraciones de Marketplace deben ejecutarse en el orden mostrado. `marketplace_quota_on_approval_migration.sql` corrige instalaciones anteriores: elimina cupos creados prematuramente para borradores o publicaciones pendientes y hace que el consumo ocurra al aprobar.
+Las migraciones de Marketplace deben ejecutarse en el orden mostrado. La migracion de consolidacion se ejecuta al final: migra `pro` a `premium`, aplica los limites de motos, separa Business de las funciones personales, valida el vencimiento documental y restringe las publicaciones al directorio de servicios Business.
 
 ## Google Maps
 

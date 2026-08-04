@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import './App.css'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { RiderOnlyRoute } from './components/RiderOnlyRoute'
 import { InstallPrompt } from './components/InstallPrompt'
 import { Toaster } from './components/ui/sonner'
 
@@ -43,24 +44,24 @@ function App() {
           <Route path="/app" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
             <Route index element={<Navigate to="/app/home" replace />} />
             <Route path="home" element={<Home />} />
-            <Route path="routes" element={<SectionMenu kind="routes" />} />
-            <Route path="community" element={<SectionMenu kind="community" />} />
-            <Route path="clubs" element={<SectionMenu kind="clubs" />} />
-            <Route path="explore" element={<Explore />} />
-            <Route path="map" element={<Map />} />
-            <Route path="routes/:routeId" element={<RouteDetail />} />
-            <Route path="premium-routes" element={<PremiumRoutes />} />
+            <Route path="routes" element={<RiderOnlyRoute><SectionMenu kind="routes" /></RiderOnlyRoute>} />
+            <Route path="community" element={<RiderOnlyRoute><SectionMenu kind="community" /></RiderOnlyRoute>} />
+            <Route path="clubs" element={<RiderOnlyRoute><SectionMenu kind="clubs" /></RiderOnlyRoute>} />
+            <Route path="explore" element={<RiderOnlyRoute><Explore /></RiderOnlyRoute>} />
+            <Route path="map" element={<RiderOnlyRoute><Map /></RiderOnlyRoute>} />
+            <Route path="routes/:routeId" element={<RiderOnlyRoute><RouteDetail /></RiderOnlyRoute>} />
+            <Route path="premium-routes" element={<RiderOnlyRoute><PremiumRoutes /></RiderOnlyRoute>} />
             <Route path="marketplace" element={<Marketplace />} />
-            <Route path="messages" element={<Messages />} />
-            <Route path="clubs/manage" element={<Clubs />} />
+            <Route path="messages" element={<RiderOnlyRoute><Messages /></RiderOnlyRoute>} />
+            <Route path="clubs/manage" element={<RiderOnlyRoute><Clubs /></RiderOnlyRoute>} />
             <Route path="profile" element={<Profile />} />
-            <Route path="garage" element={<MyBikes />} />
-            <Route path="garage/:section" element={<MyBikes />} />
-            <Route path="garage/:bikeId/:section" element={<MyBikes />} />
-            <Route path="bikes" element={<MyBikes />} />
-            <Route path="bikes/:section" element={<MyBikes />} />
-            <Route path="bikes/:bikeId/:section" element={<MyBikes />} />
-            <Route path="my-bikes" element={<MyBikes />} />
+            <Route path="garage" element={<RiderOnlyRoute><MyBikes /></RiderOnlyRoute>} />
+            <Route path="garage/:section" element={<RiderOnlyRoute><MyBikes /></RiderOnlyRoute>} />
+            <Route path="garage/:bikeId/:section" element={<RiderOnlyRoute><MyBikes /></RiderOnlyRoute>} />
+            <Route path="bikes" element={<RiderOnlyRoute><MyBikes /></RiderOnlyRoute>} />
+            <Route path="bikes/:section" element={<RiderOnlyRoute><MyBikes /></RiderOnlyRoute>} />
+            <Route path="bikes/:bikeId/:section" element={<RiderOnlyRoute><MyBikes /></RiderOnlyRoute>} />
+            <Route path="my-bikes" element={<RiderOnlyRoute><MyBikes /></RiderOnlyRoute>} />
             <Route path="settings" element={<Settings />} />
             <Route path="plan" element={<Navigate to="/app/settings?section=plan" replace />} />
             <Route path="notifications" element={<Notifications />} />

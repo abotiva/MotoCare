@@ -8,27 +8,27 @@ MotoCare debe tener tres niveles faciles de entender:
 
 - Gratis: entrada basica para que cualquier motero pruebe la app.
 - Premium: experiencia completa para el motero individual.
-- Business: herramientas comerciales para talleres, marcas, aliados, negocios o administradores de varias motos/personas.
+- Business: cuenta exclusivamente comercial para talleres, gruas, montallantas, marcas y aliados.
 
 La diferencia principal no debe ser solo "mas funciones", sino el tipo de usuario:
 
 - Gratis: uso personal limitado.
 - Premium: control completo de mis motos.
-- Business: gestion profesional de motos, clientes, clubes o negocio.
+- Business: presencia comercial y publicacion de servicios; no acumula beneficios Premium.
 
 ## Resumen comercial
 
 | Caracteristica | Gratis | Premium | Business |
 | --- | --- | --- | --- |
 | Tipo de usuario | Motero nuevo o curioso | Motero individual activo | Taller, club, negocio o gestor |
-| Motos registradas | 1 moto | Hasta 3 o 5 motos | Muchas o ilimitadas |
-| Historial de mantenimiento | Limitado | Completo | Completo por moto, cliente o miembro |
-| Recordatorios | Basicos | Avanzados por kilometraje y fecha | Avanzados para varias motos/personas |
-| Estadisticas | Basicas o no disponibles | Gastos, kilometraje y servicios | Reportes operativos y comparativos |
-| Rutas | Uso limitado | Rutas guardadas ilimitadas | Rutas y gestion para grupos/clubes |
-| Comunidad | Ver y participar | Participacion completa | Visibilidad destacada |
-| Clubes | Unirse a clubes | Crear y administrar clubes pequenos | Gestion avanzada de clubes grandes |
-| Tienda | Ver publicaciones y contactar vendedores | Hasta 5 ventas directas aprobadas al mes | Productos y servicios comerciales sin limite mensual |
+| Motos registradas | 1 moto | Hasta 3 motos; un reemplazo por ano | No disponible |
+| Historial de mantenimiento | Basico | Completo | No disponible |
+| Recordatorios | Basicos | Avanzados por kilometraje y fecha | No disponible |
+| Estadisticas | Basicas o no disponibles | Gastos, kilometraje y servicios | No disponible |
+| Rutas | Funciones basicas | Rutas, GPX y hasta 5 rutas Premium por mes | No disponible |
+| Comunidad | Ver y participar | Ver y participar | Sin acceso |
+| Clubes | Un club mediante invitacion | Crear/administrar hasta 3 clubes | Sin acceso |
+| Directorio de servicios | Consultar y contactar | Consultar y contactar | Publicar servicios moderados |
 | Perfil | Basico | Perfil mejorado | Perfil comercial/profesional |
 | Publicidad | Puede tener | Sin publicidad | Sin publicidad |
 | Soporte | Estandar | Prioritario | Prioritario/comercial |
@@ -47,8 +47,8 @@ Para usuarios que quieren probar MotoCare sin pagar.
 - Recordatorios basicos de mantenimiento.
 - Acceso a comunidad.
 - Ver rutas compartidas.
-- Ver la tienda.
-- Unirse a clubes.
+- Consultar el directorio de servicios.
+- Unirse a un club mediante invitacion.
 - Perfil basico.
 
 ### Limites sugeridos
@@ -56,7 +56,7 @@ Para usuarios que quieren probar MotoCare sin pagar.
 - No permitir mas de 1 moto.
 - Limitar historial visible o cantidad de registros activos.
 - Limitar rutas guardadas.
-- No permitir publicaciones de venta, pero sí permitir ver y comprar en la tienda.
+- No permitir publicaciones; sí consultar y contactar proveedores.
 - Mostrar invitacion a mejorar plan cuando el usuario llegue a un limite.
 - Puede incluir publicidad o mensajes promocionales internos.
 
@@ -72,16 +72,16 @@ Para el motero individual que quiere controlar bien sus motos, mantenimientos, r
 
 ### Beneficios
 
-- Hasta 3 o 5 motos registradas.
+- Hasta 3 motos registradas.
+- Si elimina una moto, solo puede registrar una moto de reemplazo por ano calendario (zona horaria America/Bogota).
 - Historial completo de mantenimientos.
 - Recordatorios avanzados por fecha y kilometraje.
 - Registro de gastos por mantenimiento.
 - Estadisticas de kilometraje, servicios y costos.
 - Rutas guardadas ilimitadas.
 - Crear y administrar clubes pequenos.
-- Hasta 5 publicaciones aprobadas por mes en la tienda como persona natural.
-- Venta directa de una sola unidad por publicacion: moto, repuesto o accesorio.
-- Borradores y publicaciones en revision sin consumo de cupo; el cupo se descuenta al aprobar.
+- Hasta 5 rutas Premium elegidas por mes.
+- Consulta y contacto con proveedores del directorio de servicios.
 - Perfil publico mejorado.
 - Sin publicidad.
 - Respaldo completo en la nube.
@@ -103,41 +103,29 @@ Para el motero individual que quiere controlar bien sus motos, mantenimientos, r
 
 ### Perfil
 
-Para talleres, clubes, negocios, marcas, aliados o usuarios que administran motos de otras personas o venden de forma comercial.
+Para talleres, gruas, montallantas, negocios, marcas y aliados que ofrecen servicios.
 
 ### Beneficios
 
-- Muchas motos registradas o motos ilimitadas segun la estrategia comercial.
-- Gestion de clientes, miembros o terceros.
-- Panel administrativo avanzado.
-- Roles de equipo: dueno, administrador y colaborador.
-- Reportes por moto, cliente, club o negocio.
-- Recordatorios de mantenimiento para varias motos/personas.
-- Historial completo por cliente o miembro.
-- Publicaciones comerciales de productos y servicios en la tienda, sin limite mensual.
+- Publicaciones de servicios en el directorio, sujetas a revision administrativa.
 - Perfil comercial o profesional verificado.
-- Gestion de clubes grandes.
 - Mayor visibilidad dentro de la app.
 - Soporte prioritario/comercial.
-- Herramientas para taller: servicios realizados, proximos mantenimientos, historial por cliente.
 
 ### Diferenciadores frente a Premium
 
 - Premium es para administrar mis motos.
-- Business es para administrar motos, clientes, miembros o servicios de terceros, y para vender como negocio.
-- Incluye herramientas de negocio, reportes y roles de equipo.
-- Puede tener beneficios comerciales dentro de la tienda.
+- Business no es un nivel superior a Premium: es una cuenta de naturaleza diferente.
+- No incluye garaje, rutas personales, comunidad, clubes, documentos, informes ni notificaciones avanzadas.
+- Su funcion vigente es mantener un perfil comercial y publicar servicios.
 
-### Reglas vigentes de la tienda por licencia
+### Reglas vigentes del directorio
 
-- Gratis puede consultar el catalogo y contactar al vendedor, pero no publicar.
-- Premium puede publicar una sola unidad fisica por aviso: moto, repuesto o accesorio. No puede publicar servicios.
-- Premium dispone de 5 cupos por mes calendario, contados por publicaciones aprobadas.
-- Guardar como borrador y enviar a revision no consumen cupo.
-- La aprobacion administrativa hace visible la publicacion y consume el cupo Premium.
-- El rechazo administrativo no consume ni libera cupo, porque la publicacion pendiente nunca lo utilizo.
-- Una venta Premium marcada como vendida se cierra y no puede reactivarse; una nueva unidad requiere una nueva publicacion.
-- Business puede publicar productos y servicios comerciales sin limite mensual. Los servicios no se marcan como vendidos.
+- Gratis y Premium pueden consultar servicios y contactar proveedores.
+- Solo Business puede publicar servicios.
+- Cada publicacion pasa por revision administrativa antes de hacerse visible.
+- No hay ventas directas ni pasarela de pagos en esta etapa.
+- La contratacion y el pago se acuerdan externamente con el proveedor.
 
 ### Mensaje comercial
 

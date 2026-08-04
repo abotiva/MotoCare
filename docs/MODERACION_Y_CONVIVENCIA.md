@@ -1,6 +1,6 @@
 # Moderacion y convivencia MotoCare
 
-MotoCare no permite reacciones violentas, acoso, amenazas, intimidacion ni spam. Las ventas directas deben publicarse en la Tienda: Premium puede vender una sola moto, repuesto o accesorio por aviso, mientras Business puede publicar productos y servicios comerciales.
+MotoCare no permite reacciones violentas, acoso, amenazas, intimidacion ni spam. Las ventas directas estan deshabilitadas; únicamente Business puede publicar servicios comerciales en el directorio y siempre pasan por revisión.
 
 ## Conductas reportables
 

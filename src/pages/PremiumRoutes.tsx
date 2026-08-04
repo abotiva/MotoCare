@@ -211,7 +211,7 @@ export function PremiumRoutes() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [editingRoute, setEditingRoute] = useState<CreatedPremiumRoute | null>(null)
-  const hasPremiumPlan = effectivePlan === 'premium' || effectivePlan === 'pro'
+  const hasPremiumPlan = effectivePlan === 'premium'
 
   const filteredRoutes = useMemo(() => {
     return routes.filter((routeItem) => {

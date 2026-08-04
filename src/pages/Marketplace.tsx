@@ -5,7 +5,7 @@ import type { FormEvent } from 'react'
 import { toast } from 'sonner'
 import { 
   Search, Filter, Grid3X3, List, MapPin, Heart, MessageCircle, 
-  Star, TrendingUp, Bike, Wrench, Shirt, Clock3, Lock, Store, MapPinned, Sparkles,
+  Star, TrendingUp, Clock3, Lock, Store,
   AlertCircle, LoaderCircle, ImagePlus, Trash2, CheckCircle2, Inbox, Send, Plus, X
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -29,32 +29,14 @@ import type {
   MarketplaceCondition,
   MarketplaceListingWithSeller,
   MarketplaceMessage,
-  MarketplacePublicationQuota,
 } from '@/types/database'
 
 const categories = [
-  { id: 'all', name: 'Todo', icon: Grid3X3 },
-  { id: 'motorcycles', name: 'Motos', icon: Bike },
-  { id: 'parts', name: 'Repuestos', icon: Wrench },
-  { id: 'gear', name: 'Accesorios', icon: Shirt },
+  { id: 'all', name: 'Todos los servicios', icon: Grid3X3 },
   { id: 'services', name: 'Servicios', icon: Store },
-  { id: 'premium-routes', name: 'Rutas Premium', icon: MapPinned },
 ]
 
-const personalSaleCategories = categories.filter((category) => (
-  category.id === 'motorcycles' || category.id === 'parts' || category.id === 'gear'
-))
-
-const businessSaleCategories = categories.filter((category) => (
-  category.id === 'motorcycles' || category.id === 'parts' || category.id === 'gear' || category.id === 'services'
-))
-
-const physicalConditionEntries = [
-  ['new', 'Nuevo'],
-  ['used_like_new', 'Usado - Como nuevo'],
-  ['used_good', 'Usado - Buen estado'],
-  ['used_fair', 'Usado - Estado aceptable'],
-] satisfies Array<[MarketplaceCondition, string]>
+const businessSaleCategories = categories.filter((category) => category.id === 'services')
 
 type StoreListing = {
   id: string
@@ -89,9 +71,9 @@ type ListingForm = {
 const emptyListingForm: ListingForm = {
   title: '',
   description: '',
-  price: '',
-  category: 'motorcycles',
-  condition: 'used_good',
+  price: '0',
+  category: 'services',
+  condition: 'service',
   mileage_km: '',
   city: '',
   department: '',
@@ -237,6 +219,8 @@ const formatPrice = (price: number) => {
   }).format(price)
 }
 
+const formatServicePrice = (price: number) => price > 0 ? formatPrice(price) : 'Consultar'
+
 const conditionLabels: Record<MarketplaceCondition, string> = {
   new: 'Nuevo',
   used_like_new: 'Usado - Como nuevo',
@@ -285,7 +269,6 @@ export function Marketplace() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [listings, setListings] = useState<StoreListing[]>(isSupabaseConfigured ? [] : demoListings)
-  const [quota, setQuota] = useState<MarketplacePublicationQuota | null>(null)
   const [isLoadingListings, setIsLoadingListings] = useState(isSupabaseConfigured)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [showCreateListing, setShowCreateListing] = useState(false)
@@ -339,12 +322,7 @@ export function Marketplace() {
           marketplacePage * MARKETPLACE_PAGE_SIZE + MARKETPLACE_PAGE_SIZE - 1
         )
 
-      const [listingsResult, quotaResult] = await Promise.all([
-        listingsRequest,
-        user && marketplacePage === 0
-          ? client.rpc('marketplace_publication_quota')
-          : Promise.resolve({ data: null, error: null }),
-      ])
+      const listingsResult = await listingsRequest
       if (!isMounted) return
 
       if (listingsResult.error) {
@@ -356,12 +334,6 @@ export function Marketplace() {
         setHasMoreListings(nextListings.length === MARKETPLACE_PAGE_SIZE)
       }
 
-      if (marketplacePage === 0 && !quotaResult.error && quotaResult.data) {
-        const row = Array.isArray(quotaResult.data) ? quotaResult.data[0] : quotaResult.data
-        setQuota((row as MarketplacePublicationQuota | undefined) ?? null)
-      } else {
-        setQuota(null)
-      }
       setIsLoadingListings(false)
     }
 
@@ -424,29 +396,24 @@ export function Marketplace() {
     supabase
     && user
     && !isLoadingSubscription
-    && effectivePlan !== 'free'
-    && (effectivePlan === 'business' || quota?.remaining_publications !== 0)
+    && effectivePlan === 'business'
   )
 
-  const availableSaleCategories = effectivePlan === 'business' ? businessSaleCategories : personalSaleCategories
+  const availableSaleCategories = businessSaleCategories
 
   const saveListing = async (status: 'draft' | 'pending_review') => {
     if (!supabase || !user || !canCreateListing) return
 
     const price = Number(listingForm.price)
-    const mileage = listingForm.mileage_km.trim() ? Number(listingForm.mileage_km) : null
+    const mileage = null
     if (!availableSaleCategories.some((category) => category.id === listingForm.category)) {
       toast.error('Categoría no permitida', {
-        description: effectivePlan === 'business'
-          ? 'Business admite motos, repuestos, accesorios o servicios.'
-          : 'Premium admite motos, repuestos o accesorios.',
+        description: 'Las licencias Business pueden publicar servicios.',
       })
       return
     }
-    const isService = listingForm.category === 'services'
-    if ((isService && listingForm.condition !== 'service')
-      || (!isService && !physicalConditionEntries.some(([condition]) => condition === listingForm.condition))) {
-      toast.error('Estado no permitido', { description: isService ? 'Selecciona el estado Servicio.' : 'Selecciona el estado real del artículo.' })
+    if (listingForm.category !== 'services' || listingForm.condition !== 'service') {
+      toast.error('Tipo no permitido', { description: 'Este directorio admite únicamente publicaciones de servicios.' })
       return
     }
     if (listingForm.title.trim().length < 5) {
@@ -457,16 +424,12 @@ export function Marketplace() {
       toast.error('Descripción muy corta', { description: 'Escribe al menos 20 caracteres.' })
       return
     }
-    if (!Number.isFinite(price) || price <= 0) {
-      toast.error('Precio inválido', { description: 'Ingresa un precio válido en pesos colombianos.' })
-      return
-    }
-    if (mileage !== null && (!Number.isInteger(mileage) || mileage < 0)) {
-      toast.error('Kilometraje inválido')
+    if (!Number.isFinite(price) || price < 0) {
+      toast.error('Precio inválido', { description: 'Ingresa un precio de referencia o déjalo en cero para indicar que debe consultarse.' })
       return
     }
     if (listingImages.length === 0) {
-      toast.error('Agrega una imagen', { description: 'La venta directa requiere al menos una foto real del artículo.' })
+      toast.error('Agrega una imagen', { description: 'La publicación requiere al menos una imagen real del negocio o servicio.' })
       return
     }
 
@@ -475,12 +438,12 @@ export function Marketplace() {
       .from('marketplace_listings')
       .insert({
         seller_id: user.id,
-        seller_type: effectivePlan === 'business' ? 'business' : 'personal',
+        seller_type: 'business',
         title: listingForm.title.trim(),
         description: listingForm.description.trim(),
         price,
-        category: listingForm.category,
-        condition: listingForm.condition,
+        category: 'services',
+        condition: 'service',
         mileage_km: mileage,
         city: listingForm.city.trim() || null,
         department: listingForm.department.trim() || null,
@@ -562,11 +525,6 @@ export function Marketplace() {
       }
     }
 
-    if (status === 'pending_review') {
-      const { data } = await supabase.rpc('marketplace_publication_quota')
-      const row = Array.isArray(data) ? data[0] : data
-      if (row) setQuota(row as MarketplacePublicationQuota)
-    }
     setListingForm(emptyListingForm)
     setListingImages([])
     setImageInputKey((current) => current + 1)
@@ -574,8 +532,8 @@ export function Marketplace() {
     setIsSavingListing(false)
     toast.success(status === 'draft' ? 'Borrador guardado' : 'Publicación enviada a revisión', {
       description: status === 'draft'
-        ? 'El borrador no consume tu cupo mensual.'
-        : 'MotoCare la revisará. El cupo solo se descontará si la publicación es aprobada.',
+        ? 'Puedes completarlo y enviarlo a revisión cuando esté listo.'
+        : 'MotoCare revisará la información antes de mostrar el servicio en el directorio.',
     })
   }
 
@@ -704,6 +662,7 @@ export function Marketplace() {
   const filteredListings = useMemo(() => {
     const searchTerm = searchQuery.trim().toLowerCase()
     return listings.filter((listing) => {
+      if (listing.category !== 'services') return false
       const matchesCategory = selectedCategory === 'all' || listing.category === selectedCategory
       const matchesSearch = !searchTerm || [
         listing.title,
@@ -725,8 +684,8 @@ export function Marketplace() {
       {/* Header */}
       <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold mb-2">Tienda</h1>
-          <p className="text-gray-400">Compra motos, repuestos, accesorios, servicios y rutas premium. Premium vende hasta cinco artículos al mes; Business puede publicar productos y servicios.</p>
+          <h1 className="text-2xl font-bold mb-2">Directorio de servicios</h1>
+          <p className="text-gray-400">Encuentra talleres, grúas, montallantas y otros servicios para motociclistas. La contratación y el pago se acuerdan directamente con cada proveedor.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {user && supabase ? (
@@ -740,7 +699,7 @@ export function Marketplace() {
               }}
             >
               <Inbox className="mr-2 h-4 w-4" />
-              Mensajes de la tienda
+              Mensajes del directorio
             </Button>
           ) : null}
           {!isSupabaseConfigured ? (
@@ -752,22 +711,13 @@ export function Marketplace() {
         </div>
       </div>
 
-      {user && !isLoadingSubscription && effectivePlan !== 'free' ? (
+      {user && !isLoadingSubscription && effectivePlan === 'business' ? (
         <Card className="mb-6 border-moto-orange/30 bg-moto-orange/10 py-0">
           <CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="font-semibold">Venta directa con licencia {effectivePlan === 'business' ? 'Business' : 'Premium'}</p>
-              <p className="text-sm text-gray-300">
-                {effectivePlan === 'business'
-                  ? 'Publicaciones de productos y servicios sin límite mensual.'
-                  : quota
-                    ? `${quota.used_publications} de 5 publicaciones usadas este mes · ${quota.remaining_publications} disponibles.`
-                    : 'Hasta 5 publicaciones nuevas por mes.'}
-              </p>
+              <p className="font-semibold">Publicación comercial con licencia Business</p>
+              <p className="text-sm text-gray-300">Publica los servicios de tu negocio. Todas las publicaciones pasan por revisión administrativa.</p>
             </div>
-            {effectivePlan !== 'business' && quota?.remaining_publications === 0 ? (
-              <Badge className="w-fit bg-violet-500 text-white">Actualiza a Business para continuar</Badge>
-            ) : null}
           </CardContent>
         </Card>
       ) : null}
@@ -777,40 +727,19 @@ export function Marketplace() {
           <CardContent className="flex gap-3 p-4 text-red-200">
             <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
             <div>
-              <p className="font-semibold">No pudimos cargar la tienda</p>
+              <p className="font-semibold">No pudimos cargar el directorio</p>
               <p className="text-sm text-red-200/80">{loadError}</p>
             </div>
           </CardContent>
         </Card>
       ) : null}
 
-      <Card className="mb-6 overflow-hidden border-moto-orange/30 bg-moto-gray">
-        <CardContent className="relative p-0">
-          <div className="absolute inset-0 bg-[url('/feature-gps.jpg')] bg-cover bg-center opacity-20" />
-          <div className="relative grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-center">
-            <div>
-              <Badge className="mb-3 bg-moto-orange text-moto-darker">
-                <Sparkles className="mr-2 h-4 w-4" />
-                MotoCare Experiences
-              </Badge>
-              <h2 className="text-2xl font-bold">Rutas premium dentro de la tienda</h2>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-gray-300">
-                Además de comprar motos y accesorios, puedes adquirir rutas verificadas con archivos GPX, puntos de interés y checklist de preparación.
-              </p>
-            </div>
-            <Button asChild className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
-              <Link to="/app/premium-routes">Explorar rutas</Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Search & Filters */}
       <div className="mb-6 flex flex-col gap-4 lg:flex-row">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
           <Input
-            placeholder="Buscar motos, rutas, repuestos, servicios..."
+            placeholder="Buscar taller, grúa, montallantas o ciudad..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 bg-moto-gray border-white/5"
@@ -918,7 +847,7 @@ export function Marketplace() {
                     </p>
                   </div>
                   <div className="shrink-0 sm:text-right">
-                    <p className="text-xl font-bold text-moto-orange">{formatPrice(listing.price)}</p>
+                    <p className="text-xl font-bold text-moto-orange">{formatServicePrice(listing.price)}</p>
                     {listing.originalPrice && (
                       <p className="text-sm text-gray-500 line-through">{formatPrice(listing.originalPrice)}</p>
                     )}
@@ -999,7 +928,7 @@ export function Marketplace() {
                       {listing.location}
                     </p>
                   </div>
-                  <p className="shrink-0 text-lg font-bold text-moto-orange">{formatPrice(listing.price)}</p>
+                  <p className="shrink-0 text-lg font-bold text-moto-orange">{formatServicePrice(listing.price)}</p>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-400 mb-3">
                   <Badge variant="secondary" className="text-xs">{listing.condition}</Badge>
@@ -1041,27 +970,27 @@ export function Marketplace() {
         ) : null}
       </div>
 
-      <section className="mt-8 space-y-4" aria-label="Información de la tienda">
+      <section className="mt-8 space-y-4" aria-label="Información del directorio de servicios">
         <Card className="overflow-hidden border-white/5 bg-moto-gray py-0">
           <CardContent className="relative p-5">
             <div className="absolute inset-0 bg-[url('/feature-marketplace.jpg')] bg-cover bg-center opacity-20" />
             <div className="relative grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center">
               <div className="min-w-0">
-                <Badge className="mb-3 bg-white/10 text-gray-200">Tienda para todos</Badge>
-                <h2 className="break-words text-2xl font-bold">Comprar es abierto para toda la comunidad</h2>
+                <Badge className="mb-3 bg-white/10 text-gray-200">Directorio para todos</Badge>
+                <h2 className="break-words text-2xl font-bold">Consulta proveedores y contacta directamente</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-300">
-                  Cualquier usuario podrá explorar publicaciones y contactar vendedores. Para publicar como persona natural se requiere licencia Premium; si la cuenta representa un negocio, taller, marca o aliado, debe tener licencia Business.
+                  Free y Premium pueden consultar el directorio. Los talleres, grúas, montallantas y demás proveedores publican con licencia Business y pasan por revisión administrativa.
                 </p>
               </div>
               <div className="rounded-xl border border-white/10 bg-moto-darker/90 p-4">
                 <div className="mb-3 flex items-center gap-2 text-moto-orange">
                   <Store className="h-5 w-5" />
-                  <span className="font-semibold">Regla para vender</span>
+                  <span className="font-semibold">Cómo funciona</span>
                 </div>
                 <div className="space-y-2 text-sm leading-6 text-gray-400">
-                  <p>Ver y comprar: disponible para todos los usuarios.</p>
-                  <p>Vender como usuario: requiere Premium.</p>
-                  <p>Vender como negocio: requiere Business.</p>
+                  <p>Consultar y contactar: disponible para todos.</p>
+                  <p>Publicar servicios: requiere Business.</p>
+                  <p>Pagos y contratación: por fuera de MotoCare por ahora.</p>
                 </div>
               </div>
             </div>
@@ -1071,23 +1000,23 @@ export function Marketplace() {
         <Card className="border-white/5 bg-moto-gray/70">
           <CardContent className="grid gap-4 p-4 md:grid-cols-3">
             <div className="rounded-lg border border-white/10 bg-moto-darker/60 p-4">
-              <p className="text-sm font-semibold text-white">Explorar y comprar</p>
-              <p className="mt-1 text-sm leading-6 text-gray-400">Disponible para toda la comunidad MotoCare Co.</p>
+              <p className="text-sm font-semibold text-white">Explorar servicios</p>
+              <p className="mt-1 text-sm leading-6 text-gray-400">Disponible para usuarios Free y Premium.</p>
             </div>
             <div className="rounded-lg border border-white/10 bg-moto-darker/60 p-4">
-              <p className="text-sm font-semibold text-white">Publicar como motero</p>
-              <p className="mt-1 text-sm leading-6 text-gray-400">Hasta 5 artículos al mes: moto, repuesto o accesorio.</p>
+              <p className="text-sm font-semibold text-white">Contactar al proveedor</p>
+              <p className="mt-1 text-sm leading-6 text-gray-400">Pregunta por cobertura, disponibilidad y precio antes de contratar.</p>
             </div>
             <div className="rounded-lg border border-white/10 bg-moto-darker/60 p-4">
               <p className="text-sm font-semibold text-white">Publicar como negocio</p>
-              <p className="mt-1 text-sm leading-6 text-gray-400">Puede publicar productos y servicios sin límite mensual.</p>
+              <p className="mt-1 text-sm leading-6 text-gray-400">Business puede publicar servicios sujetos a revisión.</p>
             </div>
           </CardContent>
         </Card>
       </section>
 
       {/* Sell Button */}
-      <div className="fixed bottom-20 right-4 z-40 flex items-center justify-end gap-2 lg:bottom-8 lg:right-8">
+      {effectivePlan === 'business' ? <div className="fixed bottom-20 right-4 z-40 flex items-center justify-end gap-2 lg:bottom-8 lg:right-8">
         {isSellActionExpanded ? (
           <Button
             size="sm"
@@ -1099,11 +1028,7 @@ export function Marketplace() {
             className="rounded-full bg-moto-orange px-4 text-moto-darker shadow-lg shadow-black/30 hover:bg-moto-orange-dark lg:hidden"
           >
             <Lock className="mr-2 h-4 w-4" />
-            {effectivePlan === 'business'
-              ? 'Publicar como negocio'
-              : effectivePlan === 'premium' || effectivePlan === 'pro'
-                ? 'Crear publicación'
-                : 'Requiere Premium'}
+            Publicar servicio
           </Button>
         ) : null}
         <Button
@@ -1120,23 +1045,12 @@ export function Marketplace() {
           size="lg"
           disabled={!canCreateListing}
           onClick={() => setShowCreateListing(true)}
-          title={
-            effectivePlan === 'free'
-              ? 'Necesitas licencia Premium o Business'
-              : quota?.remaining_publications === 0
-                ? 'Ya usaste tus 5 publicaciones del mes'
-                : undefined
-          }
           className="hidden rounded-full bg-moto-orange px-6 text-moto-darker shadow-lg shadow-moto-orange/30 hover:bg-moto-orange-dark lg:inline-flex"
         >
           <Lock className="mr-2 h-5 w-5" />
-          {effectivePlan === 'business'
-            ? 'Publicar como negocio'
-            : effectivePlan === 'premium' || effectivePlan === 'pro'
-              ? 'Crear publicación'
-              : 'Vender con Premium'}
+          Publicar servicio
         </Button>
-      </div>
+      </div> : null}
 
       <Dialog open={Boolean(selectedListing)} onOpenChange={(open) => !open && setSelectedListing(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto border-white/10 bg-moto-gray text-white sm:max-w-3xl">
@@ -1181,7 +1095,7 @@ export function Marketplace() {
                     ) : null}
                   </div>
                   <div className="shrink-0 sm:text-right">
-                    <p className="text-2xl font-bold text-moto-orange">{formatPrice(selectedListing.price)}</p>
+                    <p className="text-2xl font-bold text-moto-orange">{formatServicePrice(selectedListing.price)}</p>
                     {selectedListing.originalPrice ? (
                       <p className="text-sm text-gray-500 line-through">{formatPrice(selectedListing.originalPrice)}</p>
                     ) : null}
@@ -1377,11 +1291,9 @@ export function Marketplace() {
       <Dialog open={showCreateListing} onOpenChange={setShowCreateListing}>
         <DialogContent className="max-h-[90vh] overflow-y-auto border-white/10 bg-moto-gray text-white sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Crear publicación</DialogTitle>
+            <DialogTitle>Publicar servicio</DialogTitle>
             <DialogDescription className="text-gray-400">
-              {effectivePlan === 'business'
-                ? 'Publica productos o servicios de tu negocio. Las publicaciones Business no tienen límite mensual.'
-                : 'Publica una sola unidad: moto, repuesto o accesorio. Los borradores y las publicaciones en revisión no consumen cupo; solo se descuenta cuando un administrador la aprueba.'}
+              Describe el servicio de tu negocio. La publicación se mostrará después de la revisión administrativa.
             </DialogDescription>
           </DialogHeader>
 
@@ -1395,7 +1307,7 @@ export function Marketplace() {
                   required
                   onChange={(event) => setListingForm((current) => ({ ...current, title: event.target.value }))}
                   className="border-white/10 bg-moto-darker"
-                  placeholder="Ej. Honda CB500F 2022"
+                  placeholder="Ej. Taller especializado en motos de aventura"
                 />
               </label>
 
@@ -1406,8 +1318,8 @@ export function Marketplace() {
                   onChange={(event) => setListingForm((current) => ({
                     ...current,
                     category: event.target.value as MarketplaceCategory,
-                    condition: event.target.value === 'services' ? 'service' : current.condition === 'service' ? 'used_good' : current.condition,
-                    mileage_km: event.target.value === 'services' ? '' : current.mileage_km,
+                    condition: 'service',
+                    mileage_km: '',
                   }))}
                   className="h-9 w-full rounded-md border border-white/10 bg-moto-darker px-3 text-sm text-white"
                 >
@@ -1427,44 +1339,29 @@ export function Marketplace() {
                   }))}
                   className="h-9 w-full rounded-md border border-white/10 bg-moto-darker px-3 text-sm text-white"
                 >
-                  {(listingForm.category === 'services'
-                    ? [['service', conditionLabels.service] as [MarketplaceCondition, string]]
-                    : physicalConditionEntries).map(([value, label]) => (
+                  {([['service', conditionLabels.service]] as Array<[MarketplaceCondition, string]>).map(([value, label]) => (
                     <option key={value} value={value}>{label}</option>
                   ))}
                 </select>
               </label>
 
               <label>
-                <span className="mb-1 block text-sm text-gray-300">Precio COP</span>
+                <span className="mb-1 block text-sm text-gray-300">Precio de referencia COP (opcional)</span>
                 <Input
                   type="number"
                   min="0"
                   step="1"
-                  required
                   value={listingForm.price}
                   onChange={(event) => setListingForm((current) => ({ ...current, price: event.target.value }))}
                   className="border-white/10 bg-moto-darker"
-                  placeholder="18500000"
+                  placeholder="0 = consultar"
                 />
               </label>
 
               <div className="rounded-xl border border-white/10 bg-moto-darker px-4 py-3">
-                <p className="text-sm font-medium text-gray-200">{listingForm.category === 'services' ? 'Publicación de servicio' : 'Cantidad: 1 unidad'}</p>
-                <p className="mt-1 text-xs text-gray-500">{listingForm.category === 'services' ? 'Los servicios solo pueden publicarse con licencia Business.' : 'Al confirmar la venta, el anuncio se cerrará definitivamente.'}</p>
+                <p className="text-sm font-medium text-gray-200">Publicación de servicio</p>
+                <p className="mt-1 text-xs text-gray-500">Solo las cuentas Business pueden publicar; MotoCare no procesa pagos ni contrataciones.</p>
               </div>
-
-              <label>
-                <span className="mb-1 block text-sm text-gray-300">Kilometraje (opcional)</span>
-                <Input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={listingForm.mileage_km}
-                  onChange={(event) => setListingForm((current) => ({ ...current, mileage_km: event.target.value }))}
-                  className="border-white/10 bg-moto-darker"
-                />
-              </label>
 
               <label>
                 <span className="mb-1 block text-sm text-gray-300">Ciudad</span>

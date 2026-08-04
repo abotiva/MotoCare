@@ -201,7 +201,7 @@ create table if not exists public.app_admins (
 
 create table if not exists public.user_subscriptions (
   user_id uuid primary key references public.profiles(id) on delete cascade,
-  plan text not null default 'free' check (plan in ('free', 'pro', 'premium', 'business')),
+  plan text not null default 'free' check (plan in ('free', 'premium', 'business')),
   status text not null default 'active' check (status in ('active', 'trialing', 'past_due', 'canceled')),
   started_at timestamptz not null default now(),
   expires_at timestamptz,
@@ -443,7 +443,7 @@ for insert with check (
     select 1 from public.user_subscriptions s
     where s.user_id = auth.uid()
       and s.status in ('active', 'trialing')
-      and s.plan in ('pro', 'premium')
+      and s.plan = 'premium'
   )
 );
 
@@ -488,7 +488,7 @@ with check (
       where s.user_id = auth.uid()
         and s.status in ('active', 'trialing')
         and (s.expires_at is null or s.expires_at >= now())
-    ), 'free') in ('pro', 'premium')
+    ), 'free') = 'premium'
   )
   and (
     motorcycle_id is null
@@ -941,7 +941,7 @@ begin
     raise exception 'Admin access required';
   end if;
 
-  if target_plan not in ('free', 'pro', 'premium', 'business') then
+  if target_plan not in ('free', 'premium', 'business') then
     raise exception 'Invalid plan';
   end if;
 
@@ -1000,7 +1000,6 @@ begin
     'public_users', (select count(*) from public.profiles where is_public = true),
     'private_users', (select count(*) from public.profiles where is_public = false),
     'free_users', (select count(*) from public.user_subscriptions where plan = 'free'),
-    'pro_users', (select count(*) from public.user_subscriptions where plan = 'pro'),
     'premium_users', (select count(*) from public.user_subscriptions where plan = 'premium'),
     'motorcycles', (select count(*) from public.motorcycles),
     'routes', (select count(*) from public.routes),
@@ -1285,7 +1284,7 @@ for insert with check (
     select 1 from public.user_subscriptions s
     where s.user_id = auth.uid()
       and s.status in ('active', 'trialing')
-      and s.plan in ('pro', 'premium')
+      and s.plan = 'premium'
   )
 );
 

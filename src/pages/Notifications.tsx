@@ -57,7 +57,7 @@ function notificationText(notification: Notification) {
 export function Notifications() {
   const { user } = useAuth()
   const userId = user?.id
-  const { effectivePlan, isLoadingSubscription, hasPlan } = useSubscription()
+  const { effectivePlan, isLoadingSubscription } = useSubscription()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [filter, setFilter] = useState<NotificationFilter>('unread')
   const [isLoading, setIsLoading] = useState(true)
@@ -69,7 +69,7 @@ export function Notifications() {
   const clubCount = useMemo(() => notifications.filter((item) => item.type === 'club_invite').length, [notifications])
   const moderationCount = useMemo(() => notifications.filter((item) => item.type === 'moderation_notice').length, [notifications])
   const storeCount = useMemo(() => notifications.filter((item) => item.type === 'marketplace_message').length, [notifications])
-  const canUseAdvancedNotifications = hasPlan('premium')
+  const canUseAdvancedNotifications = effectivePlan === 'premium'
 
   const visibleNotifications = useMemo(() => {
     if (filter === 'unread') return notifications.filter((item) => !item.read_at)

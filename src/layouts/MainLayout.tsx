@@ -65,7 +65,7 @@ const communityItems: NavigationItem[] = [
 ]
 
 const marketplaceItems: NavigationItem[] = [
-  { path: '/app/marketplace', label: 'Tienda', icon: ShoppingBag },
+  { path: '/app/marketplace', label: 'Servicios', icon: ShoppingBag },
 ]
 
 const accountItems: NavigationItem[] = [
@@ -126,8 +126,9 @@ export function MainLayout() {
 
   const userId = user?.id
   const avatarFallback = initials(profile?.full_name, user?.email)
-  const isPaidPlan = effectivePlan === 'pro' || effectivePlan === 'premium' || effectivePlan === 'business'
-  const motorcycleSectionLabel = effectivePlan === 'pro' || effectivePlan === 'premium' ? 'Mi Garage' : 'Mi Moto'
+  const isBusiness = effectivePlan === 'business'
+  const isPaidPlan = effectivePlan === 'premium'
+  const motorcycleSectionLabel = effectivePlan === 'premium' ? 'Mi Garage' : 'Mi Moto'
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
   }, [location.pathname])
@@ -224,23 +225,23 @@ export function MainLayout() {
         </NavLink>
         <nav className="flex-1 space-y-6 overflow-y-auto p-4" aria-label="Navegación principal">
           <div>{sidebarLink({ path: '/app/home', label: 'Inicio', icon: Home })}</div>
-          <section aria-labelledby="nav-motorcycle">
+          {!isBusiness && <section aria-labelledby="nav-motorcycle">
             <h2 id="nav-motorcycle" className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">{motorcycleSectionLabel}</h2>
             <div className="space-y-1">{motorcycleItems.map(sidebarLink)}</div>
-          </section>
-          <section aria-labelledby="nav-routes">
+          </section>}
+          {!isBusiness && <section aria-labelledby="nav-routes">
             <div className="mb-2 flex items-center justify-between px-3">
               <h2 id="nav-routes" className="text-xs font-semibold uppercase tracking-wider text-gray-500">Rutas</h2>
               {!isPaidPlan && <Crown className="h-3.5 w-3.5 text-moto-orange" aria-label="Algunas experiencias ofrecen contenido Premium" />}
             </div>
             <div className="space-y-1">{routeItems.map(sidebarLink)}</div>
-          </section>
-          <section aria-labelledby="nav-community">
+          </section>}
+          {!isBusiness && <section aria-labelledby="nav-community">
             <h2 id="nav-community" className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Comunidad</h2>
             <div className="space-y-1">{communityItems.map(sidebarLink)}</div>
-          </section>
+          </section>}
           <section aria-labelledby="nav-marketplace">
-            <h2 id="nav-marketplace" className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Tienda</h2>
+            <h2 id="nav-marketplace" className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Servicios</h2>
             <div className="space-y-1">{marketplaceItems.map(sidebarLink)}</div>
           </section>
           <section aria-labelledby="nav-account">
@@ -318,24 +319,25 @@ export function MainLayout() {
         <div className="min-w-0 flex-1 overflow-x-hidden pb-20 lg:pb-0"><Outlet /></div>
 
         <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-moto-darker/98 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden" aria-label="Navegación móvil">
-          <div className="grid h-[4.5rem] grid-cols-6">
+          <div className={`grid h-[4.5rem] ${isBusiness ? 'grid-cols-3' : 'grid-cols-6'}`}>
             <NavLink to="/app/home" className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium ${location.pathname === '/app/home' ? 'text-moto-orange' : 'text-gray-400'}`}>
               <Home className="h-5 w-5" /><span className="max-w-full truncate">Inicio</span>
             </NavLink>
-            <NavLink to="/app/garage" className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium ${location.pathname.includes('/garage') || location.pathname.includes('/bikes') || location.pathname === '/app/my-bikes' ? 'text-moto-orange' : 'text-gray-400'}`}>
+            {!isBusiness && <NavLink to="/app/garage" className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium ${location.pathname.includes('/garage') || location.pathname.includes('/bikes') || location.pathname === '/app/my-bikes' ? 'text-moto-orange' : 'text-gray-400'}`}>
               <Bike className="h-5 w-5" /><span className="max-w-full truncate">{motorcycleSectionLabel}</span>
-            </NavLink>
-            <NavLink to="/app/routes" className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium ${location.pathname === '/app/routes' || location.pathname === '/app/explore' || location.pathname === '/app/map' || location.pathname === '/app/premium-routes' || location.pathname.startsWith('/app/routes/') ? 'text-moto-orange' : 'text-gray-400'}`}>
+            </NavLink>}
+            {!isBusiness && <NavLink to="/app/routes" className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium ${location.pathname === '/app/routes' || location.pathname === '/app/explore' || location.pathname === '/app/map' || location.pathname === '/app/premium-routes' || location.pathname.startsWith('/app/routes/') ? 'text-moto-orange' : 'text-gray-400'}`}>
               <MapIcon className="h-5 w-5" /><span className="max-w-full truncate">Rutas</span>
-            </NavLink>
-            <NavLink to="/app/community" className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium ${location.pathname === '/app/community' || location.pathname === '/app/messages' ? 'text-moto-orange' : 'text-gray-400'}`}>
+            </NavLink>}
+            {!isBusiness && <NavLink to="/app/community" className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium ${location.pathname === '/app/community' || location.pathname === '/app/messages' ? 'text-moto-orange' : 'text-gray-400'}`}>
               <MessageCircle className="h-5 w-5" /><span className="max-w-full truncate">Comunidad</span>
-            </NavLink>
-            <NavLink to="/app/marketplace" className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium ${location.pathname.startsWith('/app/marketplace') ? 'text-moto-orange' : 'text-gray-400'}`}><ShoppingBag className="h-5 w-5" /><span className="max-w-full truncate">Tienda</span></NavLink>
-            <button type="button" onClick={() => setIsQuickActionsOpen(true)} aria-label="Abrir acciones para registrar" aria-expanded={isQuickActionsOpen} className="relative flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-bold text-moto-orange">
+            </NavLink>}
+            <NavLink to="/app/marketplace" className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium ${location.pathname.startsWith('/app/marketplace') ? 'text-moto-orange' : 'text-gray-400'}`}><ShoppingBag className="h-5 w-5" /><span className="max-w-full truncate">Servicios</span></NavLink>
+            {isBusiness && <NavLink to="/app/profile" className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium ${location.pathname === '/app/profile' ? 'text-moto-orange' : 'text-gray-400'}`}><User className="h-5 w-5" /><span>Perfil</span></NavLink>}
+            {!isBusiness && <button type="button" onClick={() => setIsQuickActionsOpen(true)} aria-label="Abrir acciones para registrar" aria-expanded={isQuickActionsOpen} className="relative flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-bold text-moto-orange">
               <span className="-mt-7 grid h-14 w-14 place-items-center rounded-full border-4 border-moto-darker bg-moto-orange text-moto-darker shadow-lg shadow-moto-orange/20"><Plus className="h-7 w-7" /></span>
               <span className="max-w-full truncate">Registrar</span>
-            </button>
+            </button>}
           </div>
         </nav>
       </main>

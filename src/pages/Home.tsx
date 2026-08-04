@@ -47,14 +47,14 @@ const ecosystemBlocks = [
     items: ['Descubrir clubes', 'Mis clubes', 'Miembros', 'Invitaciones'],
   },
   {
-    title: 'Tienda',
+    title: 'Servicios',
     icon: ShoppingBag,
     to: '/app/marketplace',
     cardClass: 'border-t-emerald-400',
     iconClass: 'bg-emerald-400/15 text-emerald-300',
     linkClass: 'text-emerald-300 hover:text-emerald-200',
-    description: 'Productos, servicios y experiencias para vivir la moto.',
-    items: ['Motos', 'Repuestos', 'Accesorios', 'Servicios', 'Rutas Premium'],
+    description: 'Directorio de talleres, grúas, montallantas y asistencia para tu moto.',
+    items: ['Talleres', 'Grúas', 'Montallantas', 'Llantas', 'Asistencia'],
   },
 ]
 
@@ -74,7 +74,7 @@ export function Home() {
   const { effectivePlan } = useSubscription()
   const [isAdmin, setIsAdmin] = useState(false)
   const firstName = profile?.full_name?.trim().split(/\s+/)[0] ?? 'motero'
-  const hasPremiumGarage = effectivePlan === 'pro' || effectivePlan === 'premium'
+  const hasPremiumGarage = effectivePlan === 'premium'
 
   useEffect(() => {
     let isActive = true
@@ -95,7 +95,10 @@ export function Home() {
     }
   }, [user?.id])
 
-  const visibleBlocks = isAdmin ? [...ecosystemBlocks, administrationBlock] : ecosystemBlocks
+  const planBlocks = effectivePlan === 'business'
+    ? ecosystemBlocks.filter((block) => block.to === '/app/marketplace')
+    : ecosystemBlocks
+  const visibleBlocks = isAdmin ? [...planBlocks, administrationBlock] : planBlocks
 
   return (
     <div className="mx-auto max-w-7xl p-4 pb-24 sm:p-6 lg:pb-8">

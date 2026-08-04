@@ -19,7 +19,7 @@ export type Profile = {
   updated_at: string
 }
 
-export type UserPlan = 'free' | 'pro' | 'premium' | 'business'
+export type UserPlan = 'free' | 'premium' | 'business'
 
 export type UserPlanStatus = 'active' | 'trialing' | 'past_due' | 'canceled'
 
@@ -432,7 +432,6 @@ export type AdminOverview = {
   public_users: number
   private_users: number
   free_users: number
-  pro_users: number
   premium_users: number
   business_users?: number
   motorcycles: number

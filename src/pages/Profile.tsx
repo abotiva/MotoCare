@@ -173,7 +173,7 @@ export function Profile() {
   const username = profile?.username || user?.email?.split('@')[0] || 'motocare'
   const avatarFallback = initials(profile?.full_name, user?.email)
   const socialUrl = normalizeUrl(profile?.social_url)
-  const isPremiumProfile = effectivePlan === 'pro' || effectivePlan === 'premium'
+  const isPremiumProfile = effectivePlan === 'premium'
   const isBusinessProfile = effectivePlan === 'business'
 
   useEffect(() => {

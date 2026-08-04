@@ -43,7 +43,7 @@ const ecosystem = [
   { icon: MapPinned, title: 'Rutas', description: 'Planea recorridos y descubre nuevas experiencias.' },
   { icon: Users, title: 'Clubes', description: 'Conecta con grupos que comparten tu pasión.' },
   { icon: MessageCircle, title: 'Comunidad', description: 'Comparte historias, aprendizajes y recomendaciones.' },
-  { icon: ShoppingBag, title: 'Tienda', description: 'Encuentra motos, repuestos, accesorios, servicios y rutas premium.' },
+  { icon: ShoppingBag, title: 'Servicios', description: 'Encuentra talleres, gruas, montallantas y otros proveedores para motociclistas.' },
 ]
 
 const plans = [
@@ -55,23 +55,23 @@ const plans = [
   {
     name: 'Premium',
     description: 'Más control sobre tus motos y más herramientas para vivir la comunidad.',
-    features: ['Varias motos en Mi Garage', 'Elige tu moto principal', 'Informes de mantenimiento y gastos', 'Carga de archivos GPX', 'Creación de clubes y publicaciones', 'Acceso a experiencias y rutas Premium disponibles'],
+    features: ['Hasta 3 motos en Mi Garage', 'Un reemplazo de moto por año', 'Informes de mantenimiento y gastos', 'Carga de archivos GPX', 'Comunidad y hasta 3 clubes', 'Hasta 5 rutas Premium por mes'],
     featured: true,
   },
   {
     name: 'Business',
     description: 'Para negocios que publican en el ecosistema.',
-    features: ['Perfil comercial', 'Publicaciones comerciales', 'Gestión orientada a la tienda', 'Identificación visible como negocio'],
+    features: ['Perfil comercial', 'Publicación de servicios moderados', 'Directorio de talleres y asistencia', 'Cuenta separada de las funciones Premium'],
   },
 ]
 
 const faqs = [
   ['¿MotoCare es gratis?', 'Sí. El plan Free permite empezar la hoja de vida, registrar mantenimientos y crear recordatorios.'],
-  ['¿Puedo registrar más de una moto?', 'El plan Free incluye una moto. Con Premium puedes administrar varias motos y elegir cuál será la principal.'],
+  ['¿Puedo registrar más de una moto?', 'El plan Free incluye una moto. Premium permite hasta tres y un solo reemplazo por año calendario si eliminas una.'],
   ['¿Qué documentos puedo guardar?', 'Puedes controlar SOAT, revisión tecnomecánica y otros documentos. La carga de archivos privados requiere Premium.'],
   ['¿Cómo funcionan los recordatorios?', 'Puedes programarlos por fecha, kilometraje o ambos. MotoCare compara esos datos con el estado actual de la moto.'],
   ['¿Mis documentos son privados?', 'Sí. Los archivos se consultan mediante acceso autenticado y enlaces temporales, no mediante URLs públicas permanentes.'],
-  ['¿Qué incluye Premium?', 'Incluye carga privada de documentos, informes, GPX y funciones ampliadas de clubes y publicaciones, según las restricciones actuales de la aplicación.'],
+  ['¿Qué incluye Premium?', 'Incluye hasta tres motos, documentos privados, informes, GPX, comunidad, hasta tres clubes y cinco rutas Premium por mes.'],
 ]
 
 export function LandingPage() {
@@ -243,7 +243,7 @@ export function LandingPage() {
               <table className="w-full min-w-[36rem] text-left text-sm">
                 <thead className="bg-moto-darker text-gray-300"><tr><th className="p-4">Mi Garage</th><th className="p-4">Free</th><th className="p-4">Premium</th><th className="p-4">Business</th></tr></thead>
                 <tbody className="divide-y divide-white/10">
-                  <tr><th className="p-4 font-medium">Motos registradas</th><td className="p-4">1 moto</td><td className="p-4">Varias motos</td><td className="p-4">No disponible</td></tr>
+                  <tr><th className="p-4 font-medium">Motos registradas</th><td className="p-4">1 moto</td><td className="p-4">Hasta 3 motos</td><td className="p-4">No disponible</td></tr>
                   <tr><th className="p-4 font-medium">Moto principal</th><td className="p-4">La única registrada</td><td className="p-4">Selección manual</td><td className="p-4">No aplica</td></tr>
                 </tbody>
               </table>

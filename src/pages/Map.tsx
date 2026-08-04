@@ -258,10 +258,10 @@ type RouteMetric = 'routes' | 'kilometers' | 'shared' | 'completed'
 
 export function Map() {
   const { user } = useAuth()
-  const { effectivePlan, hasPlan, isLoadingSubscription } = useSubscription()
+  const { effectivePlan, isLoadingSubscription } = useSubscription()
   const canUseRoutes = effectivePlan !== 'business'
-  const canShareRoutes = effectivePlan === 'pro' || effectivePlan === 'premium' || (effectivePlan !== 'business' && hasPlan('premium'))
-  const canUploadExternalGpx = effectivePlan === 'pro' || effectivePlan === 'premium'
+  const canShareRoutes = effectivePlan === 'premium'
+  const canUploadExternalGpx = effectivePlan === 'premium'
   const [motorcycles, setMotorcycles] = useState<Motorcycle[]>([])
   const [myRoutes, setMyRoutes] = useState<RoutePlan[]>([])
   const [routeForm, setRouteForm] = useState<RouteForm>(emptyRouteForm)

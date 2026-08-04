@@ -18,7 +18,7 @@ Funciones disponibles:
 - ver mantenimientos recientes
 - acceder rapidamente a registrar servicio, programar pendiente, Hoja de vida y Mi perfil
 
-Las secciones **Rutas**, **Comunidad** y **Clubes** concentran funciones Premium. La **Tienda** puede consultarse desde el plan Gratis; publicar requiere Premium o Business.
+Las cuentas Free y Premium acceden a la comunidad. Premium habilita las funciones completas de rutas, documentos, informes y hasta tres clubes. **Business** es una cuenta comercial separada y no accede a los modulos personales del motero.
 
 ## Hoja de vida
 
@@ -279,32 +279,11 @@ El modulo **Explorar** fue retirado de la navegacion activa. El descubrimiento d
 
 Las rutas propias se administran desde **Rutas** y la hoja de vida de la moto desde **Hoja de vida**.
 
-## Tienda
+## Directorio de servicios
 
-La **Tienda** permite explorar publicaciones aprobadas, buscar por categoria, guardar favoritos y contactar al vendedor mediante mensajes internos.
+El directorio permite buscar talleres, gruas, montallantas y otros proveedores aprobados, y contactarlos mediante mensajes internos. Free y Premium pueden consultarlo. MotoCare no procesa compras, contrataciones ni pagos en esta etapa.
 
-### Publicaciones Premium
-
-- Puede publicar una sola unidad por aviso: moto, repuesto o accesorio.
-- No puede publicar servicios.
-- Tiene hasta 5 publicaciones aprobadas por mes calendario.
-- Guardar como borrador no consume cupo.
-- Enviar a revision no consume cupo.
-- El cupo se descuenta solamente cuando un administrador aprueba el aviso.
-- Si el administrador rechaza el aviso, debe informar el motivo y el cupo permanece intacto.
-- Al completar la venta, el vendedor usa **Marcar como vendido**. La publicacion queda cerrada y no puede reactivarse.
-
-### Publicaciones Business
-
-Las cuentas Business pueden publicar productos y servicios comerciales sin limite mensual. Una publicacion de servicio permanece disponible y no presenta la accion **Marcar como vendido**.
-
-### Flujo de una publicacion
-
-1. El vendedor completa la informacion y carga las imagenes.
-2. Puede guardar el aviso como borrador para continuarlo despues.
-3. Al enviarlo, queda pendiente de revision sin consumir cupo.
-4. Un administrador lo aprueba o rechaza con un motivo.
-5. Al aprobar una publicacion Premium, se consume un cupo mensual y el aviso aparece en la tienda.
+Solo las cuentas **Business** pueden crear publicaciones de servicios. Pueden guardarlas como borrador o enviarlas a revision; un administrador debe aprobarlas antes de que sean visibles. Las ventas directas de motos, repuestos y accesorios permanecen deshabilitadas.
 
 ## Ajustes
 

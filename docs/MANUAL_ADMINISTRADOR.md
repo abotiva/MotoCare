@@ -413,7 +413,7 @@ Los planes de usuario disponibles son:
 - `free`: usuario base
 - `premium`: usuario premium
 
-El valor `pro` puede existir como dato heredado en bases antiguas y la UI lo trata como equivalente a `premium`.
+El valor heredado `pro` se migra definitivamente a `premium` mediante `supabase/license_definition_consolidation_migration.sql` y deja de ser un plan valido.
 
 La licencia `business` esta destinada a tiendas y aliados. Permite publicaciones comerciales de productos y servicios sin limite mensual.
 
@@ -426,18 +426,18 @@ Los estados disponibles son:
 
 Desde `/app/admin`, en la vista **Usuarios**, un administrador puede cambiar plan y estado de forma manual. Esto no conecta pagos todavia; deja la estructura lista para que despues una pasarela como Wompi, Mercado Pago, PayU o Stripe actualice la misma tabla.
 
-### Revision administrativa de la tienda
+### Revision administrativa del directorio de servicios
 
-La pestana **Tienda** muestra primero las publicaciones con estado `pending_review`. El administrador puede aprobarlas o rechazarlas; el rechazo exige un motivo.
+La pestana **Tienda** muestra primero los servicios Business con estado `pending_review`. El administrador puede aprobarlos o rechazarlos; el rechazo exige un motivo.
 
-- Aprobar cambia el estado a `active`, publica el aviso y consume un cupo mensual cuando el vendedor es Premium.
+- Aprobar cambia el estado a `active` y publica el servicio en el directorio.
 - Rechazar cambia el estado a `rejected`, notifica al vendedor y no consume cupo.
 - Los borradores y las publicaciones pendientes no consumen cupo.
-- Premium tiene un maximo de 5 publicaciones aprobadas por mes calendario y solo puede ofrecer una moto, repuesto o accesorio por aviso.
-- Business puede publicar productos y servicios sin limite mensual.
-- Si Premium ya tiene 5 aprobaciones en el mes, la base de datos impide aprobar otra publicacion.
+- Solo Business puede publicar y la categoria debe ser `services` con condicion `service`.
+- Free y Premium pueden consultar y contactar, pero no publicar.
+- Las ventas y compras dentro de MotoCare permanecen deshabilitadas.
 
-Para instalaciones existentes, ejecutar las migraciones de Marketplace en orden y finalizar con `supabase/marketplace_quota_on_approval_migration.sql`. Esta ultima elimina registros de cupo creados por versiones anteriores para avisos que continuan como borrador o pendientes de revision.
+Para instalaciones existentes, ejecutar las migraciones de Marketplace en orden y finalizar con `supabase/license_definition_consolidation_migration.sql`.
 
 ## Pendiente futuro: modulo admin
 
