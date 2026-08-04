@@ -18,7 +18,7 @@ Funciones disponibles:
 - ver mantenimientos recientes
 - acceder rapidamente a registrar servicio, programar pendiente, Hoja de vida y Mi perfil
 
-Las cuentas Free y Premium acceden a la comunidad. Premium habilita las funciones completas de rutas, documentos, informes y hasta tres clubes. **Business** es una cuenta comercial separada y no accede a los modulos personales del motero.
+Las cuentas Free y Premium acceden a la comunidad y pueden descubrir y guardar rutas. Premium habilita GPX propios, compartir rutas, documentos, informes y hasta tres clubes. **Business** es una cuenta comercial separada y no accede a los modulos personales del motero; su inicio muestra Servicios, Perfil del negocio y Notificaciones comerciales.
 
 ## Hoja de vida
 
@@ -184,7 +184,7 @@ Todas las invitaciones pendientes aparecen en **Inicio**, dentro de **Notificaci
 
 ## Rutas
 
-El modulo **Rutas** permite crear rutas manuales sin usar GPS ni mapas pagos en esta fase del MVP. En la arquitectura actual queda agrupado como funcionalidad Premium.
+El modulo **Rutas** permite a Free y Premium crear rutas personales, descubrir recorridos comunitarios y mantener una biblioteca de rutas guardadas. Premium agrega la carga de GPX propios y la posibilidad de compartir rutas con la comunidad.
 
 Funciones disponibles:
 
@@ -250,9 +250,21 @@ Si se adjunta una ruta privada a una publicacion, la app la marca como visible p
 
 Los bloques **Publicaciones**, **Mias** y **Rutas publicadas** abren el listado correspondiente. Al seleccionar un elemento, la pantalla se desplaza hasta la publicacion dentro del feed.
 
+### Rutas guardadas
+
+Desde **Descubrir rutas**, Free y Premium pueden guardar una ruta comunitaria. En **Mis rutas > Rutas guardadas** pueden:
+
+- ver el detalle;
+- quitarla de guardados;
+- usarla como base de una ruta nueva.
+
+Al usar una ruta guardada se copian origen, destino, distancia, duracion y recorrido. La nueva ruta comienza como privada y planeada, y el usuario define sus propias fechas y moto.
+
+La misma biblioteca aparece en el formulario **Nueva ruta** para escoger un recorrido antes de completar los datos.
+
 ## Centro de notificaciones
 
-Los bloques **Pendientes**, **Rutas**, **Clubes** y **Moderacion** funcionan como filtros directos del centro de notificaciones y llevan al listado correspondiente.
+Para Free y Premium, los bloques **Pendientes**, **Rutas**, **Clubes**, **Tienda** y **Moderacion** funcionan como filtros. Business solo ve pendientes, mensajes de servicios y moderacion comercial; la campana se actualiza en tiempo real y realiza una comprobacion adicional cada cinco minutos.
 
 Las imagenes de publicaciones aceptan archivos de imagen de hasta 5 MB cada una. En esta version se pueden adjuntar hasta 6 imagenes por publicacion.
 
@@ -275,7 +287,7 @@ En esta version, el fundador del club administra miembros. Los mensajes privados
 
 ## Explorar
 
-El modulo **Explorar** fue retirado de la navegacion activa. El descubrimiento de rutas publicas, rutas guardadas y contenido comunitario quedara reservado para licencias Premium en una etapa posterior.
+El modulo **Explorar** lista rutas publicadas por la comunidad. Free y Premium pueden consultarlas y guardarlas; Business no tiene acceso a rutas ni comunidad.
 
 Las rutas propias se administran desde **Rutas** y la hoja de vida de la moto desde **Hoja de vida**.
 
@@ -287,7 +299,9 @@ Solo las cuentas **Business** pueden crear publicaciones de servicios. Pueden gu
 
 Las categorias disponibles son **Grua**, **Taller de mecanica**, **Montallantas**, **Lavadero** y **Guia de ruta**. Un servicio puede estar **Activo**, **Inactivo** o **En promocion**. Los inactivos solo son visibles para su propietario y administradores.
 
-El propietario Business puede editar o eliminar sus servicios. El directorio permite filtrar por categoria, ciudad y estado. El nombre del proveedor abre su perfil comercial, donde se muestran telefono, direccion, mapa y servicios publicados.
+El propietario Business puede editar o eliminar sus servicios. El directorio permite filtrar por categoria, ciudad y estado. El nombre del proveedor abre su perfil comercial, donde se muestran descripcion, telefono, direccion, mapa general y mapas de los servicios publicados.
+
+La ubicacion se registra pegando un enlace de Google Maps, Waze u OpenStreetMap. MotoCare valida el proveedor, extrae coordenadas cuando estan presentes y conserva un boton para abrir la ubicacion en la aplicacion externa. Los enlaces cortos pueden usar la direccion como respaldo para la vista previa.
 
 ## Ajustes
 

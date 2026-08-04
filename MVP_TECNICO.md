@@ -18,6 +18,8 @@
   - subir documentos de SOAT, tecnomecanica y otros soportes
 - Tarjetas de metricas navegables en Perfil, Rutas, Comunidad, Notificaciones y Administracion.
 - CRUD administrativo del catalogo `maintenance_suggestions`, protegido por `is_current_user_admin()`.
+- Biblioteca `saved_routes` para Free y Premium, integrada con Descubrir rutas, Nueva ruta y Mis rutas.
+- Experiencia Business separada, centrada en servicios moderados, perfil comercial, mapas, mensajes y notificaciones comerciales.
 
 ## Configuracion
 
@@ -47,4 +49,4 @@ npm run dev
 3. Edicion de moto y vencimientos.
 4. Crear recordatorios por kilometraje.
 5. Feed social conectado a `posts`, `post_comments` y `post_likes`.
-6. Rutas guardadas conectadas a `routes`.
+6. Sincronizar preferencias de notificaciones entre dispositivos.

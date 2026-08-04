@@ -25,7 +25,7 @@ La diferencia principal no debe ser solo "mas funciones", sino el tipo de usuari
 | Historial de mantenimiento | Basico | Completo | No disponible |
 | Recordatorios | Basicos | Avanzados por kilometraje y fecha | No disponible |
 | Estadisticas | Basicas o no disponibles | Gastos, kilometraje y servicios | No disponible |
-| Rutas | Funciones basicas | Rutas, GPX y hasta 5 rutas Premium por mes | No disponible |
+| Rutas | Rutas privadas, descubrir y guardar rutas comunitarias | Rutas, GPX, compartir y hasta 5 rutas Premium por mes | No disponible |
 | Comunidad | Ver y participar | Ver y participar | Sin acceso |
 | Clubes | Un club mediante invitacion | Crear/administrar hasta 3 clubes | Sin acceso |
 | Directorio de servicios | Consultar y contactar | Consultar y contactar | Publicar servicios moderados |
@@ -47,6 +47,7 @@ Para usuarios que quieren probar MotoCare sin pagar.
 - Recordatorios basicos de mantenimiento.
 - Acceso a comunidad.
 - Ver rutas compartidas.
+- Guardar rutas comunitarias, consultarlas en Mis rutas y usarlas como base de una ruta nueva.
 - Consultar el directorio de servicios.
 - Unirse a un club mediante invitacion.
 - Perfil basico.
@@ -55,7 +56,7 @@ Para usuarios que quieren probar MotoCare sin pagar.
 
 - No permitir mas de 1 moto.
 - Limitar historial visible o cantidad de registros activos.
-- Limitar rutas guardadas.
+- No limitar las rutas guardadas en la etapa actual.
 - No permitir publicaciones; sí consultar y contactar proveedores.
 - Mostrar invitacion a mejorar plan cuando el usuario llegue a un limite.
 - Puede incluir publicidad o mensajes promocionales internos.
@@ -78,7 +79,7 @@ Para el motero individual que quiere controlar bien sus motos, mantenimientos, r
 - Recordatorios avanzados por fecha y kilometraje.
 - Registro de gastos por mantenimiento.
 - Estadisticas de kilometraje, servicios y costos.
-- Rutas guardadas ilimitadas.
+- Rutas guardadas disponibles sin limite funcional, con opcion de ver, reutilizar y quitar.
 - Crear y administrar clubes pequenos.
 - Hasta 5 rutas Premium elegidas por mes.
 - Consulta y contacto con proveedores del directorio de servicios.
@@ -118,8 +119,9 @@ Para talleres, gruas, montallantas, negocios, marcas y aliados que ofrecen servi
 - Business no es un nivel superior a Premium: es una cuenta de naturaleza diferente.
 - No incluye garaje, rutas personales, comunidad, clubes, documentos, informes ni notificaciones avanzadas.
 - Su funcion vigente es mantener un perfil comercial y publicar servicios.
-- Su perfil comercial incluye telefono, direccion y coordenadas para mostrar la ubicacion del negocio en el mapa.
+- Su perfil comercial incluye telefono, direccion y un enlace validado de Google Maps, Waze u OpenStreetMap. MotoCare extrae coordenadas cuando la URL las contiene y conserva un boton para abrir la aplicacion externa.
 - Puede administrar la categoria y el estado visible de cada servicio, editarlo o eliminarlo.
+- Su inicio, navegacion, ajustes y notificaciones se limitan a funciones comerciales: servicios, consultas, moderacion, perfil publico y configuracion.
 
 ### Reglas vigentes del directorio
 

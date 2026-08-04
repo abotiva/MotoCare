@@ -325,7 +325,11 @@ Para habilitar rutas adjuntas en mensajes privados de club, ejecutar:
 
 ## Explorar
 
-El modulo **Explorar** fue retirado de la navegacion activa. Las tablas relacionadas (`routes` con `visibility = community`, `saved_routes` y publicaciones con rutas adjuntas) se conservan para una futura experiencia Premium, pero no se presentan como seccion principal del MVP actual.
+El modulo **Explorar** esta activo para cuentas Free y Premium. `saved_routes` funciona como una biblioteca de marcadores: Mis rutas consulta la relacion con `routes`, permite quitar el marcador y copiar sus datos al formulario de una ruta nueva. Business queda excluido por interfaz y RLS.
+
+Para bases existentes, ejecutar despues de `saved_routes_migration.sql`:
+
+`supabase/saved_routes_license_access_migration.sql`
 
 
 ## Google Maps
@@ -335,6 +339,12 @@ La integracion inicial de mapas usa Google Maps Embed en el detalle de rutas, me
 `VITE_GOOGLE_MAPS_EMBED_KEY`
 
 Nota para publicacion: esta clave debe quedar restringida en Google Cloud a la API **Maps Embed API** y al dominio real de MotoCare. Para desarrollo local puede permitir `http://127.0.0.1:*` o `http://localhost:*`.
+
+Los perfiles Business guardan el enlace externo en `profiles.business_map_url`. La interfaz admite Google Maps, Waze y OpenStreetMap; las coordenadas `business_latitude` y `business_longitude` se completan internamente cuando pueden extraerse de la URL y ya no se solicitan manualmente.
+
+Para bases existentes, ejecutar:
+
+`supabase/business_map_url_migration.sql`
 
 ## Ajustes
 
@@ -415,7 +425,7 @@ Los planes de usuario disponibles son:
 
 El valor heredado `pro` se migra definitivamente a `premium` mediante `supabase/license_definition_consolidation_migration.sql` y deja de ser un plan valido.
 
-La licencia `business` esta destinada a tiendas y aliados. Permite publicaciones comerciales de productos y servicios sin limite mensual.
+La licencia `business` esta destinada a talleres, gruas, montallantas y aliados. En la etapa vigente permite exclusivamente publicaciones de servicios moderados; las ventas de productos estan deshabilitadas.
 
 Los estados disponibles son:
 

@@ -7,11 +7,11 @@ Principio rector:
 ## Capacidades activas
 
 - Mi Garage: motos, mantenimientos, kilometraje, recordatorios, documentos, gastos y moto principal.
-- Rutas: creación y edición propia, GPX, rutas públicas, rutas guardadas, detalle y rutas Premium disponibles.
+- Rutas: creación y edición propia, GPX, rutas públicas, detalle y rutas Premium. Free y Premium pueden guardar rutas comunitarias, administrarlas en Mis rutas y copiarlas como una ruta nueva.
 - Comunidad: publicaciones, fotografías, comentarios, reacciones, rutas asociadas, actividad privada de clubes y personas.
 - Clubes: creación según licencia, membresías por invitación, roles actuales (`owner`, `admin`, `member`), publicaciones y rutas del club.
 - Seguridad: los datos de Mi Garage están separados de las publicaciones y solo se comparten mediante una acción explícita.
-- Servicios: directorio en preparacion con consulta para Free/Premium y publicaciones de servicios exclusivamente Business, sujetas a moderacion. Las compras y ventas directas estan deshabilitadas.
+- Servicios: directorio con consulta para Free/Premium y publicaciones exclusivamente Business, sujetas a moderación. El perfil público incluye contacto, ubicación, mapa y enlace a una aplicación externa. Las compras y ventas directas están deshabilitadas.
 
 ## Evolución futura que requiere modelo de datos y permisos
 
