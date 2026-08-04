@@ -526,7 +526,23 @@ create policy "post_images_own_write" on public.post_images
 for all using (auth.uid() = owner_id) with check (auth.uid() = owner_id);
 
 create policy "saved_routes_own_all" on public.saved_routes
-for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+for all using (
+  auth.uid() = user_id
+  and coalesce((
+    select s.plan from public.user_subscriptions s
+    where s.user_id = auth.uid()
+      and s.status in ('active', 'trialing')
+      and (s.expires_at is null or s.expires_at >= now())
+  ), 'free') in ('free', 'premium')
+) with check (
+  auth.uid() = user_id
+  and coalesce((
+    select s.plan from public.user_subscriptions s
+    where s.user_id = auth.uid()
+      and s.status in ('active', 'trialing')
+      and (s.expires_at is null or s.expires_at >= now())
+  ), 'free') in ('free', 'premium')
+);
 
 create policy "notifications_own_all" on public.notifications
 for all using (auth.uid() = user_id) with check (auth.uid() = user_id);

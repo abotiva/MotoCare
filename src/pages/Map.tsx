@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Bike, Calendar, CheckCircle2, Clock, Edit3, Eye, EyeOff, Flag, Loader2, Lock, MapPin, PackageCheck, PlayCircle, Plus, Route, Save, Search, Trash2 } from 'lucide-react'
+import { Bike, BookmarkCheck, Calendar, CheckCircle2, Clock, Edit3, Eye, EyeOff, Flag, Loader2, Lock, MapPin, PackageCheck, PlayCircle, Plus, Route, Save, Search, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -264,6 +264,7 @@ export function Map() {
   const canUploadExternalGpx = effectivePlan === 'premium'
   const [motorcycles, setMotorcycles] = useState<Motorcycle[]>([])
   const [myRoutes, setMyRoutes] = useState<RoutePlan[]>([])
+  const [savedRoutes, setSavedRoutes] = useState<RoutePlan[]>([])
   const [routeForm, setRouteForm] = useState<RouteForm>(emptyRouteForm)
   const [editingRoute, setEditingRoute] = useState<RoutePlan | null>(null)
   const [selectedRoute, setSelectedRoute] = useState<RoutePlan | null>(null)
@@ -370,9 +371,10 @@ export function Map() {
       client.rpc('reconcile_premium_route_access'),
     ])
 
-    const [motorcyclesResult, myRoutesResult] = await Promise.all([
+    const [motorcyclesResult, myRoutesResult, savedRoutesResult] = await Promise.all([
       client.from('motorcycles').select('*').eq('owner_id', user.id).order('created_at', { ascending: false }),
       client.from('routes').select('*').eq('owner_id', user.id).order('created_at', { ascending: false }),
+      client.from('saved_routes').select('route_id, created_at, routes:route_id(*)').eq('user_id', user.id).order('created_at', { ascending: false }),
     ])
 
     if (motorcyclesResult.error) {
@@ -432,6 +434,13 @@ export function Map() {
       }
     }
 
+    if (savedRoutesResult.error) {
+      toast.error('No pudimos cargar tus rutas guardadas', { description: savedRoutesResult.error.message })
+    } else {
+      const rows = (savedRoutesResult.data ?? []) as unknown as Array<{ routes: RoutePlan | RoutePlan[] | null }>
+      setSavedRoutes(rows.flatMap((row) => Array.isArray(row.routes) ? row.routes : row.routes ? [row.routes] : []))
+    }
+
     if (myRoutesResult.error) setIsLoading(false)
 
     void maintenancePromise.then(([syncResult, reconcileResult]) => {
@@ -463,6 +472,38 @@ export function Map() {
     setEditingRoute(null)
     setRouteForm({ ...emptyRouteForm, motorcycle_id: motorcycles[0]?.id ?? '' })
     setShowCreateRoute(true)
+  }
+
+  const applySavedRouteTemplate = (route: RoutePlan) => {
+    setEditingRoute(null)
+    setRouteForm({
+      motorcycle_id: motorcycles[0]?.id ?? '',
+      title: route.title,
+      origin: route.origin ?? '',
+      destination: route.destination ?? '',
+      distance_km: route.distance_km?.toString() ?? '',
+      duration_minutes: route.duration_minutes?.toString() ?? '',
+      start_date: '',
+      end_date: '',
+      visibility: 'private',
+      status: 'planned',
+      track_geojson: route.track_geojson,
+    })
+    setShowCreateRoute(true)
+    toast.success('Ruta seleccionada', { description: 'Completa las fechas y guárdala como una ruta nueva.' })
+  }
+
+  const removeSavedRoute = async (route: RoutePlan) => {
+    if (!supabase || !user) return
+    const confirmed = window.confirm(`¿Quitar "${route.title}" de tus rutas guardadas?`)
+    if (!confirmed) return
+    const { error } = await supabase.from('saved_routes').delete().eq('route_id', route.id).eq('user_id', user.id)
+    if (error) {
+      toast.error('No pudimos quitar la ruta guardada', { description: error.message })
+      return
+    }
+    setSavedRoutes((current) => current.filter((item) => item.id !== route.id))
+    toast.success('Ruta eliminada de guardados')
   }
 
   useEffect(() => {
@@ -851,6 +892,46 @@ export function Map() {
         </CardContent>
       </Card>
 
+      <section className="mb-5" aria-labelledby="my-saved-routes-title">
+        <Card className="border-white/5 bg-moto-gray py-0">
+          <CardContent className="p-5">
+            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+              <div>
+                <div className="flex items-center gap-2">
+                  <BookmarkCheck className="h-5 w-5 text-moto-orange" />
+                  <h2 id="my-saved-routes-title" className="font-semibold">Rutas guardadas</h2>
+                  <Badge className="bg-moto-orange/15 text-moto-orange">{savedRoutes.length}</Badge>
+                </div>
+                <p className="mt-1 text-sm text-gray-400">Rutas de la comunidad que guardaste para consultarlas o usarlas como una ruta nueva.</p>
+              </div>
+              <Button asChild variant="outline" className="border-white/10">
+                <Link to="/app/explore">Descubrir rutas</Link>
+              </Button>
+            </div>
+            {savedRoutes.length > 0 ? (
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {savedRoutes.map((route) => (
+                  <div key={route.id} className="min-w-0 rounded-xl border border-white/5 bg-moto-darker p-4">
+                    <p className="truncate font-semibold">{route.title}</p>
+                    <p className="mt-1 truncate text-sm text-gray-400">{route.origin || 'Origen sin definir'} {'->'} {route.destination || 'Destino sin definir'}</p>
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-400">
+                      <span>{route.distance_km ? `${route.distance_km.toLocaleString()} km` : 'Sin distancia'}</span>
+                      <span>•</span>
+                      <span>{formatDuration(route.duration_minutes)}</span>
+                    </div>
+                    <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                      <Button asChild size="sm" variant="outline" className="border-white/10"><Link to={`/app/routes/${route.id}`}>Ver</Link></Button>
+                      <Button type="button" size="sm" className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => applySavedRouteTemplate(route)}>Usar</Button>
+                      <Button type="button" size="sm" variant="outline" className="border-red-500/30 text-red-300 hover:text-red-200" onClick={() => void removeSavedRoute(route)}><Trash2 className="mr-1 h-4 w-4" />Quitar</Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : <p className="mt-4 rounded-xl border border-dashed border-white/10 p-4 text-sm text-gray-400">Aún no has guardado rutas de la comunidad.</p>}
+          </CardContent>
+        </Card>
+      </section>
+
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-3">
           <Card className="border-white/5 bg-moto-gray py-0">
@@ -908,8 +989,8 @@ export function Map() {
             <h2 className="mb-2 font-semibold">Rutas comunitarias</h2>
             <p className="mb-4 text-sm leading-6 text-gray-400">
               {canShareRoutes
-                ? 'Tu licencia permite compartir rutas con la comunidad. El descubrimiento de rutas de otros moteros será la siguiente fase.'
-                : 'Con Free puedes planear rutas privadas. Compartir y descubrir rutas comunitarias queda reservado para licencias Premium.'}
+                ? 'Tu licencia permite descubrir, guardar y compartir rutas con la comunidad.'
+                : 'Con Free puedes descubrir y guardar rutas comunitarias, además de planear rutas privadas. Compartir tus propias rutas requiere Premium.'}
             </p>
             <Button asChild variant="outline" className="w-full border-white/10">
               <Link to="/app/garage">Volver a Mi Garage</Link>
@@ -1021,6 +1102,21 @@ export function Map() {
             </DialogDescription>
           </DialogHeader>
           <form className="mt-4 space-y-4" onSubmit={handleSubmitRoute}>
+            {!editingRoute && savedRoutes.length > 0 ? <label>
+              <span className="mb-1 block text-sm text-gray-400">Usar una ruta guardada</span>
+              <select
+                defaultValue=""
+                className="w-full rounded-lg border border-moto-orange/30 bg-moto-darker p-2 text-white"
+                onChange={(event) => {
+                  const route = savedRoutes.find((item) => item.id === event.target.value)
+                  if (route) applySavedRouteTemplate(route)
+                }}
+              >
+                <option value="">Crear desde cero</option>
+                {savedRoutes.map((route) => <option key={route.id} value={route.id}>{route.title}</option>)}
+              </select>
+              <span className="mt-1 block text-xs text-gray-500">Copia el recorrido y sus datos; la nueva ruta quedará privada hasta que decidas compartirla.</span>
+            </label> : null}
             <label>
               <span className="mb-1 block text-sm text-gray-400">Moto para esta ruta</span>
               <select
