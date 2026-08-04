@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { supabase } from '@/lib/supabase'
+import { normalizeMapUrl } from '@/lib/mapLinks'
 import type { MarketplaceListing, Profile, ServiceCategory } from '@/types/database'
 
 const serviceCategoryLabels: Record<ServiceCategory, string> = {
@@ -44,6 +45,7 @@ export function BusinessProfile() {
     : null
   const businessLocation = [profile.business_address, profile.city, 'Colombia'].filter(Boolean).join(', ')
   const businessMapQuery = businessCoordinates || businessLocation
+  const externalMapUrl = normalizeMapUrl(profile.business_map_url)
 
   return (
     <div className="mx-auto max-w-5xl space-y-5 overflow-x-hidden p-4 pb-24 lg:p-6">
@@ -76,6 +78,7 @@ export function BusinessProfile() {
         <section>
           <h2 className="mb-3 flex items-center gap-2 text-xl font-semibold"><MapPin className="h-5 w-5 text-moto-orange" />Ubicación del negocio</h2>
           <iframe title={`Ubicación de ${name}`} className="h-72 w-full rounded-2xl border-0" loading="lazy" src={mapUrl(businessMapQuery)} />
+          {externalMapUrl ? <Button asChild className="mt-3 w-full bg-moto-orange text-moto-darker hover:bg-moto-yellow sm:w-auto"><a href={externalMapUrl} target="_blank" rel="noreferrer"><ExternalLink className="mr-2 h-4 w-4" />Abrir en aplicación de mapas</a></Button> : null}
         </section>
       ) : null}
 
@@ -99,6 +102,7 @@ export function BusinessProfile() {
                     <div className="mt-3 flex items-start gap-2 text-sm text-gray-400"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-moto-orange" /><span>{serviceLocation || profile.business_address || profile.city || 'Ubicación sin definir'}</span></div>
                   </div>
                   {serviceMapQuery ? <iframe title={`Ubicación de ${service.title}`} className="h-56 w-full border-0" loading="lazy" src={mapUrl(serviceMapQuery)} /> : null}
+                  {externalMapUrl ? <div className="p-4 pt-3"><Button asChild variant="outline" className="w-full border-white/10"><a href={externalMapUrl} target="_blank" rel="noreferrer"><ExternalLink className="mr-2 h-4 w-4" />Abrir ubicación</a></Button></div> : null}
                 </CardContent>
               </Card>
             )

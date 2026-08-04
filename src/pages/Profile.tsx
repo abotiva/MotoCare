@@ -14,6 +14,7 @@ import { ColombiaLocationFields } from '@/components/ColombiaLocationFields'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
+import { extractCoordinatesFromMapUrl, normalizeMapUrl } from '@/lib/mapLinks'
 import type { Club, Motorcycle, Profile as ProfileType, RoutePlan } from '@/types/database'
 
 type ProfileForm = {
@@ -24,8 +25,7 @@ type ProfileForm = {
   municipality_code: string
   business_phone: string
   business_address: string
-  business_latitude: string
-  business_longitude: string
+  business_map_url: string
   rider_type: string
   bio: string
   social_url: string
@@ -161,8 +161,7 @@ export function Profile() {
     municipality_code: '',
     business_phone: '',
     business_address: '',
-    business_latitude: '',
-    business_longitude: '',
+    business_map_url: '',
     rider_type: '',
     bio: '',
     social_url: '',
@@ -188,6 +187,11 @@ export function Profile() {
   const socialUrl = normalizeUrl(profile?.social_url)
   const isPremiumProfile = effectivePlan === 'premium'
   const isBusinessProfile = effectivePlan === 'business'
+  const formMapUrl = normalizeMapUrl(form.business_map_url)
+  const formMapCoordinates = extractCoordinatesFromMapUrl(formMapUrl)
+  const formMapQuery = formMapCoordinates
+    ? `${formMapCoordinates.latitude},${formMapCoordinates.longitude}`
+    : [form.business_address, form.city, 'Colombia'].filter(Boolean).join(', ')
 
   useEffect(() => {
     if (!supabase || !user) {
@@ -211,8 +215,7 @@ export function Profile() {
       municipality_code: profile?.municipality_code ?? '',
       business_phone: profile?.business_phone ?? '',
       business_address: profile?.business_address ?? '',
-      business_latitude: profile?.business_latitude?.toString() ?? '',
-      business_longitude: profile?.business_longitude?.toString() ?? '',
+      business_map_url: profile?.business_map_url ?? '',
       rider_type: profile?.rider_type ?? '',
       bio: profile?.bio ?? '',
       social_url: profile?.social_url ?? '',
@@ -276,6 +279,14 @@ export function Profile() {
 
     setIsSaving(true)
 
+    const normalizedMapUrl = normalizeMapUrl(form.business_map_url)
+    if (isBusinessProfile && form.business_map_url.trim() && !normalizedMapUrl) {
+      setIsSaving(false)
+      toast.error('Enlace de ubicación no válido', { description: 'Use un enlace de Google Maps, Waze u OpenStreetMap.' })
+      return
+    }
+    const mapCoordinates = extractCoordinatesFromMapUrl(normalizedMapUrl)
+
     const payload: Partial<ProfileType> = {
       full_name: form.full_name.trim(),
       username: cleanUsername || null,
@@ -284,8 +295,9 @@ export function Profile() {
       municipality_code: form.municipality_code || null,
       business_phone: form.business_phone.trim() || null,
       business_address: form.business_address.trim() || null,
-      business_latitude: form.business_latitude ? Number(form.business_latitude) : null,
-      business_longitude: form.business_longitude ? Number(form.business_longitude) : null,
+      business_map_url: normalizedMapUrl,
+      business_latitude: mapCoordinates?.latitude ?? null,
+      business_longitude: mapCoordinates?.longitude ?? null,
       rider_type: form.rider_type.trim() || null,
       bio: form.bio.trim() || null,
       social_url: form.social_url.trim() || null,
@@ -668,7 +680,9 @@ export function Profile() {
             {isBusinessProfile ? <>
               <label><span className="mb-1 block text-sm text-gray-400">Número de teléfono</span><input type="tel" className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={form.business_phone} onChange={(event) => setForm({ ...form, business_phone: event.target.value })} placeholder="+57 300 000 0000" /></label>
               <label><span className="mb-1 block text-sm text-gray-400">Dirección del negocio</span><input className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={form.business_address} onChange={(event) => setForm({ ...form, business_address: event.target.value })} placeholder="Calle, carrera y número" /></label>
-              <div className="grid grid-cols-2 gap-3"><label><span className="mb-1 block text-sm text-gray-400">Latitud</span><input type="number" step="any" className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={form.business_latitude} onChange={(event) => setForm({ ...form, business_latitude: event.target.value })} placeholder="4.7110" /></label><label><span className="mb-1 block text-sm text-gray-400">Longitud</span><input type="number" step="any" className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={form.business_longitude} onChange={(event) => setForm({ ...form, business_longitude: event.target.value })} placeholder="-74.0721" /></label></div>
+              <label><span className="mb-1 block text-sm text-gray-400">Enlace de ubicación</span><input type="url" className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={form.business_map_url} onChange={(event) => setForm({ ...form, business_map_url: event.target.value })} placeholder="Pegue un enlace de Google Maps, Waze u OpenStreetMap" /><span className="mt-1 block text-xs text-gray-500">Comparta la ubicación desde su aplicación de mapas. Las coordenadas se obtendrán automáticamente cuando el enlace las incluya.</span></label>
+              {form.business_map_url.trim() && !formMapUrl ? <p className="text-sm text-red-300">El enlace no pertenece a un proveedor de mapas permitido.</p> : null}
+              {formMapUrl && formMapQuery ? <div className="overflow-hidden rounded-xl border border-white/10"><iframe title="Vista previa de la ubicación" className="h-48 w-full border-0" loading="lazy" src={`https://www.google.com/maps?q=${encodeURIComponent(formMapQuery)}&z=15&output=embed`} /><a href={formMapUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 p-3 text-sm text-moto-orange"><ExternalLink className="h-4 w-4" />Verificar ubicación en mapas</a></div> : null}
             </> : null}
             <label>
               <span className="mb-1 block text-sm text-gray-400">Bio corta</span>

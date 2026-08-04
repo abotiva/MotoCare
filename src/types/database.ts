@@ -7,6 +7,7 @@ export type Profile = {
   municipality_code: string | null
   business_phone: string | null
   business_address: string | null
+  business_map_url: string | null
   business_latitude: number | null
   business_longitude: number | null
   rider_type: string | null
@@ -91,6 +92,7 @@ export type MarketplaceListingWithSeller = MarketplaceListing & {
     is_premium: boolean
     business_phone: string | null
     business_address: string | null
+    business_map_url: string | null
     business_latitude: number | null
     business_longitude: number | null
   } | null

@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { 
   Search, Grid3X3, List, MapPin, Heart, MessageCircle,
   Star, TrendingUp, Clock3, Lock, Store,
-  AlertCircle, LoaderCircle, ImagePlus, Trash2, CheckCircle2, Inbox, Send, Plus, X
+  AlertCircle, LoaderCircle, ImagePlus, Trash2, CheckCircle2, Inbox, Send, Plus, X, ExternalLink
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ColombiaLocationFields } from '@/components/ColombiaLocationFields'
@@ -68,6 +68,7 @@ type StoreListing = {
   serviceStatus?: ServiceStatus
   sellerPhone?: string
   sellerAddress?: string
+  sellerMapUrl?: string
   sellerLatitude?: number
   sellerLongitude?: number
   department?: string
@@ -289,6 +290,7 @@ function toStoreListing(listing: MarketplaceListingWithSeller): StoreListing {
     serviceStatus: listing.service_status,
     sellerPhone: listing.profiles?.business_phone ?? undefined,
     sellerAddress: listing.profiles?.business_address ?? undefined,
+    sellerMapUrl: listing.profiles?.business_map_url ?? undefined,
     sellerLatitude: listing.profiles?.business_latitude === null ? undefined : Number(listing.profiles?.business_latitude),
     sellerLongitude: listing.profiles?.business_longitude === null ? undefined : Number(listing.profiles?.business_longitude),
     department: listing.department ?? undefined,
@@ -350,7 +352,7 @@ export function Marketplace() {
         .from('marketplace_listings')
         .select(`
           *,
-          profiles:seller_id(full_name, username, city, avatar_url, business_phone, business_address, business_latitude, business_longitude),
+          profiles:seller_id(full_name, username, city, avatar_url, business_phone, business_address, business_map_url, business_latitude, business_longitude),
           marketplace_listing_images(*)
         `)
         .eq('status', 'active')
@@ -481,7 +483,7 @@ export function Marketplace() {
         })
         .eq('id', editingListingId)
         .eq('seller_id', user.id)
-        .select(`*, profiles:seller_id(full_name, username, city, avatar_url, business_phone, business_address, business_latitude, business_longitude), marketplace_listing_images(*)`)
+        .select(`*, profiles:seller_id(full_name, username, city, avatar_url, business_phone, business_address, business_map_url, business_latitude, business_longitude), marketplace_listing_images(*)`)
         .single()
       if (error) {
         toast.error('No pudimos actualizar el servicio', { description: error.message })
@@ -1223,6 +1225,7 @@ export function Marketplace() {
                     {selectedListing.sellerPhone ? <a href={`tel:${selectedListing.sellerPhone}`} className="mt-2 block text-sm text-moto-orange hover:underline">Teléfono: {selectedListing.sellerPhone}</a> : null}
                     {selectedListing.sellerAddress ? <p className="mt-1 text-sm text-gray-300">{selectedListing.sellerAddress}</p> : null}
                     <iframe title={`Ubicación de ${selectedListing.seller.name}`} className="mt-3 h-64 w-full rounded-xl border-0" loading="lazy" src={`https://www.google.com/maps?q=${encodeURIComponent(selectedListing.sellerLatitude !== undefined && selectedListing.sellerLongitude !== undefined ? `${selectedListing.sellerLatitude},${selectedListing.sellerLongitude}` : [selectedListing.sellerAddress, selectedListing.location].filter(Boolean).join(', '))}&z=15&output=embed`} />
+                    {selectedListing.sellerMapUrl ? <Button asChild variant="outline" className="mt-3 w-full border-white/10"><a href={selectedListing.sellerMapUrl} target="_blank" rel="noreferrer"><ExternalLink className="mr-2 h-4 w-4" />Abrir en aplicación de mapas</a></Button> : null}
                   </div>
                 ) : null}
 
