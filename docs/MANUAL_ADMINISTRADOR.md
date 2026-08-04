@@ -325,7 +325,11 @@ Para habilitar rutas adjuntas en mensajes privados de club, ejecutar:
 
 ## Explorar
 
-El modulo **Explorar** fue retirado de la navegacion activa. Las tablas relacionadas (`routes` con `visibility = community`, `saved_routes` y publicaciones con rutas adjuntas) se conservan para una futura experiencia Premium, pero no se presentan como seccion principal del MVP actual.
+El modulo **Explorar** esta activo para cuentas Free y Premium. `saved_routes` funciona como una biblioteca de marcadores: Mis rutas consulta la relacion con `routes`, permite quitar el marcador y copiar sus datos al formulario de una ruta nueva. Business queda excluido por interfaz y RLS.
+
+Para bases existentes, ejecutar despues de `saved_routes_migration.sql`:
+
+`supabase/saved_routes_license_access_migration.sql`
 
 
 ## Google Maps
@@ -335,6 +339,12 @@ La integracion inicial de mapas usa Google Maps Embed en el detalle de rutas, me
 `VITE_GOOGLE_MAPS_EMBED_KEY`
 
 Nota para publicacion: esta clave debe quedar restringida en Google Cloud a la API **Maps Embed API** y al dominio real de MotoCare. Para desarrollo local puede permitir `http://127.0.0.1:*` o `http://localhost:*`.
+
+Los perfiles Business guardan el enlace externo en `profiles.business_map_url`. La interfaz admite Google Maps, Waze y OpenStreetMap; las coordenadas `business_latitude` y `business_longitude` se completan internamente cuando pueden extraerse de la URL y ya no se solicitan manualmente.
+
+Para bases existentes, ejecutar:
+
+`supabase/business_map_url_migration.sql`
 
 ## Ajustes
 
@@ -392,6 +402,7 @@ El panel incluye:
 - administracion manual de licencias `Free` y `Premium`
 - listado de clubes con metricas
 - catalogo de mantenimientos sugeridos
+- revision de publicaciones de la tienda
 
 Las tarjetas superiores del panel son interactivas. Cada una abre la pestaña operativa relacionada y, cuando corresponde, aplica el filtro de licencia. Usuarios, motos y rutas llevan al detalle por usuario; clubes e invitaciones llevan a Clubes; catalogo lleva a la gestion de mantenimientos sugeridos.
 
@@ -412,9 +423,9 @@ Los planes de usuario disponibles son:
 - `free`: usuario base
 - `premium`: usuario premium
 
-El valor `pro` puede existir como dato heredado en bases antiguas y la UI lo trata como equivalente a `premium`.
+El valor heredado `pro` se migra definitivamente a `premium` mediante `supabase/license_definition_consolidation_migration.sql` y deja de ser un plan valido.
 
-La licencia `business` queda reservada para tiendas y aliados. Su alcance esta por definir y no se aplica en el MVP actual.
+La licencia `business` esta destinada a talleres, gruas, montallantas y aliados. En la etapa vigente permite exclusivamente publicaciones de servicios moderados; las ventas de productos estan deshabilitadas.
 
 Los estados disponibles son:
 
@@ -424,6 +435,19 @@ Los estados disponibles son:
 - `canceled`: licencia cancelada
 
 Desde `/app/admin`, en la vista **Usuarios**, un administrador puede cambiar plan y estado de forma manual. Esto no conecta pagos todavia; deja la estructura lista para que despues una pasarela como Wompi, Mercado Pago, PayU o Stripe actualice la misma tabla.
+
+### Revision administrativa del directorio de servicios
+
+La pestana **Tienda** muestra primero los servicios Business con estado `pending_review`. El administrador puede aprobarlos o rechazarlos; el rechazo exige un motivo.
+
+- Aprobar cambia el estado a `active` y publica el servicio en el directorio.
+- Rechazar cambia el estado a `rejected`, notifica al vendedor y no consume cupo.
+- Los borradores y las publicaciones pendientes no consumen cupo.
+- Solo Business puede publicar y la categoria debe ser `services` con condicion `service`.
+- Free y Premium pueden consultar y contactar, pero no publicar.
+- Las ventas y compras dentro de MotoCare permanecen deshabilitadas.
+
+Para instalaciones existentes, ejecutar las migraciones de Marketplace en orden y finalizar con `supabase/license_definition_consolidation_migration.sql`.
 
 ## Pendiente futuro: modulo admin
 

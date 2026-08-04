@@ -8,7 +8,7 @@ create table if not exists public.marketplace_listings (
   id uuid primary key default gen_random_uuid(),
   seller_id uuid not null references public.profiles(id) on delete cascade,
   category text not null check (category in (
-    'motorcycles', 'parts', 'gear', 'services', 'premium-routes', 'packs'
+    'motorcycles', 'parts', 'gear', 'services', 'premium-routes'
   )),
   seller_type text not null default 'personal' check (seller_type in ('personal', 'business')),
   title text not null check (char_length(btrim(title)) between 5 and 120),

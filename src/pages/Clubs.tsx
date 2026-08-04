@@ -1,21 +1,28 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Camera, Crown, Edit3, Flag, Loader2, Plus, Save, Shield, Trash2, UserPlus, Users } from 'lucide-react'
+import { Camera, ChevronDown, Crown, Edit3, Flag, Loader2, MapPinned, MessageCircle, Plus, Save, Send, Shield, Trash2, UserPlus, Users } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ImageViewer } from '@/components/ImageViewer'
+import { ColombiaLocationFields } from '@/components/ColombiaLocationFields'
+import { ClubSelector } from '@/features/clubs/components/ClubSelector'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
-import type { Club, ClubInvitation, ClubMemberWithProfile, Profile } from '@/types/database'
+import type { Club, ClubInvitation, ClubMemberWithProfile, ClubPostWithAuthor, Profile, RoutePlan } from '@/types/database'
 
 type ClubForm = {
   name: string
   city: string
+  department_code: string
+  municipality_code: string
   description: string
+  acceptsJoinRequests: boolean
 }
 
 type MembershipRow = {
@@ -23,7 +30,7 @@ type MembershipRow = {
   clubs: Club | null
 }
 
-type InviteSearchProfile = Pick<Profile, 'id' | 'full_name' | 'username' | 'city' | 'avatar_url'>
+type InviteSearchProfile = Pick<Profile, 'id' | 'full_name' | 'username' | 'city' | 'avatar_url' | 'is_premium'>
 
 type ClubInvitationWithProfile = ClubInvitation & {
   profiles: {
@@ -31,13 +38,26 @@ type ClubInvitationWithProfile = ClubInvitation & {
     username: string | null
     city: string | null
     avatar_url: string | null
+    is_premium: boolean
   } | null
+}
+
+type ClubJoinRequestWithProfile = {
+  id: string
+  club_id: string
+  requester_id: string
+  status: 'pending' | 'accepted' | 'declined' | 'cancelled'
+  created_at: string
+  profiles: Pick<Profile, 'full_name' | 'username' | 'city' | 'avatar_url' | 'is_premium'> | null
 }
 
 const emptyClubForm: ClubForm = {
   name: '',
   city: '',
+  department_code: '',
+  municipality_code: '',
   description: '',
+  acceptsJoinRequests: false,
 }
 
 const sanitizeFileName = (name: string) => name.toLowerCase().replace(/[^a-z0-9.]+/g, '-')
@@ -59,22 +79,33 @@ function roleLabel(role: ClubMemberWithProfile['role']) {
 }
 
 export function Clubs() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const { user, profile, refreshProfile } = useAuth()
   const userId = user?.id
   const { effectivePlan, isLoadingSubscription } = useSubscription()
   const [clubs, setClubs] = useState<Club[]>([])
+  const [discoveredClubs, setDiscoveredClubs] = useState<Club[]>([])
   const [members, setMembers] = useState<ClubMemberWithProfile[]>([])
   const [pendingInvitations, setPendingInvitations] = useState<ClubInvitationWithProfile[]>([])
+  const [pendingJoinRequests, setPendingJoinRequests] = useState<ClubJoinRequestWithProfile[]>([])
+  const [clubPosts, setClubPosts] = useState<ClubPostWithAuthor[]>([])
+  const [userRoutes, setUserRoutes] = useState<RoutePlan[]>([])
   const [selectedClubId, setSelectedClubId] = useState('')
   const [hasManualSelection, setHasManualSelection] = useState(false)
   const [createForm, setCreateForm] = useState<ClubForm>(emptyClubForm)
+  const [postContent, setPostContent] = useState('')
+  const [postRouteId, setPostRouteId] = useState('')
+  const [showDiscoveredClubs, setShowDiscoveredClubs] = useState(false)
+  const [requestedClubIds, setRequestedClubIds] = useState<Set<string>>(new Set())
   const [clubForm, setClubForm] = useState<ClubForm>(emptyClubForm)
   const [inviteUsername, setInviteUsername] = useState('')
   const [inviteSuggestions, setInviteSuggestions] = useState<InviteSearchProfile[]>([])
   const [isSearchingInvite, setIsSearchingInvite] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [isPublishingPost, setIsPublishingPost] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [showCreateClub, setShowCreateClub] = useState(false)
   const [viewerImage, setViewerImage] = useState<{ src: string; alt: string } | null>(null)
 
   const selectedClub = useMemo(
@@ -95,7 +126,7 @@ export function Clubs() {
   const ownedClubsCount = useMemo(() => clubs.filter((club) => club.owner_id === user?.id).length, [clubs, user?.id])
   const canCreateClub = effectivePlan === 'premium' && ownedClubsCount < 3
 
-  const showUpgradeForClubCreation = () => {
+  const showUpgradeForClubCreation = useCallback(() => {
     if (effectivePlan === 'business') {
       toast.info('Clubes para moteros', { description: 'La licencia Business es para negocios y no permite crear clubes.' })
       return
@@ -107,14 +138,21 @@ export function Clubs() {
     toast.info('Actualice su cuenta para poder crear un club', {
       description: 'Free solo puede unirse por invitación y pertenecer a un club.',
     })
-  }
+  }, [effectivePlan, ownedClubsCount])
+
+  useEffect(() => {
+    if (searchParams.get('action') !== 'create' || isLoadingSubscription) return
+    if (canCreateClub) setShowCreateClub(true)
+    else showUpgradeForClubCreation()
+    setSearchParams({}, { replace: true })
+  }, [canCreateClub, isLoadingSubscription, searchParams, setSearchParams, showUpgradeForClubCreation])
 
   const loadMembers = useCallback(async (clubId: string) => {
     if (!supabase) return
 
     const { data, error } = await supabase
       .from('club_members')
-      .select('*, profiles:user_id(full_name, username, city, avatar_url, is_public)')
+      .select('*, profiles:user_id(full_name, username, city, avatar_url, is_public, is_premium)')
       .eq('club_id', clubId)
       .order('created_at', { ascending: true })
 
@@ -130,7 +168,7 @@ export function Clubs() {
 
     const { data, error } = await supabase
       .from('club_invitations')
-      .select('*, profiles:invited_user_id(full_name, username, city, avatar_url)')
+      .select('*, profiles:invited_user_id(full_name, username, city, avatar_url, is_premium)')
       .eq('club_id', clubId)
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
@@ -141,6 +179,49 @@ export function Clubs() {
       setPendingInvitations((data ?? []) as ClubInvitationWithProfile[])
     }
   }, [])
+
+  const loadClubPosts = useCallback(async (clubId: string) => {
+    if (!supabase) return
+
+    const { data, error } = await supabase
+      .from('club_posts')
+      .select('*, profiles:author_id(full_name, username, avatar_url, is_premium), clubs:club_id(name, image_url), routes:route_id(*), club_post_attendees(user_id, created_at, profiles:user_id(full_name, username, avatar_url, is_premium))')
+      .eq('club_id', clubId)
+      .order('created_at', { ascending: false })
+      .limit(100)
+
+    if (error) {
+      toast.error('No pudimos cargar los mensajes del club', { description: error.message })
+    } else {
+      setClubPosts((data ?? []) as unknown as ClubPostWithAuthor[])
+    }
+  }, [])
+
+  const loadJoinRequests = useCallback(async (clubId: string) => {
+    if (!supabase) return
+    const { data, error } = await supabase
+      .from('club_join_requests')
+      .select('*, profiles:requester_id(full_name, username, city, avatar_url, is_premium)')
+      .eq('club_id', clubId)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true })
+
+    if (!error) setPendingJoinRequests((data ?? []) as unknown as ClubJoinRequestWithProfile[])
+  }, [])
+
+  useEffect(() => {
+    if (!supabase || !userId) {
+      setUserRoutes([])
+      return
+    }
+
+    void supabase
+      .from('routes')
+      .select('*')
+      .eq('owner_id', userId)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => setUserRoutes((data ?? []) as RoutePlan[]))
+  }, [userId])
 
   const loadClubs = useCallback(async () => {
     if (!supabase || !userId) return
@@ -182,6 +263,28 @@ export function Clubs() {
   }, [loadClubs])
 
   useEffect(() => {
+    if (!supabase) return
+    void supabase
+      .from('clubs')
+      .select('*')
+      .eq('moderation_status', 'active')
+      .eq('accepts_join_requests', true)
+      .order('created_at', { ascending: false })
+      .limit(12)
+      .then(({ data }) => setDiscoveredClubs((data ?? []) as Club[]))
+  }, [])
+
+  useEffect(() => {
+    if (!supabase || !userId) return
+    void supabase
+      .from('club_join_requests')
+      .select('club_id')
+      .eq('requester_id', userId)
+      .eq('status', 'pending')
+      .then(({ data }) => setRequestedClubIds(new Set((data ?? []).map((request) => request.club_id as string))))
+  }, [userId])
+
+  useEffect(() => {
     if (hasManualSelection || clubs.length === 0) return
     const primaryClub = clubs.find((club) => club.id === profile?.primary_club_id)
     if (primaryClub && selectedClubId !== primaryClub.id) {
@@ -194,17 +297,24 @@ export function Clubs() {
       setClubForm(emptyClubForm)
       setInviteSuggestions([])
       setPendingInvitations([])
+      setPendingJoinRequests([])
+      setClubPosts([])
       return
     }
 
     setClubForm({
       name: selectedClub.name,
       city: selectedClub.city ?? '',
+      department_code: selectedClub.department_code ?? '',
+      municipality_code: selectedClub.municipality_code ?? '',
       description: selectedClub.description ?? '',
+      acceptsJoinRequests: selectedClub.accepts_join_requests,
     })
     void loadMembers(selectedClub.id)
     void loadPendingInvitations(selectedClub.id)
-  }, [loadMembers, loadPendingInvitations, selectedClub])
+    void loadClubPosts(selectedClub.id)
+    void loadJoinRequests(selectedClub.id)
+  }, [loadClubPosts, loadJoinRequests, loadMembers, loadPendingInvitations, selectedClub])
 
   useEffect(() => {
     if (!supabase || !selectedClub || !canManageSelectedClub) {
@@ -269,16 +379,11 @@ export function Clubs() {
 
     setIsSaving(true)
 
-    const { data: club, error } = await supabase
-      .from('clubs')
-      .insert({
-        owner_id: user.id,
-        name: createForm.name.trim(),
-        city: createForm.city.trim() || null,
-        description: createForm.description.trim() || null,
-      })
-      .select('*')
-      .single()
+    const { data: club, error } = await supabase.rpc('create_club', {
+      club_name: createForm.name.trim(),
+      club_city: createForm.city.trim() || null,
+      club_description: createForm.description.trim() || null,
+    })
 
     if (error || !club) {
       toast.error('No pudimos crear el club', { description: error?.message })
@@ -286,27 +391,113 @@ export function Clubs() {
       return
     }
 
-    const createdClub = club as Club
-    const { error: memberError } = await supabase.from('club_members').insert({
-      club_id: createdClub.id,
-      user_id: user.id,
-      role: 'owner',
-    })
-
-    if (memberError) {
-      toast.error('El club se creo, pero no pudimos agregarte como miembro', { description: memberError.message })
-    } else {
-      setClubs((current) => [createdClub, ...current])
-      setHasManualSelection(true)
-      setSelectedClubId(createdClub.id)
-      if (!profile?.primary_club_id) {
-        await setPrimaryClub(createdClub)
-      }
-      setCreateForm(emptyClubForm)
-      toast.success('Club creado', { description: 'Ya puedes invitar miembros.' })
+    let createdClub = club as Club
+    if (createForm.acceptsJoinRequests || createForm.municipality_code) {
+      const { data: configuredClub } = await supabase
+        .from('clubs')
+        .update({
+          accepts_join_requests: createForm.acceptsJoinRequests,
+          department_code: createForm.department_code || null,
+          municipality_code: createForm.municipality_code || null,
+        })
+        .eq('id', createdClub.id)
+        .select('*')
+        .single()
+      if (configuredClub) createdClub = configuredClub as Club
     }
+    setClubs((current) => [createdClub, ...current])
+    setHasManualSelection(true)
+    setSelectedClubId(createdClub.id)
+    if (!profile?.primary_club_id) {
+      await setPrimaryClub(createdClub)
+    }
+    setCreateForm(emptyClubForm)
+    setShowCreateClub(false)
+    toast.success('Club creado', { description: 'Ya puedes invitar miembros.' })
 
     setIsSaving(false)
+  }
+
+  const publishClubPost = async (event: FormEvent) => {
+    event.preventDefault()
+    if (!supabase || !user || !selectedClub) return
+
+    const content = postContent.trim()
+    if (!content && !postRouteId) {
+      toast.info('Escribe un mensaje o selecciona una ruta')
+      return
+    }
+
+    setIsPublishingPost(true)
+    const { error } = await supabase.from('club_posts').insert({
+      club_id: selectedClub.id,
+      author_id: user.id,
+      content: content || 'Compartió una ruta con el club.',
+      route_id: postRouteId || null,
+    })
+
+    if (error) {
+      toast.error('No pudimos publicar en el club', { description: error.message })
+    } else {
+      setPostContent('')
+      setPostRouteId('')
+      await loadClubPosts(selectedClub.id)
+      toast.success('Mensaje publicado para el club')
+    }
+    setIsPublishingPost(false)
+  }
+
+  const deleteClubPost = async (post: ClubPostWithAuthor) => {
+    if (!supabase || !selectedClub || !user) return
+    const canDelete = post.author_id === user.id || canManageSelectedClub
+    if (!canDelete) return
+
+    const { error } = await supabase.from('club_posts').delete().eq('id', post.id).eq('club_id', selectedClub.id)
+    if (error) {
+      toast.error('No pudimos eliminar el mensaje', { description: error.message })
+    } else {
+      setClubPosts((current) => current.filter((item) => item.id !== post.id))
+    }
+  }
+
+  const requestClubMembership = async (club: Club) => {
+    if (!supabase) return
+    const { error } = await supabase.rpc('request_club_membership', { target_club_id: club.id })
+    if (error) {
+      toast.error('No pudimos enviar la solicitud', { description: error.message })
+    } else {
+      setRequestedClubIds((current) => new Set(current).add(club.id))
+      toast.success('Solicitud enviada', { description: `Los administradores de ${club.name} podrán revisarla.` })
+    }
+  }
+
+  const reviewJoinRequest = async (request: ClubJoinRequestWithProfile, decision: 'accepted' | 'declined') => {
+    if (!supabase || !selectedClub) return
+    const { error } = await supabase.rpc('review_club_join_request', {
+      target_request_id: request.id,
+      decision,
+    })
+    if (error) {
+      toast.error('No pudimos revisar la solicitud', { description: error.message })
+    } else {
+      await Promise.all([loadJoinRequests(selectedClub.id), loadMembers(selectedClub.id)])
+      toast.success(decision === 'accepted' ? 'Miembro admitido' : 'Solicitud rechazada')
+    }
+  }
+
+  const toggleRideAttendance = async (post: ClubPostWithAuthor) => {
+    if (!supabase || !user || !selectedClub) return
+    const isAttending = post.club_post_attendees.some((attendee) => attendee.user_id === user.id)
+    const query = isAttending
+      ? supabase.from('club_post_attendees').delete().eq('post_id', post.id).eq('user_id', user.id)
+      : supabase.from('club_post_attendees').insert({ post_id: post.id, user_id: user.id })
+    const { error } = await query
+
+    if (error) {
+      toast.error('No pudimos actualizar tu asistencia', { description: error.message })
+    } else {
+      await loadClubPosts(selectedClub.id)
+    }
   }
 
   const updateClub = async (event: FormEvent) => {
@@ -325,7 +516,10 @@ export function Clubs() {
       .update({
         name: clubForm.name.trim(),
         city: clubForm.city.trim() || null,
+        department_code: clubForm.department_code || null,
+        municipality_code: clubForm.municipality_code || null,
         description: clubForm.description.trim() || null,
+        accepts_join_requests: clubForm.acceptsJoinRequests,
       })
       .eq('id', selectedClub.id)
       .select('*')
@@ -336,6 +530,9 @@ export function Clubs() {
     } else if (data) {
       const updatedClub = data as Club
       setClubs((current) => current.map((club) => (club.id === updatedClub.id ? updatedClub : club)))
+      setDiscoveredClubs((current) => updatedClub.accepts_join_requests
+        ? [updatedClub, ...current.filter((club) => club.id !== updatedClub.id)]
+        : current.filter((club) => club.id !== updatedClub.id))
       toast.success('Club actualizado')
     }
 
@@ -407,7 +604,7 @@ export function Clubs() {
       return
     }
 
-    const profile = foundProfile as Pick<Profile, 'id' | 'full_name' | 'username' | 'city' | 'avatar_url' | 'is_public'>
+    const profile = foundProfile as Pick<Profile, 'id' | 'full_name' | 'username' | 'city' | 'avatar_url' | 'is_public' | 'is_premium'>
 
     const { data: existingMember } = await supabase
       .from('club_members')
@@ -592,84 +789,79 @@ export function Clubs() {
       <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
         <div className="min-w-0">
           <h1 className="text-xl font-bold sm:text-2xl">Clubes</h1>
-          <p className="text-sm leading-6 text-gray-400 sm:text-base">Crea clubes, administra miembros y prepara espacios privados para rodadas.</p>
+          <p className="text-sm leading-6 text-gray-400 sm:text-base">Descubre comunidades, administra tus clubes y organiza próximas rodadas.</p>
         </div>
+        <Button
+          type="button"
+          size="icon"
+          className="h-12 w-12 shrink-0 rounded-full bg-moto-orange text-moto-darker shadow-lg shadow-moto-orange/20 hover:bg-moto-orange-dark"
+          aria-label="Crear un club nuevo"
+          title="Crear un club nuevo"
+          onClick={() => {
+            if (canCreateClub) setShowCreateClub(true)
+            else showUpgradeForClubCreation()
+          }}
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <div className="order-2 space-y-4 lg:order-1">
-          <Card className="border-white/5 bg-moto-gray py-0">
-            <CardContent className="p-4">
-              <h2 className="mb-3 font-semibold">Mis clubes</h2>
-              {clubs.length > 0 ? (
-                <div className="space-y-2">
-                  {clubs.map((club) => (
-                    <button
-                      key={club.id}
-                      type="button"
-                      className={`flex w-full items-center gap-3 rounded-xl p-3 text-left transition-colors ${selectedClub?.id === club.id ? 'bg-moto-orange text-moto-darker' : 'bg-moto-darker hover:bg-white/5'}`}
-                      onClick={() => {
-                        setHasManualSelection(true)
-                        setSelectedClubId(club.id)
-                      }}
-                    >
-                      <Avatar className="h-10 w-10 bg-moto-gray">
-                        <AvatarImage src={club.image_url ?? undefined} />
-                        <AvatarFallback>{initials(club.name)}</AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0">
-                        <div className="flex min-w-0 items-center gap-2">
-                          <p className="truncate font-medium">{club.name}</p>
-                          {club.id === profile?.primary_club_id && (
-                            <Badge className="shrink-0 bg-white/20 text-[10px] text-inherit">Predeterminado</Badge>
-                          )}
-                        </div>
-                        <p className={`truncate text-xs ${selectedClub?.id === club.id ? 'text-moto-darker/70' : 'text-gray-500'}`}>{club.city || 'Ciudad sin definir'}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-xl bg-moto-darker p-4 text-sm text-gray-400">Aun no perteneces a ningun club.</div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="border-white/5 bg-moto-gray py-0">
-            <CardContent className="p-4">
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                <h2 className="font-semibold">Crear club</h2>
-                <Badge className={canCreateClub ? 'bg-moto-orange text-moto-darker' : 'bg-white/10 text-gray-300'}>
-                  {effectivePlan === 'business' ? 'No aplica' : `${ownedClubsCount}/3`}
-                </Badge>
-              </div>
-              {!canCreateClub && (
-                <div className="mb-3 rounded-xl border border-moto-orange/20 bg-moto-orange/10 p-3 text-sm text-gray-200">
-                  {effectivePlan === 'business'
-                    ? 'La licencia Business es para negocios. No permite crear clubes ni operar como motero.'
-                    : 'Free solo puede unirse por invitación y pertenecer a un club. Crear clubes requiere Premium.'}
-                </div>
-              )}
-              <form className="space-y-3" onSubmit={createClub}>
-                <input disabled={!canCreateClub || isLoadingSubscription} className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white disabled:opacity-60" value={createForm.name} onChange={(event) => setCreateForm({ ...createForm, name: event.target.value })} placeholder="Nombre del club" />
-                <input disabled={!canCreateClub || isLoadingSubscription} className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white disabled:opacity-60" value={createForm.city} onChange={(event) => setCreateForm({ ...createForm, city: event.target.value })} placeholder="Ciudad" />
-                <textarea disabled={!canCreateClub || isLoadingSubscription} className="h-20 w-full resize-none rounded-lg border border-white/10 bg-moto-darker p-2 text-white disabled:opacity-60" value={createForm.description} onChange={(event) => setCreateForm({ ...createForm, description: event.target.value })} placeholder="Descripcion corta" />
-                <Button type="submit" disabled={isSaving || isLoadingSubscription} className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={(event) => {
-                  if (!canCreateClub) {
-                    event.preventDefault()
-                    showUpgradeForClubCreation()
-                  }
-                }}>
-                  {isSaving || isLoadingSubscription ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
-                  {canCreateClub ? 'Crear club' : 'Actualizar cuenta'}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+      <section className="mb-6" aria-labelledby="discover-clubs-title">
+        <div className="flex flex-col justify-between gap-3 rounded-2xl border border-white/5 bg-moto-gray p-4 sm:flex-row sm:items-center">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 id="discover-clubs-title" className="text-lg font-bold">Descubre clubes</h2>
+              {discoveredClubs.length > 0 && <Badge className="bg-moto-orange/15 text-moto-orange">{discoveredClubs.length}</Badge>}
+            </div>
+            <p className="text-sm text-gray-400">Clubes que actualmente aceptan solicitudes de ingreso.</p>
+          </div>
+          <Button type="button" variant="outline" className="shrink-0 border-white/10" aria-expanded={showDiscoveredClubs} aria-controls="discover-clubs-list" onClick={() => setShowDiscoveredClubs((current) => !current)}>
+            {showDiscoveredClubs ? 'Ocultar clubes' : 'Ver clubes'}
+            <ChevronDown className={`ml-2 h-4 w-4 transition-transform ${showDiscoveredClubs ? 'rotate-180' : ''}`} />
+          </Button>
         </div>
+        {showDiscoveredClubs && (discoveredClubs.length ? (
+          <div id="discover-clubs-list" className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {discoveredClubs.map((club) => (
+              <article key={club.id} className="rounded-2xl border border-white/5 bg-moto-gray p-4">
+                <div className="flex items-center gap-3"><Avatar className="h-11 w-11"><AvatarImage src={club.image_url ?? undefined} /><AvatarFallback>{initials(club.name)}</AvatarFallback></Avatar><div className="min-w-0"><h3 className="truncate font-semibold">{club.name}</h3><p className="truncate text-sm text-gray-500">{club.city || 'Ciudad sin definir'}</p></div></div>
+                <p className="mt-3 line-clamp-2 text-sm text-gray-400">{club.description || 'Comunidad motera en MotoCare.'}</p>
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={requestedClubIds.has(club.id) || clubs.some((item) => item.id === club.id)}
+                  className="mt-4 w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark"
+                  onClick={() => void requestClubMembership(club)}
+                >
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  {clubs.some((item) => item.id === club.id) ? 'Ya eres miembro' : requestedClubIds.has(club.id) ? 'Solicitud enviada' : 'Solicitar ingreso'}
+                </Button>
+              </article>
+            ))}
+          </div>
+        ) : <div id="discover-clubs-list" className="mt-3 rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-gray-400">No hay clubes aceptando solicitudes en este momento.</div>)}
+      </section>
 
-        {selectedClub ? (
-          <div className="order-1 space-y-5 lg:order-2">
+      {clubs.length > 0 ? (
+        <ClubSelector
+          clubs={clubs}
+          selectedId={selectedClub?.id ?? null}
+          primaryId={profile?.primary_club_id}
+          onSelect={(club) => {
+            setHasManualSelection(true)
+            setSelectedClubId(club.id)
+          }}
+          onSetPrimary={(club) => void setPrimaryClub(club)}
+        />
+      ) : (
+        <div className="mb-6 rounded-xl border border-white/5 bg-moto-gray p-4 text-sm text-gray-400">
+          <p className="font-semibold text-white">Encuentra tu comunidad</p>
+          <p className="mt-1">Descubre clubes, conoce otros moteros y participa en próximas salidas.</p>
+        </div>
+      )}
+
+      {selectedClub ? (
+          <div className="space-y-5">
             <Card className="border-white/5 bg-moto-gray py-0">
               <CardContent className="p-4 sm:p-5">
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
@@ -710,12 +902,12 @@ export function Clubs() {
                     </div>
                     <p className="text-gray-400">{selectedClub.city || 'Ciudad sin definir'}</p>
                     <p className="mt-3 text-sm leading-6 text-gray-300">{selectedClub.description || 'Club sin descripción todavía.'}</p>
-                    {canManageSelectedClub && (
+                    {(canManageSelectedClub || selectedClub.id !== profile?.primary_club_id) && (
                       <div className="mt-4 flex flex-wrap justify-center gap-2 sm:justify-start">
                         {selectedClub.id !== profile?.primary_club_id && (
                           <Button size="sm" variant="outline" className="border-white/10" onClick={() => void setPrimaryClub(selectedClub)}>
                             <Crown className="mr-2 h-4 w-4" />
-                            Usar por defecto
+                            Definir como principal
                           </Button>
                         )}
                         {selectedClub.owner_id === user?.id && (
@@ -739,6 +931,103 @@ export function Clubs() {
               </CardContent>
             </Card>
 
+            <Card className="border-white/5 bg-moto-gray py-0">
+              <CardContent className="p-4 sm:p-5">
+                <div className="mb-4">
+                  <h2 className="flex items-center gap-2 font-semibold">
+                    <MessageCircle className="h-5 w-5 text-moto-orange" />
+                    Muro exclusivo del club
+                  </h2>
+                  <p className="mt-1 text-sm text-gray-400">Solo los miembros pueden ver y publicar este contenido.</p>
+                </div>
+
+                <form className="rounded-2xl border border-white/5 bg-moto-darker p-3 sm:p-4" onSubmit={publishClubPost}>
+                  <textarea
+                    className="h-24 w-full resize-none bg-transparent text-sm text-white outline-none placeholder:text-gray-500"
+                    value={postContent}
+                    onChange={(event) => setPostContent(event.target.value)}
+                    placeholder="Escribe un mensaje para los miembros..."
+                  />
+                  <div className="mt-3 flex flex-col gap-3 border-t border-white/10 pt-3 sm:flex-row sm:items-center">
+                    <label className="flex min-w-0 flex-1 items-center gap-2 text-sm text-gray-400">
+                      <MapPinned className="h-4 w-4 shrink-0 text-moto-orange" />
+                      <select
+                        className="min-w-0 flex-1 rounded-lg border border-white/10 bg-moto-gray px-3 py-2 text-white"
+                        value={postRouteId}
+                        onChange={(event) => setPostRouteId(event.target.value)}
+                      >
+                        <option value="">Sin ruta adjunta</option>
+                        {userRoutes.map((route) => (
+                          <option key={route.id} value={route.id}>{route.title}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <Button type="submit" disabled={isPublishingPost} className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
+                      {isPublishingPost ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                      Publicar
+                    </Button>
+                  </div>
+                </form>
+
+                <div className="mt-4 space-y-3">
+                  {clubPosts.length > 0 ? clubPosts.map((post) => {
+                    const authorName = post.profiles?.full_name || post.profiles?.username || 'Motero MotoCare'
+                    return (
+                      <article key={post.id} className="rounded-2xl border border-white/5 bg-moto-darker p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <Avatar premium={post.profiles?.is_premium} className="h-10 w-10 bg-moto-gray">
+                              <AvatarImage src={post.profiles?.avatar_url ?? undefined} />
+                              <AvatarFallback>{initials(authorName)}</AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0">
+                              <p className="truncate font-medium">{authorName}</p>
+                              <p className="text-xs text-gray-500">{new Date(post.created_at).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })}</p>
+                            </div>
+                          </div>
+                          {(post.author_id === user?.id || canManageSelectedClub) && (
+                            <Button type="button" size="icon" variant="ghost" className="h-8 w-8 text-gray-500 hover:text-red-300" aria-label="Eliminar mensaje" onClick={() => void deleteClubPost(post)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                        <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-gray-200">{post.content}</p>
+                        {post.routes && (
+                          <div className="mt-4 rounded-xl border border-moto-orange/20 bg-moto-orange/10 p-3">
+                            <Link to={`/app/routes/${post.routes.id}`} className="flex items-center gap-3">
+                              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-moto-orange text-moto-darker">
+                                <MapPinned className="h-5 w-5" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate font-semibold text-white">{post.routes.title}</p>
+                                <p className="truncate text-xs text-gray-400">{post.routes.origin || 'Origen por definir'} → {post.routes.destination || 'Destino por definir'}</p>
+                              </div>
+                            </Link>
+                            <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-moto-orange/15 pt-3">
+                              <div className="flex min-w-0 items-center">
+                                {post.club_post_attendees.slice(0, 5).map((attendee) => {
+                                  const attendeeName = attendee.profiles?.full_name || attendee.profiles?.username || 'Motero'
+                                  return <Avatar key={attendee.user_id} premium={attendee.profiles?.is_premium} title={attendeeName} className="-ml-1 h-7 w-7 border-2 border-moto-darker first:ml-0"><AvatarImage src={attendee.profiles?.avatar_url ?? undefined} /><AvatarFallback className="text-[9px]">{initials(attendeeName)}</AvatarFallback></Avatar>
+                                })}
+                                <span className="ml-2 text-xs text-gray-300">{post.club_post_attendees.length} {post.club_post_attendees.length === 1 ? 'miembro va' : 'miembros van'}</span>
+                              </div>
+                              <Button type="button" size="sm" variant={post.club_post_attendees.some((attendee) => attendee.user_id === user?.id) ? 'default' : 'outline'} className={post.club_post_attendees.some((attendee) => attendee.user_id === user?.id) ? 'bg-moto-orange text-moto-darker' : 'border-moto-orange/30'} onClick={() => void toggleRideAttendance(post)}>
+                                {post.club_post_attendees.some((attendee) => attendee.user_id === user?.id) ? '✓ Voy' : 'Me apunto'}
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </article>
+                    )
+                  }) : (
+                    <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-gray-400">
+                      Sé el primero en compartir un mensaje o una ruta con el club.
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
             {canManageSelectedClub && (
               <Card className="border-white/5 bg-moto-gray py-0">
                 <CardContent className="p-4 sm:p-5">
@@ -748,8 +1037,22 @@ export function Clubs() {
                   </h2>
                   <form className="grid gap-3 md:grid-cols-2" onSubmit={updateClub}>
                     <input className="min-w-0 rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={clubForm.name} onChange={(event) => setClubForm({ ...clubForm, name: event.target.value })} placeholder="Nombre" />
-                    <input className="min-w-0 rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={clubForm.city} onChange={(event) => setClubForm({ ...clubForm, city: event.target.value })} placeholder="Ciudad" />
+                    <ColombiaLocationFields
+                      departmentCode={clubForm.department_code}
+                      municipalityCode={clubForm.municipality_code}
+                      className="grid gap-3 md:col-span-2 md:grid-cols-2"
+                      onChange={(location) => setClubForm((current) => ({
+                        ...current,
+                        department_code: location.departmentCode,
+                        municipality_code: location.municipalityCode,
+                        city: location.municipalityName,
+                      }))}
+                    />
                     <textarea className="h-20 resize-none rounded-lg border border-white/10 bg-moto-darker p-2 text-white md:col-span-2" value={clubForm.description} onChange={(event) => setClubForm({ ...clubForm, description: event.target.value })} placeholder="Descripcion" />
+                    <label className="flex items-center gap-2 rounded-lg border border-white/10 bg-moto-darker p-3 text-sm text-gray-200 md:col-span-2">
+                      <input type="checkbox" checked={clubForm.acceptsJoinRequests} onChange={(event) => setClubForm({ ...clubForm, acceptsJoinRequests: event.target.checked })} className="h-4 w-4 accent-moto-orange" />
+                      Aceptar solicitudes de ingreso
+                    </label>
                     <Button type="submit" disabled={isSaving} className="md:col-span-2 bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
                       {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                       Guardar cambios
@@ -795,7 +1098,7 @@ export function Clubs() {
                                       setInviteSuggestions([])
                                     }}
                                   >
-                                    <Avatar className="h-9 w-9 bg-moto-gray">
+                                    <Avatar premium={suggestion.is_premium} className="h-9 w-9 bg-moto-gray">
                                       <AvatarImage src={suggestion.avatar_url ?? undefined} />
                                       <AvatarFallback>{initials(suggestionName)}</AvatarFallback>
                                     </Avatar>
@@ -825,7 +1128,7 @@ export function Clubs() {
                     return (
                       <div key={member.id} className="flex flex-col gap-3 rounded-xl bg-moto-darker p-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex min-w-0 items-center gap-3">
-                          <Avatar className="h-10 w-10 bg-moto-gray">
+                          <Avatar premium={member.profiles?.is_premium} className="h-10 w-10 bg-moto-gray">
                             <AvatarImage src={member.profiles?.avatar_url ?? undefined} />
                             <AvatarFallback>{initials(memberName)}</AvatarFallback>
                           </Avatar>
@@ -847,6 +1150,32 @@ export function Clubs() {
                   })}
                 </div>
 
+                {canManageSelectedClub && pendingJoinRequests.length > 0 && (
+                  <div className="mt-6 border-t border-white/10 pt-5">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <h3 className="font-semibold">Solicitudes de ingreso</h3>
+                      <Badge className="bg-moto-orange/15 text-moto-orange">{pendingJoinRequests.length}</Badge>
+                    </div>
+                    <div className="space-y-3">
+                      {pendingJoinRequests.map((request) => {
+                        const requesterName = request.profiles?.full_name || request.profiles?.username || 'Motero MotoCare'
+                        return (
+                          <div key={request.id} className="flex flex-col gap-3 rounded-xl bg-moto-darker p-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex min-w-0 items-center gap-3">
+                              <Avatar premium={request.profiles?.is_premium} className="h-10 w-10 bg-moto-gray"><AvatarImage src={request.profiles?.avatar_url ?? undefined} /><AvatarFallback>{initials(requesterName)}</AvatarFallback></Avatar>
+                              <div className="min-w-0"><p className="truncate font-medium">{requesterName}</p><p className="truncate text-xs text-gray-500">{request.profiles?.city || 'Ciudad sin definir'}</p></div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button size="sm" className="bg-moto-orange text-moto-darker" onClick={() => void reviewJoinRequest(request, 'accepted')}>Aceptar</Button>
+                              <Button size="sm" variant="outline" className="border-white/10" onClick={() => void reviewJoinRequest(request, 'declined')}>Rechazar</Button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {canManageSelectedClub && pendingInvitations.length > 0 && (
                   <div className="mt-6 border-t border-white/10 pt-5">
                     <div className="mb-3 flex items-center justify-between gap-3">
@@ -859,7 +1188,7 @@ export function Clubs() {
                         return (
                           <div key={invitation.id} className="flex flex-col gap-3 rounded-xl bg-moto-darker p-3 sm:flex-row sm:items-center sm:justify-between">
                             <div className="flex min-w-0 items-center gap-3">
-                              <Avatar className="h-10 w-10 bg-moto-gray">
+                              <Avatar premium={invitation.profiles?.is_premium} className="h-10 w-10 bg-moto-gray">
                                 <AvatarImage src={invitation.profiles?.avatar_url ?? undefined} />
                                 <AvatarFallback>{initials(invitedName)}</AvatarFallback>
                               </Avatar>
@@ -888,7 +1217,56 @@ export function Clubs() {
             </CardContent>
           </Card>
         )}
-      </div>
+      <Dialog open={showCreateClub} onOpenChange={(open) => {
+        setShowCreateClub(open)
+        if (!open && !isSaving) setCreateForm(emptyClubForm)
+      }}>
+        <DialogContent className="max-w-md border-white/10 bg-moto-gray text-white">
+          <DialogHeader>
+            <div className="mb-1 flex items-center gap-3">
+              <div className="grid h-11 w-11 place-items-center rounded-full bg-moto-orange/15 text-moto-orange">
+                <Users className="h-5 w-5" />
+              </div>
+              <div>
+                <DialogTitle>Nuevo club</DialogTitle>
+                <Badge className="mt-2 bg-moto-orange/15 text-moto-orange">{ownedClubsCount}/3 creados</Badge>
+              </div>
+            </div>
+            <DialogDescription className="text-left text-gray-400">
+              Dale una identidad a tu comunidad. Podrás agregar una imagen e invitar miembros después de crearla.
+            </DialogDescription>
+          </DialogHeader>
+          <form className="space-y-4" onSubmit={createClub}>
+            <label className="block space-y-1.5 text-sm font-medium">
+              <span>Nombre del club</span>
+              <input autoFocus className="w-full rounded-xl border border-white/10 bg-moto-darker px-3 py-2.5 text-white outline-none focus:border-moto-orange" value={createForm.name} onChange={(event) => setCreateForm({ ...createForm, name: event.target.value })} placeholder="Ej. Moteros de Bogotá" />
+            </label>
+            <ColombiaLocationFields
+              departmentCode={createForm.department_code}
+              municipalityCode={createForm.municipality_code}
+              className="grid gap-4"
+              onChange={(location) => setCreateForm((current) => ({
+                ...current,
+                department_code: location.departmentCode,
+                municipality_code: location.municipalityCode,
+                city: location.municipalityName,
+              }))}
+            />
+            <label className="block space-y-1.5 text-sm font-medium">
+              <span>Descripción</span>
+              <textarea className="h-24 w-full resize-none rounded-xl border border-white/10 bg-moto-darker px-3 py-2.5 text-white outline-none focus:border-moto-orange" value={createForm.description} onChange={(event) => setCreateForm({ ...createForm, description: event.target.value })} placeholder="¿Qué identifica a este club?" />
+            </label>
+            <label className="flex items-start gap-3 rounded-xl border border-white/10 bg-moto-darker p-3 text-sm">
+              <input type="checkbox" checked={createForm.acceptsJoinRequests} onChange={(event) => setCreateForm({ ...createForm, acceptsJoinRequests: event.target.checked })} className="mt-0.5 h-4 w-4 accent-moto-orange" />
+              <span><strong className="block text-white">Aceptar solicitudes de ingreso</strong><span className="text-gray-400">Los administradores decidirán quién entra al club.</span></span>
+            </label>
+            <Button type="submit" disabled={isSaving || isLoadingSubscription} className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
+              {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+              Crear club
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
       <ImageViewer
         src={viewerImage?.src ?? null}
         alt={viewerImage?.alt}

@@ -18,7 +18,7 @@ Funciones disponibles:
 - ver mantenimientos recientes
 - acceder rapidamente a registrar servicio, programar pendiente, Hoja de vida y Mi perfil
 
-Las secciones **Rutas**, **Comunidad**, **Clubes** y **Tienda** quedan separadas como funciones Premium.
+Las cuentas Free y Premium acceden a la comunidad y pueden descubrir y guardar rutas. Premium habilita GPX propios, compartir rutas, documentos, informes y hasta tres clubes. **Business** es una cuenta comercial separada y no accede a los modulos personales del motero; su inicio muestra Servicios, Perfil del negocio y Notificaciones comerciales.
 
 ## Hoja de vida
 
@@ -184,7 +184,7 @@ Todas las invitaciones pendientes aparecen en **Inicio**, dentro de **Notificaci
 
 ## Rutas
 
-El modulo **Rutas** permite crear rutas manuales sin usar GPS ni mapas pagos en esta fase del MVP. En la arquitectura actual queda agrupado como funcionalidad Premium.
+El modulo **Rutas** permite a Free y Premium crear rutas personales, descubrir recorridos comunitarios y mantener una biblioteca de rutas guardadas. Premium agrega la carga de GPX propios y la posibilidad de compartir rutas con la comunidad.
 
 Funciones disponibles:
 
@@ -209,6 +209,18 @@ Funciones disponibles:
 
 Los bloques **Rutas**, **Km**, **Compartidas** y **Hechas** abren un detalle filtrado. Desde ese resumen se puede entrar al detalle completo de una ruta.
 - cambiar el estado de una ruta propia
+
+### Mapas y archivos GPX
+
+Los mapas de MotoCare son informativos y no reemplazan una aplicacion de navegacion giro a giro.
+
+- El trazado naranja representa el recorrido completo del GPX.
+- **Mostrar mi ubicacion** solicita permiso de GPS y actualiza la posicion mientras MotoCare permanece visible.
+- El tramo verde y el porcentaje indican un avance aproximado calculado contra el punto mas cercano del trazado.
+- MotoCare muestra una alerta cuando la ubicacion esta a mas de 500 metros del GPX.
+- **Abrir con otra app** muestra primero una explicacion y luego comparte el GPX con una aplicacion compatible.
+- Si el navegador no permite compartir archivos, MotoCare descarga el GPX para abrirlo manualmente.
+- Al cambiar a otra aplicacion, el seguimiento de MotoCare puede pausarse. Al regresar, se debe pulsar nuevamente **Mostrar mi ubicacion**.
 
 ## Comunidad
 
@@ -238,9 +250,21 @@ Si se adjunta una ruta privada a una publicacion, la app la marca como visible p
 
 Los bloques **Publicaciones**, **Mias** y **Rutas publicadas** abren el listado correspondiente. Al seleccionar un elemento, la pantalla se desplaza hasta la publicacion dentro del feed.
 
+### Rutas guardadas
+
+Desde **Descubrir rutas**, Free y Premium pueden guardar una ruta comunitaria. En **Mis rutas > Rutas guardadas** pueden:
+
+- ver el detalle;
+- quitarla de guardados;
+- usarla como base de una ruta nueva.
+
+Al usar una ruta guardada se copian origen, destino, distancia, duracion y recorrido. La nueva ruta comienza como privada y planeada, y el usuario define sus propias fechas y moto.
+
+La misma biblioteca aparece en el formulario **Nueva ruta** para escoger un recorrido antes de completar los datos.
+
 ## Centro de notificaciones
 
-Los bloques **Pendientes**, **Rutas**, **Clubes** y **Moderacion** funcionan como filtros directos del centro de notificaciones y llevan al listado correspondiente.
+Para Free y Premium, los bloques **Pendientes**, **Rutas**, **Clubes**, **Tienda** y **Moderacion** funcionan como filtros. Business solo ve pendientes, mensajes de servicios y moderacion comercial; la campana se actualiza en tiempo real y realiza una comprobacion adicional cada cinco minutos.
 
 Las imagenes de publicaciones aceptan archivos de imagen de hasta 5 MB cada una. En esta version se pueden adjuntar hasta 6 imagenes por publicacion.
 
@@ -263,9 +287,21 @@ En esta version, el fundador del club administra miembros. Los mensajes privados
 
 ## Explorar
 
-El modulo **Explorar** fue retirado de la navegacion activa. El descubrimiento de rutas publicas, rutas guardadas y contenido comunitario quedara reservado para licencias Premium en una etapa posterior.
+El modulo **Explorar** lista rutas publicadas por la comunidad. Free y Premium pueden consultarlas y guardarlas; Business no tiene acceso a rutas ni comunidad.
 
 Las rutas propias se administran desde **Rutas** y la hoja de vida de la moto desde **Hoja de vida**.
+
+## Directorio de servicios
+
+El directorio permite buscar talleres, gruas, montallantas y otros proveedores aprobados, y contactarlos mediante mensajes internos. Free y Premium pueden consultarlo. MotoCare no procesa compras, contrataciones ni pagos en esta etapa.
+
+Solo las cuentas **Business** pueden crear publicaciones de servicios. Pueden guardarlas como borrador o enviarlas a revision; un administrador debe aprobarlas antes de que sean visibles. Las ventas directas de motos, repuestos y accesorios permanecen deshabilitadas.
+
+Las categorias disponibles son **Grua**, **Taller de mecanica**, **Montallantas**, **Lavadero** y **Guia de ruta**. Un servicio puede estar **Activo**, **Inactivo** o **En promocion**. Los inactivos solo son visibles para su propietario y administradores.
+
+El propietario Business puede editar o eliminar sus servicios. El directorio permite filtrar por categoria, ciudad y estado. El nombre del proveedor abre su perfil comercial, donde se muestran descripcion, telefono, direccion, mapa general y mapas de los servicios publicados.
+
+La ubicacion se registra pegando un enlace de Google Maps, Waze u OpenStreetMap. MotoCare valida el proveedor, extrae coordenadas cuando estan presentes y conserva un boton para abrir la ubicacion en la aplicacion externa. Los enlaces cortos pueden usar la direccion como respaldo para la vista previa.
 
 ## Ajustes
 

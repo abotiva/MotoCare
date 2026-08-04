@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { MotoCareLogo } from '@/components/MotoCareLogo'
+import { useAuth } from '@/contexts/AuthContext'
 
 const navItems = [
   ['Funcionalidades', 'funcionalidades'],
@@ -42,7 +43,7 @@ const ecosystem = [
   { icon: MapPinned, title: 'Rutas', description: 'Planea recorridos y descubre nuevas experiencias.' },
   { icon: Users, title: 'Clubes', description: 'Conecta con grupos que comparten tu pasión.' },
   { icon: MessageCircle, title: 'Comunidad', description: 'Comparte historias, aprendizajes y recomendaciones.' },
-  { icon: ShoppingBag, title: 'Marketplace', description: 'Encuentra motos, repuestos, equipamiento y servicios.' },
+  { icon: ShoppingBag, title: 'Servicios', description: 'Encuentra talleres, gruas, montallantas y otros proveedores para motociclistas.' },
 ]
 
 const plans = [
@@ -53,28 +54,29 @@ const plans = [
   },
   {
     name: 'Premium',
-    description: 'Para moteros que quieren más control y experiencias.',
-    features: ['Varias motos en Mi Garage', 'Elige tu moto principal', 'Todo lo incluido en Free', 'Carga privada de documentos', 'Informes de mantenimiento y gastos', 'Carga de archivos GPX', 'Creación de clubes y publicaciones'],
+    description: 'Más control sobre tus motos y más herramientas para vivir la comunidad.',
+    features: ['Hasta 3 motos en Mi Garage', 'Un reemplazo de moto por año', 'Informes de mantenimiento y gastos', 'Carga de archivos GPX', 'Comunidad y hasta 3 clubes', 'Hasta 5 rutas Premium por mes'],
     featured: true,
   },
   {
     name: 'Business',
     description: 'Para negocios que publican en el ecosistema.',
-    features: ['Perfil comercial', 'Publicaciones comerciales', 'Gestión orientada al marketplace', 'Identificación visible como negocio'],
+    features: ['Perfil comercial', 'Publicación de servicios moderados', 'Directorio de talleres y asistencia', 'Cuenta separada de las funciones Premium'],
   },
 ]
 
 const faqs = [
   ['¿MotoCare es gratis?', 'Sí. El plan Free permite empezar la hoja de vida, registrar mantenimientos y crear recordatorios.'],
-  ['¿Puedo registrar más de una moto?', 'El plan Free incluye una moto. Con Premium puedes administrar varias motos y elegir cuál será la principal.'],
+  ['¿Puedo registrar más de una moto?', 'El plan Free incluye una moto. Premium permite hasta tres y un solo reemplazo por año calendario si eliminas una.'],
   ['¿Qué documentos puedo guardar?', 'Puedes controlar SOAT, revisión tecnomecánica y otros documentos. La carga de archivos privados requiere Premium.'],
   ['¿Cómo funcionan los recordatorios?', 'Puedes programarlos por fecha, kilometraje o ambos. MotoCare compara esos datos con el estado actual de la moto.'],
   ['¿Mis documentos son privados?', 'Sí. Los archivos se consultan mediante acceso autenticado y enlaces temporales, no mediante URLs públicas permanentes.'],
-  ['¿Qué incluye Premium?', 'Incluye carga privada de documentos, informes, GPX y funciones ampliadas de clubes y publicaciones, según las restricciones actuales de la aplicación.'],
+  ['¿Qué incluye Premium?', 'Incluye hasta tres motos, documentos privados, informes, GPX, comunidad, hasta tres clubes y cinco rutas Premium por mes.'],
 ]
 
 export function LandingPage() {
   const navigate = useNavigate()
+  const { user, isLoading: isLoadingAuth } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
@@ -98,8 +100,14 @@ export function LandingPage() {
             {navItems.map(([label, id]) => <button key={id} type="button" onClick={() => scrollTo(id)} className="text-sm text-gray-300 hover:text-white">{label}</button>)}
           </div>
           <div className="hidden items-center gap-3 lg:flex">
-            <Button variant="ghost" onClick={() => navigate('/login')}>Iniciar sesión</Button>
-            <Button className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => navigate('/login?mode=signup')}>Crear cuenta gratis</Button>
+            {user ? (
+              <Button className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => navigate('/app/home')}>Continuar a MotoCare</Button>
+            ) : (
+              <>
+                <Button variant="ghost" onClick={() => navigate('/login')}>Iniciar sesión</Button>
+                <Button className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => navigate('/login?mode=signup')}>Registrarse</Button>
+              </>
+            )}
           </div>
           <button type="button" className="grid h-11 w-11 place-items-center rounded-xl hover:bg-white/5 lg:hidden" aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={menuOpen} onClick={() => setMenuOpen((current) => !current)}>
             {menuOpen ? <X /> : <Menu />}
@@ -108,7 +116,11 @@ export function LandingPage() {
         {menuOpen && (
           <div className="border-t border-white/10 bg-moto-darker p-4 lg:hidden">
             {navItems.map(([label, id]) => <button key={id} type="button" onClick={() => scrollTo(id)} className="block min-h-11 w-full rounded-xl px-3 text-left text-gray-300 hover:bg-white/5">{label}</button>)}
-            <div className="mt-3 grid gap-2"><Button variant="outline" onClick={() => navigate('/login')}>Iniciar sesión</Button><Button className="bg-moto-orange text-moto-darker" onClick={() => navigate('/login?mode=signup')}>Crear cuenta gratis</Button></div>
+            <div className="mt-3 grid gap-2">
+              {user
+                ? <Button className="bg-moto-orange text-moto-darker" onClick={() => navigate('/app/home')}>Continuar a MotoCare</Button>
+                : <><Button variant="outline" onClick={() => navigate('/login')}>Iniciar sesión</Button><Button className="bg-moto-orange text-moto-darker" onClick={() => navigate('/login?mode=signup')}>Registrarse</Button></>}
+            </div>
           </div>
         )}
       </nav>
@@ -119,12 +131,19 @@ export function LandingPage() {
           <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
             <div>
               <p className="font-semibold text-moto-orange">Tu moto. Tu historia. Tu ruta.</p>
-              <h1 className="mt-4 text-4xl font-bold leading-tight sm:text-5xl lg:text-7xl">Toda la historia de tu moto, siempre contigo.</h1>
-              <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-300">Registra mantenimientos, controla documentos, anticipa vencimientos y conserva la hoja de vida de tu moto desde un solo lugar.</p>
-              <p className="mt-3 max-w-2xl text-sm font-medium text-gray-400">Empieza con una moto en Free. Administra varias y define tu principal con Premium.</p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Button size="lg" className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => navigate('/login?mode=signup')}>Crear cuenta gratis <ArrowRight className="ml-2 h-5 w-5" /></Button>
-                <Button size="lg" variant="outline" className="border-white/20" onClick={() => scrollTo('como-funciona')}>Ver cómo funciona</Button>
+              <h1 className="mt-4 text-4xl font-bold leading-tight sm:text-5xl lg:text-7xl">Todo lo que vive un motero, en un solo lugar.</h1>
+              <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-300">Cuida tus motos, descubre nuevas rutas y comparte experiencias con clubes y moteros que viven la misma pasión.</p>
+              <p className="mt-3 max-w-2xl text-sm font-medium text-gray-400">MotoCare conecta tu moto, tus rutas y tu comunidad.</p>
+              <div className="mt-8 max-w-sm">
+                {user ? (
+                  <Button size="lg" className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => navigate('/app/home')}>Continuar a MotoCare <ArrowRight className="ml-2 h-5 w-5" /></Button>
+                ) : (
+                  <div className="rounded-2xl border border-white/10 bg-moto-darker/80 p-3 backdrop-blur">
+                    <Button size="lg" disabled={isLoadingAuth} className="w-full bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => navigate('/login')}>Iniciar sesión <ArrowRight className="ml-2 h-5 w-5" /></Button>
+                    <Button size="lg" disabled={isLoadingAuth} variant="ghost" className="mt-2 w-full text-white hover:bg-white/5" onClick={() => navigate('/login?mode=signup')}>Registrarse</Button>
+                  </div>
+                )}
+                <Button size="lg" variant="outline" className="mt-3 w-full border-white/20" onClick={() => scrollTo('pilares')}>Descubrir MotoCare</Button>
               </div>
             </div>
             <div className="relative mx-auto w-full max-w-xl">
@@ -134,6 +153,19 @@ export function LandingPage() {
               <div className="absolute -bottom-5 left-4 rounded-2xl border border-white/10 bg-moto-darker/95 p-4 shadow-xl sm:-left-5">
                 <p className="flex items-center gap-2 font-semibold"><ShieldCheck className="h-5 w-5 text-moto-orange" />Moto al día</p><p className="mt-1 text-xs text-gray-400">Próximo servicio programado</p>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="pilares" className="border-y border-white/5 bg-moto-darker py-16">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="text-center"><p className="text-sm font-semibold uppercase tracking-wider text-moto-orange">Un ecosistema para moteros</p><h2 className="mt-3 text-3xl font-bold sm:text-4xl">Tu moto, tus rutas y tu comunidad conectadas.</h2></div>
+            <div className="mt-10 grid gap-5 md:grid-cols-3">
+              {[
+                { icon: Bike, title: 'Mi Garage', description: 'Lleva el historial, los mantenimientos, documentos y gastos de tus motos.' },
+                { icon: MapPinned, title: 'Rutas', description: 'Descubre recorridos, crea tus propias rutas y compártelas con otros moteros.' },
+                { icon: Users, title: 'Comunidad', description: 'Únete a clubes, comparte experiencias y conecta con personas que viven la moto como tú.' },
+              ].map((pillar) => <article key={pillar.title} className="rounded-3xl border border-white/5 bg-moto-dark p-6"><pillar.icon className="h-8 w-8 text-moto-orange" /><h3 className="mt-8 text-2xl font-bold">{pillar.title}</h3><p className="mt-3 leading-7 text-gray-400">{pillar.description}</p></article>)}
             </div>
           </div>
         </section>
@@ -184,6 +216,23 @@ export function LandingPage() {
           </div>
         </section>
 
+        <section className="py-20">
+          <div className="mx-auto grid max-w-7xl gap-5 px-4 sm:px-6 lg:grid-cols-3 lg:px-8">
+            {[
+              { icon: Users, title: 'Tu club, siempre conectado.', description: 'Administra miembros, comparte rutas, publica avisos y mantén a tu comunidad informada.', cta: 'Explorar clubes' },
+              { icon: MapPinned, title: 'La próxima ruta empieza aquí.', description: 'Encuentra recorridos recomendados, conoce sus detalles y guarda tus favoritos.', cta: 'Descubrir rutas' },
+              { icon: MessageCircle, title: 'Rodar es mejor cuando se comparte.', description: 'Publica experiencias, comparte fotografías y conoce moteros cerca de ti.', cta: 'Conocer la comunidad' },
+            ].map((item) => (
+              <article key={item.title} className="flex flex-col rounded-3xl border border-white/5 bg-moto-darker p-6">
+                <item.icon className="h-8 w-8 text-moto-orange" />
+                <h2 className="mt-7 text-2xl font-bold">{item.title}</h2>
+                <p className="mt-3 flex-1 leading-7 text-gray-400">{item.description}</p>
+                <Button variant="outline" className="mt-7 w-full border-white/15" onClick={() => navigate('/login')}>{item.cta}</Button>
+              </article>
+            ))}
+          </div>
+        </section>
+
         <section id="planes" className="py-20">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="text-center"><p className="text-sm font-semibold uppercase tracking-wider text-moto-orange">Planes</p><h2 className="mt-3 text-3xl font-bold sm:text-4xl">Elige cómo vivir MotoCare.</h2></div>
@@ -194,7 +243,7 @@ export function LandingPage() {
               <table className="w-full min-w-[36rem] text-left text-sm">
                 <thead className="bg-moto-darker text-gray-300"><tr><th className="p-4">Mi Garage</th><th className="p-4">Free</th><th className="p-4">Premium</th><th className="p-4">Business</th></tr></thead>
                 <tbody className="divide-y divide-white/10">
-                  <tr><th className="p-4 font-medium">Motos registradas</th><td className="p-4">1 moto</td><td className="p-4">Varias motos</td><td className="p-4">No disponible</td></tr>
+                  <tr><th className="p-4 font-medium">Motos registradas</th><td className="p-4">1 moto</td><td className="p-4">Hasta 3 motos</td><td className="p-4">No disponible</td></tr>
                   <tr><th className="p-4 font-medium">Moto principal</th><td className="p-4">La única registrada</td><td className="p-4">Selección manual</td><td className="p-4">No aplica</td></tr>
                 </tbody>
               </table>

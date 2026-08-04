@@ -8,27 +8,27 @@ MotoCare debe tener tres niveles faciles de entender:
 
 - Gratis: entrada basica para que cualquier motero pruebe la app.
 - Premium: experiencia completa para el motero individual.
-- Business: herramientas comerciales para talleres, marcas, aliados, negocios o administradores de varias motos/personas.
+- Business: cuenta exclusivamente comercial para talleres, gruas, montallantas, marcas y aliados.
 
 La diferencia principal no debe ser solo "mas funciones", sino el tipo de usuario:
 
 - Gratis: uso personal limitado.
 - Premium: control completo de mis motos.
-- Business: gestion profesional de motos, clientes, clubes o negocio.
+- Business: presencia comercial y publicacion de servicios; no acumula beneficios Premium.
 
 ## Resumen comercial
 
 | Caracteristica | Gratis | Premium | Business |
 | --- | --- | --- | --- |
 | Tipo de usuario | Motero nuevo o curioso | Motero individual activo | Taller, club, negocio o gestor |
-| Motos registradas | 1 moto | Hasta 3 o 5 motos | Muchas o ilimitadas |
-| Historial de mantenimiento | Limitado | Completo | Completo por moto, cliente o miembro |
-| Recordatorios | Basicos | Avanzados por kilometraje y fecha | Avanzados para varias motos/personas |
-| Estadisticas | Basicas o no disponibles | Gastos, kilometraje y servicios | Reportes operativos y comparativos |
-| Rutas | Uso limitado | Rutas guardadas ilimitadas | Rutas y gestion para grupos/clubes |
-| Comunidad | Ver y participar | Participacion completa | Visibilidad destacada |
-| Clubes | Unirse a clubes | Crear y administrar clubes pequenos | Gestion avanzada de clubes grandes |
-| Marketplace | Ver publicaciones y comprar | Publicar como persona natural | Publicar como negocio, aliado o perfil comercial |
+| Motos registradas | 1 moto | Hasta 3 motos; un reemplazo por ano | No disponible |
+| Historial de mantenimiento | Basico | Completo | No disponible |
+| Recordatorios | Basicos | Avanzados por kilometraje y fecha | No disponible |
+| Estadisticas | Basicas o no disponibles | Gastos, kilometraje y servicios | No disponible |
+| Rutas | Rutas privadas, descubrir y guardar rutas comunitarias | Rutas, GPX, compartir y hasta 5 rutas Premium por mes | No disponible |
+| Comunidad | Ver y participar | Ver y participar | Sin acceso |
+| Clubes | Un club mediante invitacion | Crear/administrar hasta 3 clubes | Sin acceso |
+| Directorio de servicios | Consultar y contactar | Consultar y contactar | Publicar servicios moderados |
 | Perfil | Basico | Perfil mejorado | Perfil comercial/profesional |
 | Publicidad | Puede tener | Sin publicidad | Sin publicidad |
 | Soporte | Estandar | Prioritario | Prioritario/comercial |
@@ -47,16 +47,17 @@ Para usuarios que quieren probar MotoCare sin pagar.
 - Recordatorios basicos de mantenimiento.
 - Acceso a comunidad.
 - Ver rutas compartidas.
-- Ver marketplace.
-- Unirse a clubes.
+- Guardar rutas comunitarias, consultarlas en Mis rutas y usarlas como base de una ruta nueva.
+- Consultar el directorio de servicios.
+- Unirse a un club mediante invitacion.
 - Perfil basico.
 
 ### Limites sugeridos
 
 - No permitir mas de 1 moto.
 - Limitar historial visible o cantidad de registros activos.
-- Limitar rutas guardadas.
-- No permitir publicaciones de venta, pero si permitir ver y comprar en marketplace.
+- No limitar las rutas guardadas en la etapa actual.
+- No permitir publicaciones; sí consultar y contactar proveedores.
 - Mostrar invitacion a mejorar plan cuando el usuario llegue a un limite.
 - Puede incluir publicidad o mensajes promocionales internos.
 
@@ -72,14 +73,16 @@ Para el motero individual que quiere controlar bien sus motos, mantenimientos, r
 
 ### Beneficios
 
-- Hasta 3 o 5 motos registradas.
+- Hasta 3 motos registradas.
+- Si elimina una moto, solo puede registrar una moto de reemplazo por ano calendario (zona horaria America/Bogota).
 - Historial completo de mantenimientos.
 - Recordatorios avanzados por fecha y kilometraje.
 - Registro de gastos por mantenimiento.
 - Estadisticas de kilometraje, servicios y costos.
-- Rutas guardadas ilimitadas.
+- Rutas guardadas disponibles sin limite funcional, con opcion de ver, reutilizar y quitar.
 - Crear y administrar clubes pequenos.
-- Publicaciones en marketplace como persona natural.
+- Hasta 5 rutas Premium elegidas por mes.
+- Consulta y contacto con proveedores del directorio de servicios.
 - Perfil publico mejorado.
 - Sin publicidad.
 - Respaldo completo en la nube.
@@ -101,30 +104,32 @@ Para el motero individual que quiere controlar bien sus motos, mantenimientos, r
 
 ### Perfil
 
-Para talleres, clubes, negocios, marcas, aliados o usuarios que administran motos de otras personas o venden de forma comercial.
+Para talleres, gruas, montallantas, negocios, marcas y aliados que ofrecen servicios.
 
 ### Beneficios
 
-- Muchas motos registradas o motos ilimitadas segun la estrategia comercial.
-- Gestion de clientes, miembros o terceros.
-- Panel administrativo avanzado.
-- Roles de equipo: dueno, administrador y colaborador.
-- Reportes por moto, cliente, club o negocio.
-- Recordatorios de mantenimiento para varias motos/personas.
-- Historial completo por cliente o miembro.
-- Publicaciones comerciales en marketplace.
+- Publicaciones de servicios en el directorio, sujetas a revision administrativa.
 - Perfil comercial o profesional verificado.
-- Gestion de clubes grandes.
 - Mayor visibilidad dentro de la app.
 - Soporte prioritario/comercial.
-- Herramientas para taller: servicios realizados, proximos mantenimientos, historial por cliente.
 
 ### Diferenciadores frente a Premium
 
 - Premium es para administrar mis motos.
-- Business es para administrar motos, clientes, miembros o servicios de terceros, y para vender como negocio.
-- Incluye herramientas de negocio, reportes y roles de equipo.
-- Puede tener beneficios comerciales dentro de marketplace.
+- Business no es un nivel superior a Premium: es una cuenta de naturaleza diferente.
+- No incluye garaje, rutas personales, comunidad, clubes, documentos, informes ni notificaciones avanzadas.
+- Su funcion vigente es mantener un perfil comercial y publicar servicios.
+- Su perfil comercial incluye telefono, direccion y un enlace validado de Google Maps, Waze u OpenStreetMap. MotoCare extrae coordenadas cuando la URL las contiene y conserva un boton para abrir la aplicacion externa.
+- Puede administrar la categoria y el estado visible de cada servicio, editarlo o eliminarlo.
+- Su inicio, navegacion, ajustes y notificaciones se limitan a funciones comerciales: servicios, consultas, moderacion, perfil publico y configuracion.
+
+### Reglas vigentes del directorio
+
+- Gratis y Premium pueden consultar servicios y contactar proveedores.
+- Solo Business puede publicar servicios.
+- Cada publicacion pasa por revision administrativa antes de hacerse visible.
+- No hay ventas directas ni pasarela de pagos en esta etapa.
+- La contratacion y el pago se acuerdan externamente con el proveedor.
 
 ### Mensaje comercial
 
@@ -148,7 +153,7 @@ Funciones que conviene reservar:
 - estadisticas completas;
 - historial ilimitado;
 - multiples motos;
-- publicar ventas en marketplace;
+- publicar ventas en la tienda;
 - gestion de clubes;
 - reportes.
 

@@ -1,15 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Calendar, Edit3, Flag, Heart, Image as ImageIcon, Loader2, MapPin, MessageCircle, Plus, Route as RouteIcon, Send, Trash2, Users, X } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsContent } from '@/components/ui/tabs'
 import { ImageViewer } from '@/components/ImageViewer'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
@@ -24,6 +23,7 @@ type PublicProfileSummary = {
   city: string | null
   rider_type: string | null
   avatar_url: string | null
+  is_premium: boolean
   last_seen_at: string | null
 }
 type PeopleFilter = 'all' | 'online'
@@ -82,52 +82,6 @@ function formatRouteDates(route: RoutePlan) {
   return `Finaliza ${formatDate(route.end_date!)}`
 }
 
-function CompactMetricCard({
-  icon: Icon,
-  label,
-  mobileLabel,
-  value,
-  tone,
-  onClick,
-}: {
-  icon: LucideIcon
-  label: string
-  mobileLabel?: string
-  value: string | number
-  tone: 'orange' | 'green' | 'sky'
-  onClick: () => void
-}) {
-  const tones = {
-    orange: 'bg-moto-orange/20 text-moto-orange',
-    green: 'bg-green-500/20 text-green-300',
-    sky: 'bg-sky-500/20 text-sky-300',
-  }
-
-  return (
-    <Card className="h-full min-w-0 border-white/5 bg-moto-gray py-0 transition-colors hover:border-moto-orange/40 hover:bg-white/[0.04]">
-      <CardContent className="p-0">
-        <button
-          type="button"
-          className="flex w-full min-w-0 flex-col items-center gap-1.5 p-2 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-moto-orange sm:flex-row sm:gap-4 sm:p-4 sm:text-left"
-          onClick={onClick}
-          aria-label={`Ver detalle de ${label}`}
-        >
-          <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg sm:h-12 sm:w-12 sm:rounded-xl ${tones[tone]}`}>
-            <Icon className="h-4 w-4 sm:h-6 sm:w-6" />
-          </div>
-          <div className="min-w-0">
-            <p className="max-w-full truncate text-[11px] leading-tight text-gray-400 sm:text-sm">
-              <span className="sm:hidden">{mobileLabel ?? label}</span>
-              <span className="hidden sm:inline">{label}</span>
-            </p>
-            <p className="truncate text-base font-bold leading-tight sm:text-xl">{value}</p>
-          </div>
-        </button>
-      </CardContent>
-    </Card>
-  )
-}
-
 export function Community() {
   const { user, profile } = useAuth()
   const [posts, setPosts] = useState<PostWithAuthor[]>([])
@@ -159,6 +113,22 @@ export function Community() {
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null)
   const [viewerImage, setViewerImage] = useState<{ src: string; alt: string } | null>(null)
   const [selectedMetric, setSelectedMetric] = useState<CommunityMetric | null>(null)
+  const [postAuthorFilter, setPostAuthorFilter] = useState('all')
+  const [postDateFrom, setPostDateFrom] = useState('')
+  const [postDateTo, setPostDateTo] = useState('')
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  useEffect(() => {
+    if (isLoading || searchParams.get('action') !== 'post') return
+    window.requestAnimationFrame(() => {
+      document.getElementById('community-post-composer')?.focus()
+      document.getElementById('community-post-composer')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    })
+    setSearchParams((current) => {
+      current.delete('action')
+      return current
+    }, { replace: true })
+  }, [isLoading, searchParams, setSearchParams])
 
   const myPostsCount = useMemo(() => posts.filter((post) => post.author_id === user?.id).length, [posts, user?.id])
   const routePostsCount = useMemo(() => posts.filter((post) => post.route_id).length, [posts])
@@ -187,6 +157,19 @@ export function Community() {
     () => publicProfiles.filter((item) => peopleFilter === 'all' || isOnline(item.last_seen_at)),
     [peopleFilter, publicProfiles]
   )
+  const postAuthors = useMemo(() => {
+    const authors = new Map<string, string>()
+    posts.forEach((post) => {
+      authors.set(post.author_id, post.profiles?.full_name || post.profiles?.username || 'Motero MotoCare')
+    })
+    return [...authors.entries()].sort(([, a], [, b]) => a.localeCompare(b, 'es'))
+  }, [posts])
+  const filteredCommunityPosts = useMemo(() => posts.filter((post) => {
+    const publishedDate = post.created_at.slice(0, 10)
+    return (postAuthorFilter === 'all' || post.author_id === postAuthorFilter)
+      && (!postDateFrom || publishedDate >= postDateFrom)
+      && (!postDateTo || publishedDate <= postDateTo)
+  }), [postAuthorFilter, postDateFrom, postDateTo, posts])
 
   const loadFeed = async () => {
     if (!supabase) return
@@ -194,7 +177,7 @@ export function Community() {
 
     const { data, error } = await supabase
       .from('posts')
-      .select('*, profiles:author_id(full_name, username, city, avatar_url), routes:route_id(id, owner_id, title, origin, destination, distance_km, duration_minutes, start_date, end_date, visibility, status, created_at), post_images(id, post_id, owner_id, image_url, sort_order, created_at)')
+      .select('*, profiles:author_id(full_name, username, city, avatar_url, is_premium), routes:route_id(id, owner_id, title, origin, destination, distance_km, duration_minutes, start_date, end_date, visibility, status, created_at), post_images(id, post_id, owner_id, image_url, sort_order, created_at)')
       .order('created_at', { ascending: false })
       .limit(30)
 
@@ -301,7 +284,7 @@ export function Community() {
 
     const { data, error } = await supabase
       .from('club_posts')
-      .select('*, profiles:author_id(full_name, username, avatar_url), clubs:club_id(name, image_url), routes:route_id(id, owner_id, title, origin, destination, distance_km, duration_minutes, start_date, end_date, visibility, status, created_at)')
+      .select('*, profiles:author_id(full_name, username, avatar_url, is_premium), clubs:club_id(name, image_url), routes:route_id(id, owner_id, title, origin, destination, distance_km, duration_minutes, start_date, end_date, visibility, status, created_at)')
       .eq('club_id', clubId)
       .order('created_at', { ascending: false })
       .limit(40)
@@ -444,7 +427,7 @@ export function Community() {
 
       const { data: fullPost, error: fetchError } = await supabase
         .from('posts')
-        .select('*, profiles:author_id(full_name, username, city, avatar_url), routes:route_id(id, owner_id, title, origin, destination, distance_km, duration_minutes, start_date, end_date, visibility, status, created_at), post_images(id, post_id, owner_id, image_url, sort_order, created_at)')
+        .select('*, profiles:author_id(full_name, username, city, avatar_url, is_premium), routes:route_id(id, owner_id, title, origin, destination, distance_km, duration_minutes, start_date, end_date, visibility, status, created_at), post_images(id, post_id, owner_id, image_url, sort_order, created_at)')
         .eq('id', insertedPost.id)
         .single()
 
@@ -499,7 +482,7 @@ export function Community() {
       })
       .eq('id', post.id)
       .eq('author_id', user.id)
-      .select('*, profiles:author_id(full_name, username, city, avatar_url), routes:route_id(id, owner_id, title, origin, destination, distance_km, duration_minutes, start_date, end_date, visibility, status, created_at), post_images(id, post_id, owner_id, image_url, sort_order, created_at)')
+      .select('*, profiles:author_id(full_name, username, city, avatar_url, is_premium), routes:route_id(id, owner_id, title, origin, destination, distance_km, duration_minutes, start_date, end_date, visibility, status, created_at), post_images(id, post_id, owner_id, image_url, sort_order, created_at)')
       .single()
 
     if (error) {
@@ -626,7 +609,7 @@ export function Community() {
         author_id: user.id,
         content,
       })
-      .select('*, profiles:author_id(full_name, username, avatar_url)')
+      .select('*, profiles:author_id(full_name, username, avatar_url, is_premium)')
       .single()
 
     if (error) {
@@ -667,7 +650,7 @@ export function Community() {
         content: content || `Compartiendo ruta con el club: ${selectedClubRoute?.title}`,
         route_id: selectedClubRoute?.id ?? null,
       })
-      .select('*, profiles:author_id(full_name, username, avatar_url), clubs:club_id(name, image_url), routes:route_id(id, owner_id, title, origin, destination, distance_km, duration_minutes, start_date, end_date, visibility, status, created_at)')
+      .select('*, profiles:author_id(full_name, username, avatar_url, is_premium), clubs:club_id(name, image_url), routes:route_id(id, owner_id, title, origin, destination, distance_km, duration_minutes, start_date, end_date, visibility, status, created_at)')
       .single()
 
     if (error) {
@@ -691,18 +674,12 @@ export function Community() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl p-3 pb-24 sm:p-4 lg:p-6">
+    <div className="mx-auto w-full min-w-0 max-w-6xl overflow-x-hidden p-3 pb-24 sm:p-4 lg:p-6">
       <div className="mb-5 flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
         <div className="min-w-0">
           <h1 className="text-xl font-bold sm:text-2xl">Comunidad</h1>
           <p className="text-sm leading-6 text-gray-400 sm:text-base">Comparte rutas, mantenimientos, planes y aprendizajes con otros moteros.</p>
         </div>
-      </div>
-
-      <div className="mb-4 grid grid-cols-3 gap-2 sm:mb-5 sm:gap-4">
-        <CompactMetricCard icon={Users} label="Publicaciones" mobileLabel="Posts" value={posts.length} tone="orange" onClick={() => setSelectedMetric('posts')} />
-        <CompactMetricCard icon={Send} label="Mías" mobileLabel="Mías" value={myPostsCount} tone="green" onClick={() => setSelectedMetric('mine')} />
-        <CompactMetricCard icon={RouteIcon} label="Rutas publicadas" mobileLabel="Rutas" value={routePostsCount} tone="sky" onClick={() => setSelectedMetric('routes')} />
       </div>
 
       <Dialog open={selectedMetric !== null} onOpenChange={(open) => !open && setSelectedMetric(null)}>
@@ -748,27 +725,19 @@ export function Community() {
       </Dialog>
 
       <Tabs defaultValue="public" className="w-full min-w-0">
-        <TabsList className="mb-5 grid h-auto w-full grid-cols-2 gap-1 border-white/5 bg-moto-gray p-1">
-          <TabsTrigger value="public" className="min-w-0 whitespace-normal px-2 py-2 text-xs leading-tight data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker sm:text-sm">
-            Comunidad pública
-          </TabsTrigger>
-          <TabsTrigger value="clubs" className="min-w-0 whitespace-normal px-2 py-2 text-xs leading-tight data-[state=active]:bg-moto-orange data-[state=active]:text-moto-darker sm:text-sm">
-            Club privado
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="public">
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="space-y-4">
+        <TabsContent value="public" className="min-w-0 overflow-x-hidden">
+          <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="min-w-0 space-y-4">
           <Card className="border-white/5 bg-moto-gray py-0">
             <CardContent className="p-3 sm:p-4">
               <form className="flex gap-3 sm:gap-4" onSubmit={handleCreatePost}>
-                <Avatar className="hidden h-11 w-11 sm:flex">
+                <Avatar premium={profile?.is_premium} className="hidden h-11 w-11 sm:flex">
                   <AvatarImage src={profile?.avatar_url ?? undefined} />
                   <AvatarFallback>{initials(profile?.full_name, profile?.username)}</AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
                   <textarea
+                    id="community-post-composer"
                     className="h-24 w-full resize-none rounded-xl border border-white/10 bg-moto-darker p-3 text-sm text-white placeholder:text-gray-500"
                     value={newPost}
                     onChange={(event) => setNewPost(event.target.value)}
@@ -776,7 +745,7 @@ export function Community() {
                     placeholder="Comparte una ruta, un tip de mantenimiento o una salida..."
                   />
                   <select
-                    className="mt-3 w-full rounded-xl border border-white/10 bg-moto-darker p-3 text-sm text-white"
+                    className="mt-3 w-full min-w-0 max-w-full rounded-xl border border-white/10 bg-moto-darker p-3 text-sm text-white"
                     value={selectedRouteId}
                     onChange={(event) => setSelectedRouteId(event.target.value)}
                   >
@@ -836,8 +805,28 @@ export function Community() {
             </CardContent>
           </Card>
 
-          {posts.length > 0 ? (
-            posts.map((post) => {
+          <Card className="border-white/5 bg-moto-gray py-0">
+            <CardContent className="grid gap-3 p-4 sm:grid-cols-3">
+              <label className="space-y-1.5 text-xs text-gray-400">
+                <span>Usuario</span>
+                <select value={postAuthorFilter} onChange={(event) => setPostAuthorFilter(event.target.value)} className="w-full rounded-xl border border-white/10 bg-moto-darker px-3 py-2.5 text-sm text-white">
+                  <option value="all">Todos los usuarios</option>
+                  {postAuthors.map(([authorId, authorName]) => <option key={authorId} value={authorId}>{authorName}</option>)}
+                </select>
+              </label>
+              <label className="space-y-1.5 text-xs text-gray-400">
+                <span>Fecha inicial</span>
+                <input type="date" value={postDateFrom} max={postDateTo || undefined} onChange={(event) => setPostDateFrom(event.target.value)} className="w-full rounded-xl border border-white/10 bg-moto-darker px-3 py-2.5 text-sm text-white" />
+              </label>
+              <label className="space-y-1.5 text-xs text-gray-400">
+                <span>Fecha final</span>
+                <input type="date" value={postDateTo} min={postDateFrom || undefined} onChange={(event) => setPostDateTo(event.target.value)} className="w-full rounded-xl border border-white/10 bg-moto-darker px-3 py-2.5 text-sm text-white" />
+              </label>
+            </CardContent>
+          </Card>
+
+          {filteredCommunityPosts.length > 0 ? (
+            filteredCommunityPosts.map((post) => {
               const author = post.profiles
               const authorName = author?.full_name || author?.username || 'Motero MotoCare Co'
               const authorUsername = author?.username || 'motocare'
@@ -856,14 +845,14 @@ export function Community() {
                   <CardHeader className="p-4 pb-0">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="flex min-w-0 items-center gap-3">
-                        <Avatar className="h-11 w-11">
+                        <Avatar premium={author?.is_premium} className="h-11 w-11">
                           <AvatarImage src={author?.avatar_url ?? undefined} />
                           <AvatarFallback>{initials(authorName, authorUsername)}</AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
                           <p className="truncate font-semibold">{authorName}</p>
                           <p className="text-xs text-gray-500">
-                            @{authorUsername} - {relativeDate(post.created_at)}
+                            @{authorUsername} · Publicado el {new Date(post.created_at).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })}
                           </p>
                         </div>
                       </div>
@@ -924,7 +913,7 @@ export function Community() {
                         </div>
                       </div>
                     ) : (
-                      <p className="whitespace-pre-wrap text-sm leading-6 text-gray-100">{post.content}</p>
+                      <p className="break-words whitespace-pre-wrap text-sm leading-6 text-gray-100 [overflow-wrap:anywhere]">{post.content}</p>
                     )}
                     {postImages.length > 0 && (
                       <div className="mt-4 grid gap-2" style={{ gridTemplateColumns: postImages.length === 1 ? '1fr' : 'repeat(auto-fit, minmax(160px, 1fr))' }}>
@@ -993,7 +982,7 @@ export function Community() {
                             const commentName = commentAuthor?.full_name || commentAuthor?.username || 'Motero MotoCare Co'
                             return (
                               <div key={comment.id} className="flex gap-3 rounded-xl bg-moto-darker p-3">
-                                <Avatar className="h-9 w-9">
+                                <Avatar premium={commentAuthor?.is_premium} className="h-9 w-9">
                                   <AvatarImage src={commentAuthor?.avatar_url ?? undefined} />
                                   <AvatarFallback>{initials(commentName, commentAuthor?.username)}</AvatarFallback>
                                 </Avatar>
@@ -1002,7 +991,7 @@ export function Community() {
                                     <span className="font-semibold text-white">{commentName}</span>
                                     <span className="text-gray-500">{relativeDate(comment.created_at)}</span>
                                   </div>
-                                  <p className="mt-1 whitespace-pre-wrap text-sm text-gray-300">{comment.content}</p>
+                                  <p className="mt-1 break-words whitespace-pre-wrap text-sm text-gray-300 [overflow-wrap:anywhere]">{comment.content}</p>
                                 </div>
                               </div>
                             )
@@ -1011,11 +1000,11 @@ export function Community() {
                           <p className="rounded-xl bg-moto-darker p-3 text-sm text-gray-500">Aun no hay comentarios.</p>
                         )}
                         <form className="flex gap-2 sm:gap-3" onSubmit={(event) => void handleCreateComment(event, post)}>
-                          <Avatar className="hidden h-9 w-9 sm:flex">
+                          <Avatar premium={profile?.is_premium} className="hidden h-9 w-9 sm:flex">
                             <AvatarImage src={profile?.avatar_url ?? undefined} />
                             <AvatarFallback>{initials(profile?.full_name, profile?.username)}</AvatarFallback>
                           </Avatar>
-                          <div className="flex flex-1 gap-2">
+                          <div className="flex min-w-0 flex-1 gap-2">
                             <input
                               className="min-w-0 flex-1 rounded-lg border border-white/10 bg-moto-darker px-3 py-2 text-sm text-white placeholder:text-gray-500"
                               value={commentDrafts[post.id] ?? ''}
@@ -1038,13 +1027,13 @@ export function Community() {
             <Card className="border-white/5 bg-moto-gray py-0">
               <CardContent className="p-8 text-center text-gray-400">
                 <Users className="mx-auto mb-3 h-12 w-12 text-gray-600" />
-                Aun no hay publicaciónes. Sea el primero en compartir algo.
+                {posts.length > 0 ? 'No hay publicaciones que coincidan con los filtros.' : 'Aún no hay publicaciones. Sé el primero en compartir algo.'}
               </CardContent>
             </Card>
           )}
         </div>
 
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <Card className="border-white/5 bg-moto-gray py-0">
             <CardContent className="p-5">
               <div className="mb-4 flex items-start justify-between gap-3">
@@ -1078,7 +1067,7 @@ export function Community() {
                     return (
                       <div key={publicProfile.id} className="flex items-center gap-3 rounded-xl bg-moto-darker p-3">
                         <div className="relative">
-                          <Avatar className="h-10 w-10">
+                          <Avatar premium={publicProfile.is_premium} className="h-10 w-10">
                             <AvatarImage src={publicProfile.avatar_url ?? undefined} />
                             <AvatarFallback>{initials(publicProfile.full_name, publicProfile.username)}</AvatarFallback>
                           </Avatar>
@@ -1128,10 +1117,10 @@ export function Community() {
           </div>
         </TabsContent>
 
-        <TabsContent value="clubs">
+        <TabsContent value="clubs" className="min-w-0 overflow-x-hidden">
           {myClubs.length > 0 && selectedClub ? (
-            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-              <div className="space-y-4">
+            <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+              <div className="min-w-0 space-y-4">
                 <Card className="border-white/5 bg-moto-gray py-0">
                   <CardContent className="p-4">
                     <div className="mb-4 flex flex-col justify-between gap-3 md:flex-row md:items-center">
@@ -1146,7 +1135,7 @@ export function Community() {
                         </div>
                       </div>
                       <select
-                        className="w-full rounded-xl border border-white/10 bg-moto-darker p-3 text-sm text-white md:w-auto"
+                        className="w-full min-w-0 max-w-full rounded-xl border border-white/10 bg-moto-darker p-3 text-sm text-white md:w-auto"
                         value={selectedClubId}
                         onChange={(event) => setSelectedClubId(event.target.value)}
                       >
@@ -1158,7 +1147,7 @@ export function Community() {
                       </select>
                     </div>
                     <form className="flex gap-3 sm:gap-4" onSubmit={handleCreateClubPost}>
-                      <Avatar className="hidden h-11 w-11 sm:flex">
+                      <Avatar premium={profile?.is_premium} className="hidden h-11 w-11 sm:flex">
                         <AvatarImage src={profile?.avatar_url ?? undefined} />
                         <AvatarFallback>{initials(profile?.full_name, profile?.username)}</AvatarFallback>
                       </Avatar>
@@ -1172,7 +1161,7 @@ export function Community() {
                         />
                         <div className="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
                           <select
-                            className="w-full rounded-xl border border-white/10 bg-moto-darker p-3 text-sm text-white"
+                            className="w-full min-w-0 max-w-full rounded-xl border border-white/10 bg-moto-darker p-3 text-sm text-white"
                             value={selectedClubRouteId}
                             onChange={(event) => setSelectedClubRouteId(event.target.value)}
                           >
@@ -1216,7 +1205,7 @@ export function Community() {
                         <CardContent className="p-4">
                           <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div className="flex min-w-0 items-center gap-3">
-                              <Avatar className="h-10 w-10">
+                              <Avatar premium={author?.is_premium} className="h-10 w-10">
                                 <AvatarImage src={author?.avatar_url ?? undefined} />
                                 <AvatarFallback>{initials(authorName, author?.username)}</AvatarFallback>
                               </Avatar>
@@ -1232,7 +1221,7 @@ export function Community() {
                               </Button>
                             )}
                           </div>
-                          <p className="whitespace-pre-wrap text-sm leading-6 text-gray-100">{post.content}</p>
+                          <p className="break-words whitespace-pre-wrap text-sm leading-6 text-gray-100 [overflow-wrap:anywhere]">{post.content}</p>
                           {post.routes && (
                             <Link to={`/app/routes/${post.routes.id}`} className="mt-4 block rounded-xl border border-white/10 bg-moto-darker p-3 transition hover:border-moto-orange/50 hover:bg-moto-darker/80 sm:p-4">
                               <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -1273,7 +1262,7 @@ export function Community() {
                 )}
               </div>
 
-              <div className="space-y-4">
+              <div className="min-w-0 space-y-4">
                 <Card className="border-white/5 bg-moto-gray py-0">
                   <CardContent className="p-5">
                     <h2 className="mb-3 font-semibold">Clubes disponibles</h2>

@@ -10,15 +10,22 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ImageViewer } from '@/components/ImageViewer'
+import { ColombiaLocationFields } from '@/components/ColombiaLocationFields'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
+import { extractCoordinatesFromMapUrl, normalizeMapUrl } from '@/lib/mapLinks'
 import type { Club, Motorcycle, Profile as ProfileType, RoutePlan } from '@/types/database'
 
 type ProfileForm = {
   full_name: string
   username: string
   city: string
+  department_code: string
+  municipality_code: string
+  business_phone: string
+  business_address: string
+  business_map_url: string
   rider_type: string
   bio: string
   social_url: string
@@ -150,6 +157,11 @@ export function Profile() {
     full_name: '',
     username: '',
     city: '',
+    department_code: '',
+    municipality_code: '',
+    business_phone: '',
+    business_address: '',
+    business_map_url: '',
     rider_type: '',
     bio: '',
     social_url: '',
@@ -167,13 +179,27 @@ export function Profile() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   const visibleName = profile?.full_name || user?.email?.split('@')[0] || 'Motero MotoCare Co'
   const username = profile?.username || user?.email?.split('@')[0] || 'motocare'
   const avatarFallback = initials(profile?.full_name, user?.email)
   const socialUrl = normalizeUrl(profile?.social_url)
-  const isPremiumProfile = effectivePlan === 'pro' || effectivePlan === 'premium'
+  const isPremiumProfile = effectivePlan === 'premium'
   const isBusinessProfile = effectivePlan === 'business'
+  const formMapUrl = normalizeMapUrl(form.business_map_url)
+  const formMapCoordinates = extractCoordinatesFromMapUrl(formMapUrl)
+  const formMapQuery = formMapCoordinates
+    ? `${formMapCoordinates.latitude},${formMapCoordinates.longitude}`
+    : [form.business_address, form.city, 'Colombia'].filter(Boolean).join(', ')
+
+  useEffect(() => {
+    if (!supabase || !user) {
+      setIsAdmin(false)
+      return
+    }
+    void supabase.rpc('is_current_user_admin').then(({ data }) => setIsAdmin(Boolean(data)))
+  }, [user])
 
   const primaryBike = useMemo(
     () => motorcycles.find((motorcycle) => motorcycle.id === profile?.primary_motorcycle_id) ?? motorcycles[0] ?? null,
@@ -185,6 +211,11 @@ export function Profile() {
       full_name: profile?.full_name ?? '',
       username: profile?.username ?? '',
       city: profile?.city ?? '',
+      department_code: profile?.department_code ?? '',
+      municipality_code: profile?.municipality_code ?? '',
+      business_phone: profile?.business_phone ?? '',
+      business_address: profile?.business_address ?? '',
+      business_map_url: profile?.business_map_url ?? '',
       rider_type: profile?.rider_type ?? '',
       bio: profile?.bio ?? '',
       social_url: profile?.social_url ?? '',
@@ -195,6 +226,14 @@ export function Profile() {
 
   useEffect(() => {
     if (!supabase || !user) return
+    if (isBusinessProfile) {
+      setMotorcycles([])
+      setRoutes([])
+      setClubs([])
+      setStats(emptyStats)
+      setIsLoading(false)
+      return
+    }
     const client = supabase
 
     const loadProfileData = async () => {
@@ -234,7 +273,7 @@ export function Profile() {
     }
 
     void loadProfileData()
-  }, [user])
+  }, [isBusinessProfile, user])
 
   const handleSaveProfile = async (event: FormEvent) => {
     event.preventDefault()
@@ -248,10 +287,25 @@ export function Profile() {
 
     setIsSaving(true)
 
+    const normalizedMapUrl = normalizeMapUrl(form.business_map_url)
+    if (isBusinessProfile && form.business_map_url.trim() && !normalizedMapUrl) {
+      setIsSaving(false)
+      toast.error('Enlace de ubicación no válido', { description: 'Use un enlace de Google Maps, Waze u OpenStreetMap.' })
+      return
+    }
+    const mapCoordinates = extractCoordinatesFromMapUrl(normalizedMapUrl)
+
     const payload: Partial<ProfileType> = {
       full_name: form.full_name.trim(),
       username: cleanUsername || null,
       city: form.city.trim() || null,
+      department_code: form.department_code || null,
+      municipality_code: form.municipality_code || null,
+      business_phone: form.business_phone.trim() || null,
+      business_address: form.business_address.trim() || null,
+      business_map_url: normalizedMapUrl,
+      business_latitude: mapCoordinates?.latitude ?? null,
+      business_longitude: mapCoordinates?.longitude ?? null,
       rider_type: form.rider_type.trim() || null,
       bio: form.bio.trim() || null,
       social_url: form.social_url.trim() || null,
@@ -331,7 +385,7 @@ export function Profile() {
                 onClick={() => setShowAvatarPreview(true)}
                 aria-label="Ver foto de perfil"
               >
-                <Avatar className="h-20 w-20 border-4 border-moto-darker bg-moto-darker sm:h-28 sm:w-28">
+                <Avatar premium={profile?.is_premium} className="h-20 w-20 border-4 border-moto-darker bg-moto-darker sm:h-28 sm:w-28">
                   <AvatarImage src={profile?.avatar_url ?? undefined} />
                   <AvatarFallback className="text-2xl sm:text-3xl">{avatarFallback}</AvatarFallback>
                 </Avatar>
@@ -373,7 +427,7 @@ export function Profile() {
             <div className="min-w-0 flex-1 text-left">
               <div className="mb-1 flex flex-wrap items-center gap-2 sm:mb-2 sm:gap-3">
                 <h1 className="w-full truncate text-xl font-bold leading-tight sm:w-auto sm:text-3xl">{visibleName}</h1>
-                <Badge className="bg-moto-orange text-moto-darker">{profile?.rider_type || 'Motero'}</Badge>
+                <Badge className="bg-moto-orange text-moto-darker">{isBusinessProfile ? 'Negocio' : profile?.rider_type || 'Motero'}</Badge>
                 <Badge className={profile?.is_public === false ? 'bg-white/10 text-gray-300' : 'bg-green-500/15 text-green-300'}>
                   {profile?.is_public === false ? 'Privado' : 'Público'}
                 </Badge>
@@ -415,7 +469,28 @@ export function Profile() {
         </CardContent>
       </Card>
 
-      <Card className="mb-5 border-white/5 bg-moto-gray py-0">
+      {isAdmin && (
+        <Card className="mb-5 border-moto-orange/30 bg-moto-orange/10 py-0">
+          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-moto-orange text-moto-darker">
+                <Shield className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="font-semibold">Panel de administración</h2>
+                <p className="text-sm text-gray-300">Gestiona usuarios, licencias, clubes, moderación y Tienda.</p>
+              </div>
+            </div>
+            <Button asChild className="shrink-0 bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
+              <Link to="/app/admin">Abrir administración</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {isBusinessProfile ? <Card className="mb-5 border-violet-500/25 bg-violet-500/10 py-0"><CardContent className="p-5"><h2 className="text-lg font-semibold">Perfil comercial</h2><div className="mt-3 grid gap-3 text-sm sm:grid-cols-2"><div className="rounded-xl bg-moto-darker p-3"><span className="text-gray-500">Teléfono</span><p>{profile?.business_phone || 'Sin definir'}</p></div><div className="rounded-xl bg-moto-darker p-3"><span className="text-gray-500">Dirección</span><p>{profile?.business_address || profile?.city || 'Sin definir'}</p></div></div><Button asChild className="mt-4 bg-violet-500 text-white hover:bg-violet-400"><Link to={`/app/business/${user?.id}`}>Ver perfil público del negocio</Link></Button></CardContent></Card> : null}
+
+      <Card className={`${isBusinessProfile ? 'hidden' : ''} mb-5 border-white/5 bg-moto-gray py-0`}>
         <CardContent className="p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h2 className="flex items-center gap-2 text-lg font-semibold">
@@ -449,14 +524,14 @@ export function Profile() {
         </CardContent>
       </Card>
 
-      <div className="mb-4 grid grid-cols-4 gap-2 sm:mb-5 sm:gap-4">
+      <div className={`${isBusinessProfile ? 'hidden' : ''} mb-4 grid grid-cols-4 gap-2 sm:mb-5 sm:gap-4`}>
         <CompactMetricCard icon={UserRound} label="Tipo de motero" mobileLabel="Tipo" value={profile?.rider_type || 'Sin definir'} tone="orange" onClick={() => setShowEditProfile(true)} />
         <CompactMetricCard icon={Route} label="Rutas creadas" mobileLabel="Rutas" value={stats.routes} tone="green" onClick={() => setShowRoutesPreview(true)} />
         <CompactMetricCard icon={Route} label="Km en rutas" mobileLabel="Km" value={`${routes.reduce((total, route) => total + (route.distance_km ?? 0), 0).toLocaleString()} km`} tone="green" onClick={() => setShowRoutesPreview(true)} />
         <CompactMetricCard icon={UserRound} label="Publicaciones" mobileLabel="Posts" value={stats.posts} tone="yellow" onClick={() => navigate('/app/messages')} />
       </div>
 
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      <div className={`${isBusinessProfile ? 'hidden' : ''} grid gap-5 md:grid-cols-2 xl:grid-cols-3`}>
         <Card className="border-white/5 bg-moto-gray py-0">
           <CardContent className="p-5">
             <h2 className="mb-4 text-lg font-semibold">Resumen</h2>
@@ -599,23 +674,32 @@ export function Profile() {
                 placeholder="motero_colombia"
               />
             </label>
+            <ColombiaLocationFields
+              departmentCode={form.department_code}
+              municipalityCode={form.municipality_code}
+              className="grid gap-4"
+              onChange={(location) => setForm((current) => ({
+                ...current,
+                department_code: location.departmentCode,
+                municipality_code: location.municipalityCode,
+                city: location.municipalityName,
+              }))}
+            />
+            {isBusinessProfile ? <>
+              <label><span className="mb-1 block text-sm text-gray-400">Número de teléfono</span><input type="tel" className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={form.business_phone} onChange={(event) => setForm({ ...form, business_phone: event.target.value })} placeholder="+57 300 000 0000" /></label>
+              <label><span className="mb-1 block text-sm text-gray-400">Dirección del negocio</span><input className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={form.business_address} onChange={(event) => setForm({ ...form, business_address: event.target.value })} placeholder="Calle, carrera y número" /></label>
+              <label><span className="mb-1 block text-sm text-gray-400">Enlace de ubicación</span><input type="url" className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={form.business_map_url} onChange={(event) => setForm({ ...form, business_map_url: event.target.value })} placeholder="Pegue un enlace de Google Maps, Waze u OpenStreetMap" /><span className="mt-1 block text-xs text-gray-500">Comparta la ubicación desde su aplicación de mapas. Las coordenadas se obtendrán automáticamente cuando el enlace las incluya.</span></label>
+              {form.business_map_url.trim() && !formMapUrl ? <p className="text-sm text-red-300">El enlace no pertenece a un proveedor de mapas permitido.</p> : null}
+              {formMapUrl && formMapQuery ? <div className="overflow-hidden rounded-xl border border-white/10"><iframe title="Vista previa de la ubicación" className="h-48 w-full border-0" loading="lazy" src={`https://www.google.com/maps?q=${encodeURIComponent(formMapQuery)}&z=15&output=embed`} /><a href={formMapUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 p-3 text-sm text-moto-orange"><ExternalLink className="h-4 w-4" />Verificar ubicación en mapas</a></div> : null}
+            </> : null}
             <label>
-              <span className="mb-1 block text-sm text-gray-400">Ciudad</span>
-              <input
-                className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white"
-                value={form.city}
-                onChange={(event) => setForm({ ...form, city: event.target.value })}
-                placeholder="Bogota"
-              />
-            </label>
-            <label>
-              <span className="mb-1 block text-sm text-gray-400">Bio corta</span>
+              <span className="mb-1 block text-sm text-gray-400">{isBusinessProfile ? 'Descripción del negocio' : 'Bio corta'}</span>
               <textarea
                 className="h-20 w-full resize-none rounded-lg border border-white/10 bg-moto-darker p-2 text-white"
                 value={form.bio}
                 onChange={(event) => setForm({ ...form, bio: event.target.value })}
                 maxLength={180}
-                placeholder="Amo las rutas de montaña y los viajes de fin de semana."
+                placeholder={isBusinessProfile ? 'Describe brevemente el negocio, su experiencia y cobertura.' : 'Amo las rutas de montaña y los viajes de fin de semana.'}
               />
               <span className="mt-1 block text-xs text-gray-500">{form.bio.length}/180</span>
             </label>
@@ -628,7 +712,7 @@ export function Profile() {
                 placeholder="instagram.com/usuario"
               />
             </label>
-            <label>
+            {!isBusinessProfile ? <label>
               <span className="mb-1 block text-sm text-gray-400">Tipo de motero</span>
               <select
                 className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white"
@@ -643,8 +727,8 @@ export function Profile() {
                 <option value="Custom">Custom</option>
                 <option value="Trabajo">Trabajo</option>
               </select>
-            </label>
-            <label>
+            </label> : null}
+            {!isBusinessProfile ? <label>
               <span className="mb-1 block text-sm text-gray-400">Moto principal</span>
               <select
                 className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white"
@@ -659,7 +743,7 @@ export function Profile() {
                   </option>
                 ))}
               </select>
-            </label>
+            </label> : null}
             <label className="flex items-start justify-between gap-4 rounded-xl border border-white/10 bg-moto-darker p-3">
               <span>
                 <span className="flex items-center gap-2 text-sm font-medium">
@@ -667,7 +751,7 @@ export function Profile() {
                   Perfil público
                 </span>
                 <span className="mt-1 block text-xs text-gray-400">
-                  Si lo apaga, no aparece en búsquedas y las invitaciones a clubes quedan pendientes de aprobación.
+                  {isBusinessProfile ? 'Si lo apaga, el perfil público del negocio deja de estar visible.' : 'Si lo apaga, no aparece en búsquedas y las invitaciones a clubes quedan pendientes de aprobación.'}
                 </span>
               </span>
               <input

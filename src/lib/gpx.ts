@@ -4,6 +4,17 @@ export type RouteTrack = {
   geometry: { type: 'LineString'; coordinates: [number, number][] }
 }
 
+export type GpxAnalysis = {
+  track: RouteTrack
+  distanceKm: number
+  elevationGainM: number | null
+  durationMinutes: number | null
+  pointCount: number
+  suggestedLevel: 3 | 4 | 5
+  suggestedCompatibility: string
+  suggestedDescription: string
+}
+
 const EARTH_RADIUS_KM = 6371
 
 function radians(value: number) {
@@ -40,5 +51,74 @@ export function parseGpx(xml: string, source = 'archivo.gpx'): RouteTrack {
       source,
     },
     geometry: { type: 'LineString', coordinates: points },
+  }
+}
+
+export function serializeGpx(track: RouteTrack, fallbackName = 'Ruta MotoCare') {
+  const name = (track.properties.name || fallbackName)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&apos;')
+  const points = track.geometry.coordinates
+    .map(([longitude, latitude]) => `    <trkpt lat="${latitude}" lon="${longitude}" />`)
+    .join('\n')
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="MotoCare" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>${name}</name>
+    <trkseg>
+${points}
+    </trkseg>
+  </trk>
+</gpx>`
+}
+
+export function analyzeGpx(xml: string, source = 'archivo.gpx'): GpxAnalysis {
+  const document = new DOMParser().parseFromString(xml, 'application/xml')
+  if (document.querySelector('parsererror')) throw new Error('El archivo GPX no es XML válido.')
+
+  const pointElements = Array.from(document.querySelectorAll('trkpt, rtept'))
+  const track = parseGpx(xml, source)
+  const elevations = pointElements
+    .map((point) => Number(point.querySelector('ele')?.textContent))
+    .filter(Number.isFinite)
+  const timestamps = pointElements
+    .map((point) => Date.parse(point.querySelector('time')?.textContent ?? ''))
+    .filter(Number.isFinite)
+  const distanceKm = trackDistanceKm(track)
+  const elevationGainM = elevations.length >= 2
+    ? Math.round(elevations.slice(1).reduce((gain, elevation, index) => (
+        gain + Math.max(0, elevation - elevations[index])
+      ), 0))
+    : null
+  const durationMinutes = timestamps.length >= 2
+    ? Math.max(1, Math.round((Math.max(...timestamps) - Math.min(...timestamps)) / 60_000))
+    : null
+  const effortScore = distanceKm + (elevationGainM ?? 0) / 25
+  const suggestedLevel: 3 | 4 | 5 = effortScore >= 280 ? 5 : effortScore >= 150 ? 4 : 3
+  const suggestedCompatibility = suggestedLevel === 5
+    ? 'Adventure o doble propósito; validar terreno y autonomía antes de publicar.'
+    : suggestedLevel === 4
+      ? 'Adventure, touring o doble propósito; ajustar según el tipo real de superficie.'
+      : 'Touring, naked, scooter de alto cilindraje o adventure; confirmar el estado de la vía.'
+  const routeName = track.properties.name || source.replace(/\.gpx$/i, '')
+  const metrics = [
+    `${distanceKm.toFixed(1)} km`,
+    elevationGainM !== null ? `${elevationGainM.toLocaleString('es-CO')} m de ascenso acumulado` : null,
+    durationMinutes !== null ? `${Math.floor(durationMinutes / 60)} h ${durationMinutes % 60} min registrados` : null,
+  ].filter(Boolean).join(', ')
+
+  return {
+    track,
+    distanceKm,
+    elevationGainM,
+    durationMinutes,
+    pointCount: track.geometry.coordinates.length,
+    suggestedLevel,
+    suggestedCompatibility,
+    suggestedDescription: `${routeName}: recorrido de ${metrics}. Revisa y completa la descripción con el terreno, clima, peajes y recomendaciones locales antes de publicarlo.`,
   }
 }

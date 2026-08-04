@@ -10,7 +10,9 @@ export function Login() {
   const { signIn, signUp, user, isConfigured } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [mode, setMode] = useState<'login' | 'signup'>('login')
+  const [mode, setMode] = useState<'login' | 'signup'>(() =>
+    new URLSearchParams(location.search).get('mode') === 'signup' ? 'signup' : 'login'
+  )
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -72,7 +74,7 @@ export function Login() {
             <p className="mt-2 text-sm text-gray-400">
               {mode === 'login'
                 ? 'Accede para gestionar tu moto y tus recordatorios.'
-                : 'Tu primer garaje digital queda listo en minutos.'}
+                : 'La hoja de vida digital de tu moto queda lista en minutos.'}
             </p>
 
             {!isConfigured && (
@@ -136,7 +138,9 @@ export function Login() {
               className="mt-5 w-full rounded-lg px-3 py-2 text-center text-sm text-gray-400 transition-colors hover:bg-white/5 hover:text-moto-orange"
               onClick={() => {
                 setError(null)
-                setMode(mode === 'login' ? 'signup' : 'login')
+                const nextMode = mode === 'login' ? 'signup' : 'login'
+                setMode(nextMode)
+                navigate(nextMode === 'signup' ? '/login?mode=signup' : '/login', { replace: true })
               }}
             >
               {mode === 'login' ? 'No tengo cuenta, quiero registrarme' : 'Ya tengo cuenta, quiero entrar'}

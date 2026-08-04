@@ -5,14 +5,12 @@ import type { UserPlan, UserPlanStatus, UserSubscription } from '@/types/databas
 
 const planRank: Record<UserPlan, number> = {
   free: 0,
-  pro: 1,
   premium: 1,
   business: 2,
 }
 
 export const planLabels: Record<UserPlan, string> = {
   free: 'Free',
-  pro: 'Premium',
   premium: 'Premium',
   business: 'Business',
 }

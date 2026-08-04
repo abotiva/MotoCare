@@ -6,10 +6,10 @@ import type { ZodType } from 'zod'
 import {
   BarChart3,
   Bike,
-  CalendarClock,
   CheckCircle,
   Clock,
   DollarSign,
+  Download,
   ExternalLink,
   Gauge,
   ImageUp,
@@ -45,7 +45,8 @@ import {
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
-import type { MaintenanceRecord, MaintenanceSuggestion, Motorcycle, MotorcycleDocument, Reminder } from '@/types/database'
+import { downloadExpenseReportPdf } from '@/lib/expenseReportPdf'
+import type { MaintenanceRecord, MaintenanceSuggestion, MarketplacePurchase, Motorcycle, MotorcycleDocument, Reminder } from '@/types/database'
 
 type StarterReminder = {
   owner_id: string
@@ -154,6 +155,14 @@ function formatMoney(value: number) {
   })
 }
 
+const marketplaceCategoryLabels: Record<MarketplacePurchase['category'], string> = {
+  motorcycles: 'Motos',
+  parts: 'Repuestos',
+  gear: 'Accesorios',
+  services: 'Servicios de tienda',
+  'premium-routes': 'Rutas Premium',
+}
+
 type BikeTab = 'reminders' | 'history' | 'reports' | 'documents'
 
 const sectionToTab = {
@@ -192,18 +201,9 @@ function ReportCard({ icon: Icon, label, value, detail }: { icon: LucideIcon; la
   )
 }
 
-function ReportLine({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-4 rounded-lg bg-moto-gray px-3 py-2">
-      <p className="min-w-0 truncate text-sm text-gray-400">{label}</p>
-      <p className="shrink-0 text-sm font-semibold text-white">{value}</p>
-    </div>
-  )
-}
-
 export function MyBikes() {
-  const { user, profile } = useAuth()
-  const { hasPlan, effectivePlan, isLoadingSubscription } = useSubscription()
+  const { user, profile, refreshProfile } = useAuth()
+  const { effectivePlan, isLoadingSubscription } = useSubscription()
   const location = useLocation()
   const navigate = useNavigate()
   const { bikeId, section } = useParams<{ bikeId?: string; section?: string }>()
@@ -212,6 +212,7 @@ export function MyBikes() {
   const [activeTab, setActiveTab] = useState<BikeTab>(() => routeTab ?? tabFromHash(location.hash))
   const [motorcycles, setMotorcycles] = useState<Motorcycle[]>([])
   const [records, setRecords] = useState<MaintenanceRecord[]>([])
+  const [marketplacePurchases, setMarketplacePurchases] = useState<MarketplacePurchase[]>([])
   const [reminders, setReminders] = useState<Reminder[]>([])
   const [documents, setDocuments] = useState<MotorcycleDocument[]>([])
   const [maintenanceSuggestions, setMaintenanceSuggestions] = useState<MaintenanceSuggestion[]>([])
@@ -230,6 +231,7 @@ export function MyBikes() {
   const [showRecordDetail, setShowRecordDetail] = useState(false)
   const [reminderToCancel, setReminderToCancel] = useState<Reminder | null>(null)
   const [documentToDelete, setDocumentToDelete] = useState<MotorcycleDocument | null>(null)
+  const [bikeToDelete, setBikeToDelete] = useState<Motorcycle | null>(null)
   const [bikeToMakePrimary, setBikeToMakePrimary] = useState<Motorcycle | null>(null)
   const [showGarageLimit, setShowGarageLimit] = useState(false)
   const [editingBike, setEditingBike] = useState<Motorcycle | null>(null)
@@ -258,10 +260,11 @@ export function MyBikes() {
   }
 
   const isNegativeNumber = (value: string) => value.trim() !== '' && Number(value) < 0
-  const canViewMaintenanceReports = hasPlan('premium')
-  const canUploadDocuments = effectivePlan === 'pro' || effectivePlan === 'premium'
+  const canViewMaintenanceReports = effectivePlan === 'premium'
+  const canUploadDocuments = effectivePlan === 'premium'
   const isBusinessAccount = effectivePlan === 'business'
-  const isPremiumRider = effectivePlan === 'pro' || effectivePlan === 'premium'
+  const isPremiumRider = effectivePlan === 'premium'
+  const motorcycleSectionLabel = isPremiumRider ? 'Mi Garage' : 'Mi Moto'
 
   useEffect(() => {
     setPrimaryMotorcycleId(profile?.primary_motorcycle_id ?? null)
@@ -269,10 +272,13 @@ export function MyBikes() {
 
   useEffect(() => {
     setActiveTab(routeTab ?? tabFromHash(location.hash))
-    if (location.hash || section) {
+    const shouldFocusTabs = Boolean(location.hash || (section && section !== 'overview'))
+    if (shouldFocusTabs) {
       window.requestAnimationFrame(() => {
         document.getElementById('bike-sections')?.scrollIntoView({ block: 'start', behavior: 'smooth' })
       })
+    } else {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
     }
   }, [location.hash, routeTab, section])
 
@@ -391,6 +397,54 @@ export function MyBikes() {
     }
   }, [selectedRecords])
 
+  const purchaseReport = useMemo(() => {
+    const byCategory = marketplacePurchases.reduce<Record<string, number>>((totals, purchase) => {
+      const label = marketplaceCategoryLabels[purchase.category]
+      totals[label] = (totals[label] ?? 0) + Number(purchase.amount)
+      return totals
+    }, {})
+    return {
+      total: marketplacePurchases.reduce((sum, purchase) => sum + Number(purchase.amount), 0),
+      byCategory: Object.entries(byCategory).sort(([, a], [, b]) => b - a),
+    }
+  }, [marketplacePurchases])
+
+  const exportExpenseReport = () => {
+    if (!selectedBike || !canViewMaintenanceReports) return
+    downloadExpenseReportPdf({
+      ownerName: profile?.full_name || user?.email || 'Usuario MotoCare',
+      motorcycleName: `${selectedBike.brand} ${selectedBike.model}${selectedBike.plate ? ` - ${selectedBike.plate}` : ''}`,
+      generatedAt: new Date().toLocaleString('es-CO'),
+      sections: [
+        {
+          title: 'Servicios y mantenimientos',
+          items: [...selectedRecords]
+            .filter((record) => record.cost !== null)
+            .sort((a, b) => b.service_date.localeCompare(a.service_date))
+            .map((record) => ({
+              date: record.service_date,
+              description: record.service_type,
+              category: 'Servicio',
+              amount: Number(record.cost),
+              detail: `${record.mileage.toLocaleString()} km${record.notes ? ` - ${record.notes}` : ''}`,
+            })),
+        },
+        ...purchaseReport.byCategory.map(([category]) => ({
+          title: `Compras en Tienda - ${category}`,
+          items: marketplacePurchases
+            .filter((purchase) => marketplaceCategoryLabels[purchase.category] === category)
+            .sort((a, b) => b.purchased_at.localeCompare(a.purchased_at))
+            .map((purchase) => ({
+              date: purchase.purchased_at.slice(0, 10),
+              description: purchase.title,
+              category,
+              amount: Number(purchase.amount),
+            })),
+        })),
+      ],
+    })
+  }
+
   const healthScore = useMemo(() => {
     if (!selectedBike) return 0
     const soatDays = daysUntil(selectedBike.soat_expires_on)
@@ -441,6 +495,25 @@ export function MyBikes() {
 
     loadGarage()
   }, [user, profile?.primary_motorcycle_id])
+
+  useEffect(() => {
+    if (!supabase || !user || !canViewMaintenanceReports) {
+      setMarketplacePurchases([])
+      return
+    }
+    void supabase
+      .from('marketplace_purchases')
+      .select('*')
+      .eq('buyer_id', user.id)
+      .order('purchased_at', { ascending: false })
+      .then(({ data, error: purchasesError }) => {
+        if (purchasesError) {
+          toast.error('No pudimos cargar las compras de Tienda', { description: purchasesError.message })
+        } else {
+          setMarketplacePurchases((data ?? []) as MarketplacePurchase[])
+        }
+      })
+  }, [canViewMaintenanceReports, user])
 
   useEffect(() => {
     if (!supabase || !user || !selectedBike?.id) {
@@ -587,7 +660,7 @@ export function MyBikes() {
       notifyError('Garaje no disponible', 'La licencia Business es para negocios y no permite registrar motos.')
       return
     }
-    if (effectivePlan === 'free' && motorcycles.length >= 1) {
+    if ((effectivePlan === 'free' && motorcycles.length >= 1) || (effectivePlan === 'premium' && motorcycles.length >= 3)) {
       setShowGarageLimit(true)
       return
     }
@@ -715,6 +788,35 @@ export function MyBikes() {
       toast.success('Moto actualizada', { description: 'Los cambios quedaron guardados.' })
     }
 
+    setIsSaving(false)
+  }
+
+  const deleteMotorcycle = async () => {
+    if (!supabase || !user || !bikeToDelete) return
+    setIsSaving(true)
+    const motorcycle = bikeToDelete
+    const { error: deleteError } = await supabase
+      .from('motorcycles')
+      .delete()
+      .eq('id', motorcycle.id)
+      .eq('owner_id', user.id)
+
+    if (deleteError) {
+      notifyError('No pudimos eliminar la moto', deleteError.message)
+    } else {
+      const remaining = motorcycles.filter((bike) => bike.id !== motorcycle.id)
+      setMotorcycles(remaining)
+      setSelectedId((current) => current === motorcycle.id ? (remaining[0]?.id ?? null) : current)
+      setShowAddBike(false)
+      setEditingBike(null)
+      setBikeToDelete(null)
+      await refreshProfile()
+      toast.success('Moto eliminada', {
+        description: effectivePlan === 'premium'
+          ? 'Premium permite registrar una moto de reemplazo una vez por año calendario.'
+          : 'La moto y su historial dejaron de estar disponibles.',
+      })
+    }
     setIsSaving(false)
   }
 
@@ -1317,15 +1419,23 @@ export function MyBikes() {
     <div className="mx-auto max-w-6xl p-4 pb-24 lg:p-6">
       <div className="mb-6 flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
         <div>
-          <h1 className="mb-1 text-2xl font-bold">Mi Garage</h1>
-          <p className="text-gray-400">Tus motos, mantenimientos y vencimientos en un solo lugar.</p>
+          <h1 className="mb-1 text-2xl font-bold">{motorcycleSectionLabel}</h1>
+          <p className="text-gray-400">
+            {isPremiumRider
+              ? 'Tus motos, mantenimientos y vencimientos en un solo lugar.'
+              : 'Tu moto, mantenimientos y vencimientos en un solo lugar.'}
+          </p>
         </div>
         <div className="grid w-full grid-cols-3 gap-2 sm:w-auto sm:flex sm:flex-wrap sm:gap-3">
           {!isBusinessAccount && (
-            <Button className="min-w-0 bg-moto-orange px-2 text-xs text-moto-darker hover:bg-moto-orange-dark sm:px-4 sm:text-sm" onClick={openCreateBike}>
+            <Button
+              variant={!isPremiumRider && motorcycles.length > 0 ? 'premium' : 'default'}
+              className="min-w-0 px-2 text-xs sm:px-4 sm:text-sm"
+              onClick={openCreateBike}
+            >
               <Plus className="mr-1 h-4 w-4 sm:mr-2 sm:h-5 sm:w-5" />
-              <span className="sm:hidden">Moto</span>
-              <span className="hidden sm:inline">Agregar moto</span>
+              <span className="sm:hidden">{motorcycles.length > 0 ? 'Premium' : 'Moto'}</span>
+              <span className="hidden sm:inline">{!isPremiumRider && motorcycles.length > 0 ? 'Ampliar con Premium' : 'Agregar moto'}</span>
             </Button>
           )}
           {selectedBike && (
@@ -1368,7 +1478,9 @@ export function MyBikes() {
               <div className="mx-auto grid h-20 w-20 place-items-center rounded-2xl bg-moto-orange/20">
                 <Bike className="h-10 w-10 text-moto-orange" />
               </div>
-              <h2 className="mt-6 text-2xl font-bold">Agrega tu primera moto a Mi Garage</h2>
+              <h2 className="mt-6 text-2xl font-bold">
+                {isPremiumRider ? 'Agrega tu primera moto a Mi Garage' : 'Registra tu moto en MotoCare Co'}
+              </h2>
               <p className="mx-auto mt-2 max-w-md text-gray-400">
                 Registra tu moto para empezar a controlar SOAT, tecnomecánica, kilometraje y mantenimientos.
               </p>
@@ -1503,44 +1615,29 @@ export function MyBikes() {
                         </div>
                       ) : canViewMaintenanceReports ? (
                         <>
-                          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                            <ReportCard icon={DollarSign} label="Gasto total" value={formatMoney(maintenanceReport.totalSpent)} detail={`${maintenanceReport.totalServices} servicios`} />
-                            <ReportCard icon={CalendarClock} label="Este año" value={formatMoney(maintenanceReport.yearSpent)} detail={`Este mes: ${formatMoney(maintenanceReport.monthSpent)}`} />
-                            <ReportCard icon={BarChart3} label="Promedio por servicio" value={formatMoney(maintenanceReport.averageCost)} detail="Servicios con costo" />
+                          <div className="flex flex-col justify-between gap-3 rounded-xl border border-white/5 bg-moto-darker p-4 sm:flex-row sm:items-center">
+                            <div>
+                              <h3 className="font-semibold">Informe detallado de gastos</h3>
+                              <p className="text-sm text-gray-400">Servicios de esta moto y compras realizadas en Tienda, separadas por categoría.</p>
+                            </div>
+                            <Button type="button" className="shrink-0 bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={exportExpenseReport}>
+                              <Download className="mr-2 h-4 w-4" />
+                              Exportar PDF
+                            </Button>
+                          </div>
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <ReportCard
+                              icon={DollarSign}
+                              label="Gasto total"
+                              value={formatMoney(maintenanceReport.totalSpent + purchaseReport.total)}
+                              detail={`Servicios: ${formatMoney(maintenanceReport.totalSpent)} · Tienda: ${formatMoney(purchaseReport.total)}`}
+                            />
                             <ReportCard
                               icon={Clock}
                               label="Último servicio"
                               value={maintenanceReport.daysSinceLast !== null ? `${maintenanceReport.daysSinceLast} días` : 'Sin datos'}
                               detail={maintenanceReport.lastRecord?.service_type ?? 'Registra un mantenimiento'}
                             />
-                          </div>
-
-                          <div className="grid gap-4 lg:grid-cols-2">
-                            <Card className="border-white/5 bg-moto-darker py-0">
-                              <CardContent className="p-4">
-                                <h3 className="mb-3 font-semibold">Tiempos y kilometraje</h3>
-                                <div className="space-y-3">
-                                  <ReportLine label="Promedio entre servicios" value={maintenanceReport.averageDaysBetweenServices !== null ? `${maintenanceReport.averageDaysBetweenServices} días` : 'Sin datos suficientes'} />
-                                  <ReportLine label="Promedio entre kilometrajes" value={maintenanceReport.averageKmBetweenServices !== null ? `${maintenanceReport.averageKmBetweenServices.toLocaleString()} km` : 'Sin datos suficientes'} />
-                                  <ReportLine label="Último kilometraje registrado" value={maintenanceReport.lastRecord ? `${maintenanceReport.lastRecord.mileage.toLocaleString()} km` : 'Sin registros'} />
-                                </div>
-                              </CardContent>
-                            </Card>
-
-                            <Card className="border-white/5 bg-moto-darker py-0">
-                              <CardContent className="p-4">
-                                <h3 className="mb-3 font-semibold">Gastos por tipo</h3>
-                                {maintenanceReport.topExpenseTypes.length > 0 ? (
-                                  <div className="space-y-3">
-                                    {maintenanceReport.topExpenseTypes.map(([serviceType, total]) => (
-                                      <ReportLine key={serviceType} label={serviceType} value={formatMoney(total)} />
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <p className="text-sm text-gray-400">Agrega costos a tus mantenimientos para ver este informe.</p>
-                                )}
-                              </CardContent>
-                            </Card>
                           </div>
                         </>
                       ) : (
@@ -1780,6 +1877,18 @@ export function MyBikes() {
               {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : editingBike ? <Pencil className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
               {editingBike ? 'Guardar cambios' : 'Agregar moto'}
             </Button>
+            {editingBike ? (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isSaving}
+                className="w-full border-red-500/30 text-red-300 hover:bg-red-500/10 hover:text-red-200"
+                onClick={() => setBikeToDelete(editingBike)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Eliminar moto
+              </Button>
+            ) : null}
           </form>
         </DialogContent>
       </Dialog>
@@ -2305,9 +2414,20 @@ export function MyBikes() {
         }}
       />
       <ConfirmActionDialog
+        open={Boolean(bikeToDelete)}
+        title="Eliminar moto"
+        description={bikeToDelete ? `Se eliminarán ${bikeToDelete.brand} ${bikeToDelete.model} y toda su hoja de vida. Si tu plan es Premium, solo podrás registrar una moto de reemplazo durante este año calendario.` : ''}
+        confirmLabel="Eliminar definitivamente"
+        isProcessing={isSaving}
+        onOpenChange={(open) => !open && setBikeToDelete(null)}
+        onConfirm={() => void deleteMotorcycle()}
+      />
+      <ConfirmActionDialog
         open={showGarageLimit}
-        title="Tu plan Free incluye una moto"
-        description="Ya tienes una moto en Mi Garage. Con Premium puedes administrar varias motos y elegir cuál será la principal."
+        title={effectivePlan === 'premium' ? 'Premium incluye hasta tres motos' : 'Tu plan Free incluye una moto'}
+        description={effectivePlan === 'premium'
+          ? 'Ya tienes tres motos registradas. Si eliminas una, podrás registrar una moto de reemplazo una sola vez durante el año calendario.'
+          : 'Ya tienes una moto en Mi Garage. Con Premium puedes administrar hasta tres motos y elegir cuál será la principal.'}
         confirmLabel="Conocer Premium"
         cancelLabel="Seguir con mi moto"
         destructive={false}

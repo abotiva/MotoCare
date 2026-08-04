@@ -3,10 +3,18 @@ export type Profile = {
   full_name: string | null
   username: string | null
   city: string | null
+  department_code: string | null
+  municipality_code: string | null
+  business_phone: string | null
+  business_address: string | null
+  business_map_url: string | null
+  business_latitude: number | null
+  business_longitude: number | null
   rider_type: string | null
   bio: string | null
   social_url: string | null
   avatar_url: string | null
+  is_premium: boolean
   primary_motorcycle_id: string | null
   primary_club_id: string | null
   is_public: boolean
@@ -18,7 +26,7 @@ export type Profile = {
   updated_at: string
 }
 
-export type UserPlan = 'free' | 'pro' | 'premium' | 'business'
+export type UserPlan = 'free' | 'premium' | 'business'
 
 export type UserPlanStatus = 'active' | 'trialing' | 'past_due' | 'canceled'
 
@@ -30,11 +38,13 @@ export type UserSubscription = {
   updated_at: string | null
 }
 
-export type MarketplaceCategory = 'motorcycles' | 'parts' | 'gear' | 'services' | 'premium-routes' | 'packs'
+export type MarketplaceCategory = 'motorcycles' | 'parts' | 'gear' | 'services' | 'premium-routes'
 
 export type MarketplaceCondition = 'new' | 'used_like_new' | 'used_good' | 'used_fair' | 'service' | 'digital'
 
 export type MarketplaceListingStatus = 'draft' | 'pending_review' | 'active' | 'paused' | 'sold' | 'rejected' | 'archived'
+export type ServiceCategory = 'tow' | 'mechanic' | 'tire_shop' | 'car_wash' | 'route_guide'
+export type ServiceStatus = 'active' | 'inactive' | 'promotion'
 
 export type MarketplaceListingImage = {
   id: string
@@ -60,12 +70,17 @@ export type MarketplaceListing = {
   mileage_km: number | null
   city: string | null
   department: string | null
+  quantity: 1
   status: MarketplaceListingStatus
   is_featured: boolean
   published_at: string | null
   sold_at: string | null
   created_at: string
   updated_at: string
+  department_code: string | null
+  municipality_code: string | null
+  service_category: ServiceCategory | null
+  service_status: ServiceStatus
 }
 
 export type MarketplaceListingWithSeller = MarketplaceListing & {
@@ -74,6 +89,12 @@ export type MarketplaceListingWithSeller = MarketplaceListing & {
     username: string | null
     city: string | null
     avatar_url: string | null
+    is_premium: boolean
+    business_phone: string | null
+    business_address: string | null
+    business_map_url: string | null
+    business_latitude: number | null
+    business_longitude: number | null
   } | null
   marketplace_listing_images: MarketplaceListingImage[]
 }
@@ -211,6 +232,9 @@ export type RoutePlan = {
   visibility: 'private' | 'community'
   status: 'planned' | 'in_progress' | 'completed'
   track_geojson: import('@/lib/gpx').RouteTrack | null
+  premium_route_id?: string | null
+  route_source?: 'personal' | 'premium'
+  premium_access_expires_at?: string | null
   created_at: string
 }
 
@@ -220,6 +244,7 @@ export type RouteWithOwner = RoutePlan & {
     username: string | null
     city: string | null
     avatar_url: string | null
+    is_premium: boolean
   } | null
   motorcycles?: {
     id: string
@@ -263,7 +288,10 @@ export type Club = {
   name: string
   description: string | null
   city: string | null
+  department_code: string | null
+  municipality_code: string | null
   image_url: string | null
+  accepts_join_requests: boolean
   moderation_status?: 'active' | 'suspended' | 'deleted'
   moderation_until?: string | null
   moderation_reason?: string | null
@@ -285,6 +313,7 @@ export type ClubMemberWithProfile = ClubMember & {
     username: string | null
     city: string | null
     avatar_url: string | null
+    is_premium: boolean
     is_public?: boolean
   } | null
 }
@@ -329,12 +358,35 @@ export type ClubPostWithAuthor = ClubPost & {
     full_name: string | null
     username: string | null
     avatar_url: string | null
+    is_premium: boolean
   } | null
   clubs: {
     name: string
     image_url: string | null
   } | null
   routes: RoutePlan | null
+  club_post_attendees: Array<{
+    user_id: string
+    created_at: string
+    profiles: {
+      full_name: string | null
+      username: string | null
+      avatar_url: string | null
+      is_premium: boolean
+    } | null
+  }>
+}
+
+export type MarketplacePurchase = {
+  id: string
+  listing_id: string
+  buyer_id: string
+  seller_id: string
+  category: MarketplaceCategory
+  title: string
+  amount: number
+  currency: 'COP'
+  purchased_at: string
 }
 
 export type Post = {
@@ -352,6 +404,7 @@ export type PostWithAuthor = Post & {
     username: string | null
     city: string | null
     avatar_url: string | null
+    is_premium: boolean
   } | null
   routes: RoutePlan | null
   post_images: PostImage[]
@@ -379,6 +432,7 @@ export type PostCommentWithAuthor = PostComment & {
     full_name: string | null
     username: string | null
     avatar_url: string | null
+    is_premium: boolean
   } | null
 }
 
@@ -398,7 +452,6 @@ export type AdminOverview = {
   public_users: number
   private_users: number
   free_users: number
-  pro_users: number
   premium_users: number
   business_users?: number
   motorcycles: number
