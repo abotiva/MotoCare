@@ -137,10 +137,13 @@ export function MainLayout() {
     if (!supabase || !userId) return
     const client = supabase
     const loadNotifications = async () => {
-      const [countResult, notificationsResult] = await Promise.all([
-        client.from('notifications').select('id', { count: 'exact', head: true }).eq('user_id', userId).is('read_at', null).lte('scheduled_for', new Date().toISOString()),
-        client.from('notifications').select('*').eq('user_id', userId).is('read_at', null).lte('scheduled_for', new Date().toISOString()).order('scheduled_for').limit(5),
-      ])
+      let countQuery = client.from('notifications').select('id', { count: 'exact', head: true }).eq('user_id', userId).is('read_at', null).lte('scheduled_for', new Date().toISOString())
+      let notificationsQuery = client.from('notifications').select('*').eq('user_id', userId).is('read_at', null).lte('scheduled_for', new Date().toISOString()).order('scheduled_for').limit(5)
+      if (isBusiness) {
+        countQuery = countQuery.in('type', ['marketplace_message', 'moderation_notice'])
+        notificationsQuery = notificationsQuery.in('type', ['marketplace_message', 'moderation_notice'])
+      }
+      const [countResult, notificationsResult] = await Promise.all([countQuery, notificationsQuery])
       setUnreadNotifications(countResult.count ?? 0)
       setNotificationItems((notificationsResult.data ?? []) as Notification[])
     }
@@ -154,10 +157,10 @@ export function MainLayout() {
       window.clearInterval(refreshTimer)
       void client.removeChannel(channel)
     }
-  }, [userId])
+  }, [isBusiness, userId])
 
   useEffect(() => {
-    if (!supabase || !userId) {
+    if (!supabase || !userId || isBusiness) {
       setQuickActionBike(null)
       return
     }
@@ -174,7 +177,7 @@ export function MainLayout() {
             ?? null
         )
       })
-  }, [profile?.primary_motorcycle_id, userId])
+  }, [isBusiness, profile?.primary_motorcycle_id, userId])
 
   useEffect(() => {
     if (!supabase || !userId) {
@@ -255,7 +258,7 @@ export function MainLayout() {
         </nav>
         <div className="border-t border-white/5 p-4">
           <Link to="/app/profile" className="flex min-h-11 items-center gap-3 rounded-xl p-2 hover:bg-white/5">
-            <Avatar premium={profile?.is_premium} className="h-9 w-9 bg-moto-gray">
+            <Avatar premium={!isBusiness && profile?.is_premium} className="h-9 w-9 bg-moto-gray">
               <AvatarImage src={profile?.avatar_url ?? undefined} />
               <AvatarFallback>{avatarFallback}</AvatarFallback>
             </Avatar>
@@ -301,7 +304,7 @@ export function MainLayout() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button type="button" className="grid h-11 w-11 place-items-center rounded-xl hover:bg-white/5" aria-label="Abrir opciones de cuenta">
-                    <Avatar premium={profile?.is_premium} className="h-8 w-8 bg-moto-gray">
+                    <Avatar premium={!isBusiness && profile?.is_premium} className="h-8 w-8 bg-moto-gray">
                       <AvatarImage src={profile?.avatar_url ?? undefined} />
                       <AvatarFallback className="text-xs">{avatarFallback}</AvatarFallback>
                     </Avatar>
@@ -310,7 +313,7 @@ export function MainLayout() {
                 <DropdownMenuContent align="end" className="w-56 border-white/10 bg-moto-darker text-white">
                   <DropdownMenuLabel>{profile?.full_name || user?.email || 'Mi cuenta'}</DropdownMenuLabel>
                   <DropdownMenuSeparator className="bg-white/10" />
-                  {accountItems.map((item) => <DropdownMenuItem key={item.path} asChild><Link to={item.path}><item.icon className="mr-2 h-4 w-4" />{item.label}</Link></DropdownMenuItem>)}
+                  {accountItems.filter((item) => !(isBusiness && item.path === '/app/plan')).map((item) => <DropdownMenuItem key={item.path} asChild><Link to={item.path}><item.icon className="mr-2 h-4 w-4" />{item.label}</Link></DropdownMenuItem>)}
                   <DropdownMenuSeparator className="bg-white/10" />
                   <DropdownMenuItem onSelect={() => void signOut()}><LogOut className="mr-2 h-4 w-4" />Cerrar sesión</DropdownMenuItem>
                 </DropdownMenuContent>

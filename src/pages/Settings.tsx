@@ -10,6 +10,7 @@ import {
   Mail,
   Route,
   Shield,
+  Store,
   User,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -21,9 +22,10 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { useAuth } from '@/contexts/AuthContext'
+import { useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
 
-type PreferenceKey = 'maintenance_alerts' | 'community_alerts' | 'route_alerts' | 'email_summary' | 'public_profile'
+type PreferenceKey = 'maintenance_alerts' | 'community_alerts' | 'route_alerts' | 'service_alerts' | 'email_summary' | 'public_profile'
 
 type Preference = {
   id: PreferenceKey
@@ -35,6 +37,7 @@ const defaultPreferences: Record<PreferenceKey, boolean> = {
   maintenance_alerts: true,
   community_alerts: true,
   route_alerts: true,
+  service_alerts: true,
   email_summary: false,
   public_profile: true,
 }
@@ -60,6 +63,11 @@ const notificationPreferences: Preference[] = [
     label: 'Resumen por email',
     description: 'Recibir un resumen periódico cuando se habilite esta función.',
   },
+]
+
+const businessNotificationPreferences: Preference[] = [
+  { id: 'service_alerts', label: 'Mensajes de servicios', description: 'Consultas de clientes y novedades de sus publicaciones comerciales.' },
+  { id: 'email_summary', label: 'Resumen por email', description: 'Recibir un resumen comercial cuando se habilite esta función.' },
 ]
 
 const privacyPreferences: Preference[] = [
@@ -92,11 +100,17 @@ function loadPreferences() {
 
 export function Settings() {
   const { user, profile, refreshProfile, signOut } = useAuth()
+  const { effectivePlan } = useSubscription()
   const [preferences, setPreferences] = useState<Record<PreferenceKey, boolean>>(defaultPreferences)
   const [isSendingReset, setIsSendingReset] = useState(false)
 
   const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Motero MotoCare Co'
   const username = profile?.username || user?.email?.split('@')[0] || 'motocare'
+  const isBusiness = effectivePlan === 'business'
+  const visibleNotificationPreferences = isBusiness ? businessNotificationPreferences : notificationPreferences
+  const visiblePrivacyPreferences = isBusiness
+    ? [{ ...privacyPreferences[0], description: 'Permitir que los clientes consulten la información y ubicación pública del negocio.' }]
+    : privacyPreferences
 
   useEffect(() => {
     setPreferences(loadPreferences())
@@ -163,14 +177,14 @@ export function Settings() {
       <Card className="mb-6 overflow-hidden border-white/5 bg-moto-gray py-0">
         <CardContent className="p-4 sm:p-5">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-            <Avatar premium={profile?.is_premium} className="mx-auto h-16 w-16 shrink-0 sm:mx-0 sm:h-20 sm:w-20">
+            <Avatar premium={!isBusiness && profile?.is_premium} className="mx-auto h-16 w-16 shrink-0 sm:mx-0 sm:h-20 sm:w-20">
               <AvatarImage src={profile?.avatar_url ?? undefined} />
               <AvatarFallback className="text-xl">{initials(profile?.full_name, user?.email)}</AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1 text-center sm:text-left">
               <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
                 <h2 className="max-w-full break-words text-lg font-bold sm:text-xl">{displayName}</h2>
-                <Badge className="max-w-full bg-moto-orange text-moto-darker">{profile?.rider_type || 'Motero'}</Badge>
+                <Badge className="max-w-full bg-moto-orange text-moto-darker">{isBusiness ? 'Negocio Business' : profile?.rider_type || 'Motero'}</Badge>
               </div>
               <p className="break-words text-sm text-gray-400 sm:text-base">@{username}</p>
               <div className="mt-2 flex flex-col items-center gap-2 text-sm text-gray-500 sm:flex-row sm:flex-wrap sm:items-start sm:justify-start">
@@ -194,13 +208,13 @@ export function Settings() {
       <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-5">
           <SettingsGroup icon={Bell} title="Notificaciones">
-            {notificationPreferences.map((item) => (
+            {visibleNotificationPreferences.map((item) => (
               <ToggleRow key={item.id} item={item} checked={preferences[item.id]} onToggle={() => togglePreference(item.id)} />
             ))}
           </SettingsGroup>
 
           <SettingsGroup icon={Shield} title="Privacidad">
-            {privacyPreferences.map((item) => (
+            {visiblePrivacyPreferences.map((item) => (
               <ToggleRow
                 key={item.id}
                 item={item}
@@ -208,7 +222,7 @@ export function Settings() {
                 onToggle={() => togglePreference(item.id)}
               />
             ))}
-            <InfoRow label="Rutas privadas" description="Las rutas privadas solo las ve usted. Las funciones comunitarias quedarán reservadas para licencias Premium." />
+            {!isBusiness ? <InfoRow label="Rutas privadas" description="Las rutas privadas solo las ve usted. Las funciones comunitarias quedarán reservadas para licencias Premium." /> : null}
           </SettingsGroup>
 
           <SettingsGroup icon={KeyRound} title="Seguridad">
@@ -240,8 +254,13 @@ export function Settings() {
               <h3 className="font-semibold">Accesos rápidos</h3>
             </CardHeader>
             <CardContent className="p-0">
-              <QuickLink icon={Bike} label="Mi Garage" description="Motos, documentos y mantenimientos" to="/app/garage" />
-              <QuickLink icon={Route} label="Rutas" description="Crear, editar y guardar rutas" to="/app/map" />
+              {isBusiness ? <>
+                <QuickLink icon={Store} label="Mis servicios" description="Publicar y administrar servicios comerciales" to="/app/marketplace" />
+                <QuickLink icon={User} label="Perfil público" description="Revisar la información visible del negocio" to={`/app/business/${user?.id}`} />
+              </> : <>
+                <QuickLink icon={Bike} label="Mi Garage" description="Motos, documentos y mantenimientos" to="/app/garage" />
+                <QuickLink icon={Route} label="Rutas" description="Crear, editar y guardar rutas" to="/app/map" />
+              </>}
             </CardContent>
           </Card>
         </div>

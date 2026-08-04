@@ -226,6 +226,14 @@ export function Profile() {
 
   useEffect(() => {
     if (!supabase || !user) return
+    if (isBusinessProfile) {
+      setMotorcycles([])
+      setRoutes([])
+      setClubs([])
+      setStats(emptyStats)
+      setIsLoading(false)
+      return
+    }
     const client = supabase
 
     const loadProfileData = async () => {
@@ -265,7 +273,7 @@ export function Profile() {
     }
 
     void loadProfileData()
-  }, [user])
+  }, [isBusinessProfile, user])
 
   const handleSaveProfile = async (event: FormEvent) => {
     event.preventDefault()
@@ -685,13 +693,13 @@ export function Profile() {
               {formMapUrl && formMapQuery ? <div className="overflow-hidden rounded-xl border border-white/10"><iframe title="Vista previa de la ubicación" className="h-48 w-full border-0" loading="lazy" src={`https://www.google.com/maps?q=${encodeURIComponent(formMapQuery)}&z=15&output=embed`} /><a href={formMapUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 p-3 text-sm text-moto-orange"><ExternalLink className="h-4 w-4" />Verificar ubicación en mapas</a></div> : null}
             </> : null}
             <label>
-              <span className="mb-1 block text-sm text-gray-400">Bio corta</span>
+              <span className="mb-1 block text-sm text-gray-400">{isBusinessProfile ? 'Descripción del negocio' : 'Bio corta'}</span>
               <textarea
                 className="h-20 w-full resize-none rounded-lg border border-white/10 bg-moto-darker p-2 text-white"
                 value={form.bio}
                 onChange={(event) => setForm({ ...form, bio: event.target.value })}
                 maxLength={180}
-                placeholder="Amo las rutas de montaña y los viajes de fin de semana."
+                placeholder={isBusinessProfile ? 'Describe brevemente el negocio, su experiencia y cobertura.' : 'Amo las rutas de montaña y los viajes de fin de semana.'}
               />
               <span className="mt-1 block text-xs text-gray-500">{form.bio.length}/180</span>
             </label>
@@ -743,7 +751,7 @@ export function Profile() {
                   Perfil público
                 </span>
                 <span className="mt-1 block text-xs text-gray-400">
-                  Si lo apaga, no aparece en búsquedas y las invitaciones a clubes quedan pendientes de aprobación.
+                  {isBusinessProfile ? 'Si lo apaga, el perfil público del negocio deja de estar visible.' : 'Si lo apaga, no aparece en búsquedas y las invitaciones a clubes quedan pendientes de aprobación.'}
                 </span>
               </span>
               <input

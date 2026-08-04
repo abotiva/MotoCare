@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ArrowRight, Bike, MapPinned, MessageCircle, ShieldCheck, ShoppingBag, Users } from 'lucide-react'
+import { ArrowRight, Bell, Bike, MapPinned, MessageCircle, ShieldCheck, ShoppingBag, Store, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
@@ -69,11 +69,18 @@ const administrationBlock = {
   items: ['Usuarios', 'Licencias', 'Tienda', 'Moderación', 'Catálogos'],
 }
 
+const businessBlocks = [
+  { title: 'Servicios', icon: ShoppingBag, to: '/app/marketplace', cardClass: 'border-t-emerald-400', iconClass: 'bg-emerald-400/15 text-emerald-300', linkClass: 'text-emerald-300 hover:text-emerald-200', description: 'Publica y administra los servicios ofrecidos por tu negocio.', items: ['Directorio', 'Crear servicio', 'Mis publicaciones', 'Mensajes de clientes'] },
+  { title: 'Perfil del negocio', icon: Store, to: '/app/profile', cardClass: 'border-t-violet-400', iconClass: 'bg-violet-400/15 text-violet-300', linkClass: 'text-violet-300 hover:text-violet-200', description: 'Mantén actualizados los datos públicos, contacto y ubicación de tu negocio.', items: ['Información comercial', 'Teléfono', 'Ubicación', 'Perfil público'] },
+  { title: 'Notificaciones', icon: Bell, to: '/app/notifications', cardClass: 'border-t-amber-400', iconClass: 'bg-amber-400/15 text-amber-300', linkClass: 'text-amber-300 hover:text-amber-200', description: 'Revisa consultas, moderación y novedades de tus servicios.', items: ['Mensajes', 'Revisión de servicios', 'Avisos comerciales', 'Pendientes'] },
+]
+
 export function Home() {
   const { profile, user } = useAuth()
   const { effectivePlan } = useSubscription()
   const [isAdmin, setIsAdmin] = useState(false)
-  const firstName = profile?.full_name?.trim().split(/\s+/)[0] ?? 'motero'
+  const isBusiness = effectivePlan === 'business'
+  const firstName = profile?.full_name?.trim().split(/\s+/)[0] ?? (isBusiness ? 'negocio' : 'motero')
   const hasPremiumGarage = effectivePlan === 'premium'
 
   useEffect(() => {
@@ -95,21 +102,19 @@ export function Home() {
     }
   }, [user?.id])
 
-  const planBlocks = effectivePlan === 'business'
-    ? ecosystemBlocks.filter((block) => block.to === '/app/marketplace')
-    : ecosystemBlocks
+  const planBlocks = isBusiness ? businessBlocks : ecosystemBlocks
   const visibleBlocks = isAdmin ? [...planBlocks, administrationBlock] : planBlocks
 
   return (
     <div className="mx-auto max-w-7xl p-4 pb-24 sm:p-6 lg:pb-8">
       <header>
-        <p className="text-sm font-medium text-moto-orange">MotoCare conecta tu moto, tus rutas y tu comunidad.</p>
+        <p className="text-sm font-medium text-moto-orange">{isBusiness ? 'MotoCare conecta tu negocio con motociclistas que necesitan tus servicios.' : 'MotoCare conecta tu moto, tus rutas y tu comunidad.'}</p>
         <h1 className="mt-1 text-3xl font-bold">Hola, {firstName}</h1>
       </header>
 
       <section className="mt-8" aria-labelledby="ecosystem-title">
         <div>
-          <p className="text-sm text-gray-500">Todo el ecosistema, de un vistazo</p>
+          <p className="text-sm text-gray-500">{isBusiness ? 'Tu operación comercial, de un vistazo' : 'Todo el ecosistema, de un vistazo'}</p>
           <h2 id="ecosystem-title" className="mt-1 text-2xl font-bold">¿Qué quieres gestionar hoy?</h2>
         </div>
 

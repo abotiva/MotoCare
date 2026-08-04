@@ -1078,7 +1078,7 @@ export function Marketplace() {
         ) : null}
       </div>
 
-      <section className="mt-8 space-y-4" aria-label="Información del directorio de servicios">
+      {effectivePlan !== 'business' ? <section className="mt-8 space-y-4" aria-label="Información del directorio de servicios">
         <Card className="overflow-hidden border-white/5 bg-moto-gray py-0">
           <CardContent className="relative p-5">
             <div className="absolute inset-0 bg-[url('/feature-marketplace.jpg')] bg-cover bg-center opacity-20" />
@@ -1121,7 +1121,7 @@ export function Marketplace() {
             </div>
           </CardContent>
         </Card>
-      </section>
+      </section> : null}
 
       {/* Sell Button */}
       {effectivePlan === 'business' ? <div className="fixed bottom-20 right-4 z-40 flex items-center justify-end gap-2 lg:bottom-8 lg:right-8">

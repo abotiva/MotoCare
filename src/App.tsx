@@ -65,7 +65,7 @@ function App() {
             <Route path="bikes/:bikeId/:section" element={<RiderOnlyRoute><MyBikes /></RiderOnlyRoute>} />
             <Route path="my-bikes" element={<RiderOnlyRoute><MyBikes /></RiderOnlyRoute>} />
             <Route path="settings" element={<Settings />} />
-            <Route path="plan" element={<Navigate to="/app/settings?section=plan" replace />} />
+            <Route path="plan" element={<RiderOnlyRoute><Navigate to="/app/settings?section=plan" replace /></RiderOnlyRoute>} />
             <Route path="notifications" element={<Notifications />} />
             <Route path="admin" element={<Admin />} />
             <Route path="*" element={<Navigate to="/app/home" replace />} />

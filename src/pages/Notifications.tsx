@@ -64,22 +64,25 @@ export function Notifications() {
   const [busyId, setBusyId] = useState<string | null>(null)
   const [isMarkingAll, setIsMarkingAll] = useState(false)
 
-  const unreadCount = useMemo(() => notifications.filter((item) => !item.read_at).length, [notifications])
+  const isBusinessAccount = effectivePlan === 'business'
+  const applicableNotifications = useMemo(() => isBusinessAccount
+    ? notifications.filter((item) => item.type === 'marketplace_message' || item.type === 'moderation_notice')
+    : notifications, [isBusinessAccount, notifications])
+  const unreadCount = useMemo(() => applicableNotifications.filter((item) => !item.read_at).length, [applicableNotifications])
   const routeCount = useMemo(() => notifications.filter((item) => item.type === 'route_planned' || item.type === 'route_overdue').length, [notifications])
   const clubCount = useMemo(() => notifications.filter((item) => item.type === 'club_invite').length, [notifications])
   const moderationCount = useMemo(() => notifications.filter((item) => item.type === 'moderation_notice').length, [notifications])
   const storeCount = useMemo(() => notifications.filter((item) => item.type === 'marketplace_message').length, [notifications])
   const canUseAdvancedNotifications = effectivePlan === 'premium'
-  const isBusinessAccount = effectivePlan === 'business'
 
   const visibleNotifications = useMemo(() => {
-    if (filter === 'unread') return notifications.filter((item) => !item.read_at)
-    if (filter === 'routes') return notifications.filter((item) => item.type === 'route_planned' || item.type === 'route_overdue')
-    if (filter === 'clubs') return notifications.filter((item) => item.type === 'club_invite')
-    if (filter === 'store') return notifications.filter((item) => item.type === 'marketplace_message')
-    if (filter === 'moderation') return notifications.filter((item) => item.type === 'moderation_notice')
-    return notifications
-  }, [filter, notifications])
+    if (filter === 'unread') return applicableNotifications.filter((item) => !item.read_at)
+    if (filter === 'routes') return applicableNotifications.filter((item) => item.type === 'route_planned' || item.type === 'route_overdue')
+    if (filter === 'clubs') return applicableNotifications.filter((item) => item.type === 'club_invite')
+    if (filter === 'store') return applicableNotifications.filter((item) => item.type === 'marketplace_message')
+    if (filter === 'moderation') return applicableNotifications.filter((item) => item.type === 'moderation_notice')
+    return applicableNotifications
+  }, [applicableNotifications, filter])
 
   const loadNotifications = useCallback(async () => {
     if (!supabase || !userId) return
@@ -128,12 +131,14 @@ export function Notifications() {
     if (!supabase || !user || unreadCount === 0) return
     setIsMarkingAll(true)
     const readAt = new Date().toISOString()
-    const { error } = await supabase
+    let updateQuery = supabase
       .from('notifications')
       .update({ read_at: readAt })
       .eq('user_id', userId)
       .is('read_at', null)
       .lte('scheduled_for', new Date().toISOString())
+    if (isBusinessAccount) updateQuery = updateQuery.in('type', ['marketplace_message', 'moderation_notice'])
+    const { error } = await updateQuery
 
     if (error) {
       toast.error('No pudimos marcar todas', { description: error.message })
@@ -185,7 +190,7 @@ export function Notifications() {
         <div className="min-w-0">
           <h1 className="text-xl font-bold sm:text-2xl">Notificaciones</h1>
           <p className="mt-1 text-sm leading-6 text-gray-400 sm:text-base">
-            Gestiona alertas de rutas, clubes y avisos importantes de MotoCare Co.
+            {isBusinessAccount ? 'Gestiona mensajes de servicios y avisos comerciales de MotoCare Co.' : 'Gestiona alertas de rutas, clubes y avisos importantes de MotoCare Co.'}
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <Badge className="bg-white/10 text-gray-300">
@@ -232,7 +237,7 @@ export function Notifications() {
       </Card>
 
       <div id="notification-detail" className="mb-5 grid scroll-mt-24 grid-cols-2 gap-2 sm:flex">
-        {filters.map((item) => (
+        {filters.filter((item) => !isBusinessAccount || (item.id !== 'routes' && item.id !== 'clubs')).map((item) => (
           <button
             key={item.id}
             type="button"
