@@ -20,6 +20,7 @@ const PremiumRoutes = lazy(() => import('./pages/PremiumRoutes').then((module) =
 const Messages = lazy(() => import('./pages/Messages').then((module) => ({ default: module.Messages })))
 const Clubs = lazy(() => import('./pages/Clubs').then((module) => ({ default: module.Clubs })))
 const Profile = lazy(() => import('./pages/Profile').then((module) => ({ default: module.Profile })))
+const BusinessProfile = lazy(() => import('./pages/BusinessProfile').then((module) => ({ default: module.BusinessProfile })))
 const MyBikes = lazy(() => import('./pages/MyBikes').then((module) => ({ default: module.MyBikes })))
 const Settings = lazy(() => import('./pages/Settings').then((module) => ({ default: module.Settings })))
 const Admin = lazy(() => import('./pages/Admin').then((module) => ({ default: module.Admin })))
@@ -55,6 +56,7 @@ function App() {
             <Route path="messages" element={<RiderOnlyRoute><Messages /></RiderOnlyRoute>} />
             <Route path="clubs/manage" element={<RiderOnlyRoute><Clubs /></RiderOnlyRoute>} />
             <Route path="profile" element={<Profile />} />
+            <Route path="business/:businessId" element={<BusinessProfile />} />
             <Route path="garage" element={<RiderOnlyRoute><MyBikes /></RiderOnlyRoute>} />
             <Route path="garage/:section" element={<RiderOnlyRoute><MyBikes /></RiderOnlyRoute>} />
             <Route path="garage/:bikeId/:section" element={<RiderOnlyRoute><MyBikes /></RiderOnlyRoute>} />

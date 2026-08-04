@@ -56,6 +56,7 @@ Para una base nueva, ejecutar:
 ```txt
 supabase/schema.sql
 supabase/license_definition_consolidation_migration.sql
+supabase/colombia_locations_migration.sql
 ```
 
 Para bases existentes, revisar y ejecutar las migraciones necesarias en `supabase/`:
@@ -79,7 +80,9 @@ Para bases existentes, revisar y ejecutar las migraciones necesarias en `supabas
 - `marketplace_personal_sales_phase_one_migration.sql`
 - `marketplace_personal_sales_phase_two_business_services_migration.sql`
 - `marketplace_quota_on_approval_migration.sql`
-- `license_definition_consolidation_migration.sql` (ejecutar al final)
+- `license_definition_consolidation_migration.sql` (ejecutar despues de las migraciones funcionales)
+- `colombia_locations_migration.sql` (ejecutar al final; catalogo oficial DIVIPOLA y relaciones de ubicacion)
+- `business_services_expansion_migration.sql` (categorias, estados y perfil comercial Business)
 
 La migracion `admin_catalog_crud_migration.sql` permite crear, editar, activar, desactivar y eliminar elementos del catalogo exclusivamente a usuarios registrados en `public.app_admins`.
 

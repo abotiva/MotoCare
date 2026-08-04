@@ -118,6 +118,8 @@ Para talleres, gruas, montallantas, negocios, marcas y aliados que ofrecen servi
 - Business no es un nivel superior a Premium: es una cuenta de naturaleza diferente.
 - No incluye garaje, rutas personales, comunidad, clubes, documentos, informes ni notificaciones avanzadas.
 - Su funcion vigente es mantener un perfil comercial y publicar servicios.
+- Su perfil comercial incluye telefono, direccion y coordenadas para mostrar la ubicacion del negocio en el mapa.
+- Puede administrar la categoria y el estado visible de cada servicio, editarlo o eliminarlo.
 
 ### Reglas vigentes del directorio
 

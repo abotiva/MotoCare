@@ -4,11 +4,12 @@ import { useEffect } from 'react'
 import type { FormEvent } from 'react'
 import { toast } from 'sonner'
 import { 
-  Search, Filter, Grid3X3, List, MapPin, Heart, MessageCircle, 
+  Search, Grid3X3, List, MapPin, Heart, MessageCircle,
   Star, TrendingUp, Clock3, Lock, Store,
   AlertCircle, LoaderCircle, ImagePlus, Trash2, CheckCircle2, Inbox, Send, Plus, X
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ColombiaLocationFields } from '@/components/ColombiaLocationFields'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -29,14 +30,21 @@ import type {
   MarketplaceCondition,
   MarketplaceListingWithSeller,
   MarketplaceMessage,
+  ServiceCategory,
+  ServiceStatus,
 } from '@/types/database'
 
-const categories = [
-  { id: 'all', name: 'Todos los servicios', icon: Grid3X3 },
-  { id: 'services', name: 'Servicios', icon: Store },
+const serviceCategories: Array<{ id: 'all' | ServiceCategory; name: string }> = [
+  { id: 'all', name: 'Todos' },
+  { id: 'tow', name: 'Grúa' },
+  { id: 'mechanic', name: 'Taller de mecánica' },
+  { id: 'tire_shop', name: 'Montallantas' },
+  { id: 'car_wash', name: 'Lavadero' },
+  { id: 'route_guide', name: 'Guía de ruta' },
 ]
+const serviceCategoryLabels = Object.fromEntries(serviceCategories.filter((item) => item.id !== 'all').map((item) => [item.id, item.name])) as Record<ServiceCategory, string>
+const serviceStatusLabels: Record<ServiceStatus, string> = { active: 'Activo', inactive: 'Inactivo', promotion: 'En promoción' }
 
-const businessSaleCategories = categories.filter((category) => category.id === 'services')
 
 type StoreListing = {
   id: string
@@ -46,6 +54,7 @@ type StoreListing = {
   condition: string
   mileage?: string
   location: string
+  city?: string
   image: string
   seller: { name: string; rating: number; verified: boolean }
   featured: boolean
@@ -55,6 +64,15 @@ type StoreListing = {
   images?: string[]
   sellerId?: string
   status?: 'active' | 'sold'
+  serviceCategory?: ServiceCategory
+  serviceStatus?: ServiceStatus
+  sellerPhone?: string
+  sellerAddress?: string
+  sellerLatitude?: number
+  sellerLongitude?: number
+  department?: string
+  departmentCode?: string
+  municipalityCode?: string
 }
 
 type ListingForm = {
@@ -66,6 +84,10 @@ type ListingForm = {
   mileage_km: string
   city: string
   department: string
+  department_code: string
+  municipality_code: string
+  service_category: ServiceCategory
+  service_status: ServiceStatus
 }
 
 const emptyListingForm: ListingForm = {
@@ -77,6 +99,10 @@ const emptyListingForm: ListingForm = {
   mileage_km: '',
   city: '',
   department: '',
+  department_code: '',
+  municipality_code: '',
+  service_category: 'mechanic',
+  service_status: 'active',
 }
 
 const MARKETPLACE_PAGE_SIZE = 24
@@ -245,6 +271,7 @@ function toStoreListing(listing: MarketplaceListingWithSeller): StoreListing {
     condition: conditionLabels[listing.condition],
     mileage: listing.mileage_km === null ? undefined : `${listing.mileage_km.toLocaleString('es-CO')} km`,
     location: [listing.city, listing.department].filter(Boolean).join(', ') || 'Colombia',
+    city: listing.city || '',
     image: image || '/feature-marketplace.jpg',
     seller: {
       name: sellerName,
@@ -258,6 +285,15 @@ function toStoreListing(listing: MarketplaceListingWithSeller): StoreListing {
     images,
     sellerId: listing.seller_id,
     status: listing.status === 'sold' ? 'sold' : 'active',
+    serviceCategory: listing.service_category ?? 'mechanic',
+    serviceStatus: listing.service_status,
+    sellerPhone: listing.profiles?.business_phone ?? undefined,
+    sellerAddress: listing.profiles?.business_address ?? undefined,
+    sellerLatitude: listing.profiles?.business_latitude === null ? undefined : Number(listing.profiles?.business_latitude),
+    sellerLongitude: listing.profiles?.business_longitude === null ? undefined : Number(listing.profiles?.business_longitude),
+    department: listing.department ?? undefined,
+    departmentCode: listing.department_code ?? undefined,
+    municipalityCode: listing.municipality_code ?? undefined,
   }
 }
 
@@ -268,6 +304,9 @@ export function Marketplace() {
   const [searchQuery, setSearchQuery] = useState('')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [selectedCategory, setSelectedCategory] = useState('all')
+  const [selectedCity, setSelectedCity] = useState('all')
+  const [selectedStatus, setSelectedStatus] = useState<'all' | ServiceStatus>('all')
+  const [editingListingId, setEditingListingId] = useState<string | null>(null)
   const [listings, setListings] = useState<StoreListing[]>(isSupabaseConfigured ? [] : demoListings)
   const [isLoadingListings, setIsLoadingListings] = useState(isSupabaseConfigured)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -311,7 +350,7 @@ export function Marketplace() {
         .from('marketplace_listings')
         .select(`
           *,
-          profiles:seller_id(full_name, username, city, avatar_url),
+          profiles:seller_id(full_name, username, city, avatar_url, business_phone, business_address, business_latitude, business_longitude),
           marketplace_listing_images(*)
         `)
         .eq('status', 'active')
@@ -399,19 +438,11 @@ export function Marketplace() {
     && effectivePlan === 'business'
   )
 
-  const availableSaleCategories = businessSaleCategories
-
   const saveListing = async (status: 'draft' | 'pending_review') => {
     if (!supabase || !user || !canCreateListing) return
 
     const price = Number(listingForm.price)
     const mileage = null
-    if (!availableSaleCategories.some((category) => category.id === listingForm.category)) {
-      toast.error('Categoría no permitida', {
-        description: 'Las licencias Business pueden publicar servicios.',
-      })
-      return
-    }
     if (listingForm.category !== 'services' || listingForm.condition !== 'service') {
       toast.error('Tipo no permitido', { description: 'Este directorio admite únicamente publicaciones de servicios.' })
       return
@@ -428,12 +459,43 @@ export function Marketplace() {
       toast.error('Precio inválido', { description: 'Ingresa un precio de referencia o déjalo en cero para indicar que debe consultarse.' })
       return
     }
-    if (listingImages.length === 0) {
+    if (!editingListingId && listingImages.length === 0) {
       toast.error('Agrega una imagen', { description: 'La publicación requiere al menos una imagen real del negocio o servicio.' })
       return
     }
 
     setIsSavingListing(true)
+    if (editingListingId) {
+      const { data, error } = await supabase
+        .from('marketplace_listings')
+        .update({
+          title: listingForm.title.trim(),
+          description: listingForm.description.trim(),
+          price,
+          service_category: listingForm.service_category,
+          service_status: listingForm.service_status,
+          city: listingForm.city.trim() || null,
+          department: listingForm.department.trim() || null,
+          department_code: listingForm.department_code || null,
+          municipality_code: listingForm.municipality_code || null,
+        })
+        .eq('id', editingListingId)
+        .eq('seller_id', user.id)
+        .select(`*, profiles:seller_id(full_name, username, city, avatar_url, business_phone, business_address, business_latitude, business_longitude), marketplace_listing_images(*)`)
+        .single()
+      if (error) {
+        toast.error('No pudimos actualizar el servicio', { description: error.message })
+      } else if (data) {
+        const updated = toStoreListing(data as MarketplaceListingWithSeller)
+        setListings((current) => current.map((item) => item.id === updated.id ? updated : item))
+        toast.success('Servicio actualizado')
+        setShowCreateListing(false)
+        setEditingListingId(null)
+        setListingForm(emptyListingForm)
+      }
+      setIsSavingListing(false)
+      return
+    }
     const { data: insertedListing, error } = await supabase
       .from('marketplace_listings')
       .insert({
@@ -447,6 +509,10 @@ export function Marketplace() {
         mileage_km: mileage,
         city: listingForm.city.trim() || null,
         department: listingForm.department.trim() || null,
+        department_code: listingForm.department_code || null,
+        municipality_code: listingForm.municipality_code || null,
+        service_category: listingForm.service_category,
+        service_status: listingForm.service_status,
         quantity: 1,
         status: 'draft',
       })
@@ -540,6 +606,38 @@ export function Marketplace() {
   const handleSubmitListing = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     void saveListing('pending_review')
+  }
+
+  const openEditListing = (listing: StoreListing) => {
+    setEditingListingId(listing.id)
+    setListingForm({
+      ...emptyListingForm,
+      title: listing.title,
+      description: listing.description ?? '',
+      price: String(listing.price),
+      city: listing.city ?? '',
+      department: listing.department ?? '',
+      department_code: listing.departmentCode ?? '',
+      municipality_code: listing.municipalityCode ?? '',
+      service_category: listing.serviceCategory ?? 'mechanic',
+      service_status: listing.serviceStatus ?? 'active',
+    })
+    setListingImages([])
+    setSelectedListing(null)
+    setShowCreateListing(true)
+  }
+
+  const deleteListing = async (listing: StoreListing) => {
+    if (!supabase || !user || listing.sellerId !== user.id) return
+    if (!window.confirm(`¿Eliminar definitivamente "${listing.title}"?`)) return
+    const { error } = await supabase.from('marketplace_listings').delete().eq('id', listing.id).eq('seller_id', user.id)
+    if (error) {
+      toast.error('No pudimos eliminar el servicio', { description: error.message })
+      return
+    }
+    setListings((current) => current.filter((item) => item.id !== listing.id))
+    setSelectedListing(null)
+    toast.success('Servicio eliminado')
   }
 
   const sendMarketplaceMessage = async (
@@ -638,6 +736,7 @@ export function Marketplace() {
       .map((message) => message.id)
     if (unreadIds.length > 0) {
       await supabase.from('marketplace_messages').update({ read_at: new Date().toISOString() }).in('id', unreadIds)
+      await supabase.from('notifications').update({ read_at: new Date().toISOString() }).in('marketplace_message_id', unreadIds).eq('user_id', user.id)
     }
   }
 
@@ -663,16 +762,20 @@ export function Marketplace() {
     const searchTerm = searchQuery.trim().toLowerCase()
     return listings.filter((listing) => {
       if (listing.category !== 'services') return false
-      const matchesCategory = selectedCategory === 'all' || listing.category === selectedCategory
+      const matchesCategory = selectedCategory === 'all' || (listing.serviceCategory ?? 'mechanic') === selectedCategory
+      const matchesCity = selectedCity === 'all' || listing.city === selectedCity
+      const matchesStatus = selectedStatus === 'all' || (listing.serviceStatus ?? 'active') === selectedStatus
       const matchesSearch = !searchTerm || [
         listing.title,
         listing.location,
         listing.condition,
         listing.seller.name,
       ].some((value) => value.toLowerCase().includes(searchTerm))
-      return matchesCategory && matchesSearch
+      return matchesCategory && matchesCity && matchesStatus && matchesSearch
     })
-  }, [listings, searchQuery, selectedCategory])
+  }, [listings, searchQuery, selectedCategory, selectedCity, selectedStatus])
+
+  const availableCities = useMemo(() => [...new Set(listings.map((listing) => listing.city).filter((city): city is string => Boolean(city)))].sort((a, b) => a.localeCompare(b, 'es')), [listings])
 
   const featuredListings = useMemo(
     () => filteredListings.filter((listing) => listing.featured),
@@ -746,14 +849,14 @@ export function Marketplace() {
           />
         </div>
         <div className="grid grid-cols-2 gap-2 sm:flex">
-          <Button variant="outline" className="w-full border-white/10 sm:w-auto" disabled>
-            <MapPin className="w-4 h-4 mr-2" />
-            Ubicación
-          </Button>
-          <Button variant="outline" className="w-full border-white/10 sm:w-auto" disabled>
-            <Filter className="w-4 h-4 mr-2" />
-            Filtros
-          </Button>
+          <select value={selectedCity} onChange={(event) => setSelectedCity(event.target.value)} className="h-10 min-w-0 rounded-lg border border-white/10 bg-moto-gray px-3 text-sm text-white">
+            <option value="all">Todas las ciudades</option>
+            {availableCities.map((city) => <option key={city} value={city}>{city}</option>)}
+          </select>
+          <select value={selectedStatus} onChange={(event) => setSelectedStatus(event.target.value as 'all' | ServiceStatus)} className="h-10 min-w-0 rounded-lg border border-white/10 bg-moto-gray px-3 text-sm text-white">
+            <option value="all">Todos los estados</option>
+            {(Object.entries(serviceStatusLabels) as Array<[ServiceStatus, string]>).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
           <div className="col-span-2 flex overflow-hidden rounded-lg border border-white/10 sm:col-span-1">
             <button
               onClick={() => setViewMode('grid')}
@@ -773,7 +876,7 @@ export function Marketplace() {
 
       {/* Categories */}
       <div className="flex gap-3 overflow-x-auto pb-4 mb-6 scrollbar-hide">
-        {categories.map((cat) => (
+        {serviceCategories.map((cat) => (
           <button
             key={cat.id}
             onClick={() => setSelectedCategory(cat.id)}
@@ -783,7 +886,6 @@ export function Marketplace() {
                 : 'bg-moto-gray text-gray-400 hover:bg-white/5'
             }`}
           >
-            <cat.icon className="w-5 h-5" />
             <span className="font-medium">{cat.name}</span>
           </button>
         ))}
@@ -833,9 +935,11 @@ export function Marketplace() {
                   className="w-full h-full object-cover"
                 />
                 <Badge className="absolute top-3 left-3 bg-moto-orange">Destacado</Badge>
+                {(listing.serviceStatus ?? 'active') === 'promotion' ? <Badge className="absolute bottom-3 left-3 bg-fuchsia-600 text-white">En promoción</Badge> : null}
                 <button className="absolute top-3 right-3 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center" disabled>
                   <Heart className="w-4 h-4" />
                 </button>
+                {(listing.serviceStatus ?? 'active') === 'promotion' ? <Badge className="absolute bottom-3 left-3 bg-fuchsia-600 text-white">En promoción</Badge> : null}
               </div>
               <CardContent className="p-4">
                 <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -855,6 +959,7 @@ export function Marketplace() {
                 </div>
                 <div className="flex items-center gap-4 text-sm text-gray-400 mb-3">
                   <Badge variant="secondary">{listing.condition}</Badge>
+                  <Badge className="bg-white/10 text-gray-200">{serviceCategoryLabels[listing.serviceCategory ?? 'mechanic']}</Badge>
                   {listing.mileage && <span>{listing.mileage}</span>}
                 </div>
                 <div className="flex flex-col gap-3 border-t border-white/5 pt-3 sm:flex-row sm:items-center sm:justify-between">
@@ -863,7 +968,7 @@ export function Marketplace() {
                       <span className="text-sm font-medium">{listing.seller.name[0]}</span>
                     </div>
                     <div className="min-w-0">
-                      <p className="truncate text-sm">{listing.seller.name}</p>
+                      <Link to={`/app/business/${listing.sellerId}`} className="truncate text-sm text-moto-orange hover:underline">{listing.seller.name}</Link>
                       <div className="flex items-center gap-1 text-xs text-gray-500">
                         <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
                         {listing.seller.rating}
@@ -932,11 +1037,12 @@ export function Marketplace() {
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-400 mb-3">
                   <Badge variant="secondary" className="text-xs">{listing.condition}</Badge>
+                  <Badge className="bg-white/10 text-xs text-gray-200">{serviceCategoryLabels[listing.serviceCategory ?? 'mechanic']}</Badge>
                   {listing.mileage && <span className="text-xs">{listing.mileage}</span>}
                 </div>
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex min-w-0 items-center gap-2">
-                    <span className="truncate text-sm">{listing.seller.name}</span>
+                    <Link to={`/app/business/${listing.sellerId}`} className="truncate text-sm text-moto-orange hover:underline">{listing.seller.name}</Link>
                     {listing.seller.verified && (
                       <Badge variant="secondary" className="text-[10px]">Verificado</Badge>
                     )}
@@ -1059,7 +1165,7 @@ export function Marketplace() {
               <DialogHeader>
                 <DialogTitle className="pr-8 text-xl">{selectedListing.title}</DialogTitle>
                 <DialogDescription className="text-gray-400">
-                  Publicado por {selectedListing.seller.name}
+                  Publicado por <Link className="font-medium text-moto-orange hover:underline" to={`/app/business/${selectedListing.sellerId}`} onClick={() => setSelectedListing(null)}>{selectedListing.seller.name}</Link>
                 </DialogDescription>
               </DialogHeader>
 
@@ -1082,6 +1188,8 @@ export function Marketplace() {
                     <div className="flex flex-wrap gap-2">
                       <Badge variant="secondary">{selectedListing.condition}</Badge>
                       <Badge className="bg-white/10 text-gray-300">{selectedListing.category}</Badge>
+                      <Badge className="bg-white/10 text-gray-200">{serviceCategoryLabels[selectedListing.serviceCategory ?? 'mechanic']}</Badge>
+                      <Badge className={(selectedListing.serviceStatus ?? 'active') === 'promotion' ? 'bg-fuchsia-500/20 text-fuchsia-200' : (selectedListing.serviceStatus ?? 'active') === 'inactive' ? 'bg-gray-500/20 text-gray-300' : 'bg-green-500/15 text-green-300'}>{serviceStatusLabels[selectedListing.serviceStatus ?? 'active']}</Badge>
                       {selectedListing.seller.verified ? (
                         <Badge className="bg-green-500/15 text-green-300">Vendedor verificado</Badge>
                       ) : null}
@@ -1109,6 +1217,17 @@ export function Marketplace() {
                   </p>
                 </div>
 
+                {(selectedListing.sellerPhone || selectedListing.sellerAddress) ? (
+                  <div className="rounded-xl border border-white/10 bg-moto-darker p-4">
+                    <h3 className="font-semibold">Contacto y ubicación</h3>
+                    {selectedListing.sellerPhone ? <a href={`tel:${selectedListing.sellerPhone}`} className="mt-2 block text-sm text-moto-orange hover:underline">Teléfono: {selectedListing.sellerPhone}</a> : null}
+                    {selectedListing.sellerAddress ? <p className="mt-1 text-sm text-gray-300">{selectedListing.sellerAddress}</p> : null}
+                    {selectedListing.sellerLatitude !== undefined && selectedListing.sellerLongitude !== undefined ? (
+                      <iframe title={`Ubicación de ${selectedListing.seller.name}`} className="mt-3 h-64 w-full rounded-xl border-0" loading="lazy" src={`https://www.google.com/maps?q=${selectedListing.sellerLatitude},${selectedListing.sellerLongitude}&z=15&output=embed`} />
+                    ) : null}
+                  </div>
+                ) : null}
+
                 <div className="flex gap-3 rounded-xl border border-amber-400/25 bg-amber-400/10 p-4 text-sm leading-6 text-amber-100">
                   <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
                   <p>
@@ -1127,7 +1246,12 @@ export function Marketplace() {
                       {selectedListing.seller.rating}
                     </div>
                   </div>
-                  {selectedListing.category === 'premium-routes' ? (
+                  {selectedListing.sellerId === user?.id ? (
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" className="border-white/10" onClick={() => openEditListing(selectedListing)}>Editar</Button>
+                      <Button type="button" variant="outline" className="border-red-500/30 text-red-300" onClick={() => void deleteListing(selectedListing)}>Eliminar</Button>
+                    </div>
+                  ) : selectedListing.category === 'premium-routes' ? (
                     <Button asChild className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark">
                       <Link to="/app/premium-routes" onClick={() => setSelectedListing(null)}>Explorar ruta</Link>
                     </Button>
@@ -1288,12 +1412,12 @@ export function Marketplace() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showCreateListing} onOpenChange={setShowCreateListing}>
+      <Dialog open={showCreateListing} onOpenChange={(open) => { setShowCreateListing(open); if (!open) { setEditingListingId(null); setListingForm(emptyListingForm); setListingImages([]) } }}>
         <DialogContent className="max-h-[90vh] overflow-y-auto border-white/10 bg-moto-gray text-white sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Publicar servicio</DialogTitle>
+            <DialogTitle>{editingListingId ? 'Editar servicio' : 'Publicar servicio'}</DialogTitle>
             <DialogDescription className="text-gray-400">
-              Describe el servicio de tu negocio. La publicación se mostrará después de la revisión administrativa.
+              {editingListingId ? 'Actualiza la información, categoría o visibilidad del servicio.' : 'Describe el servicio de tu negocio. La publicación se mostrará después de la revisión administrativa.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -1313,35 +1437,15 @@ export function Marketplace() {
 
               <label>
                 <span className="mb-1 block text-sm text-gray-300">Categoría</span>
-                <select
-                  value={listingForm.category}
-                  onChange={(event) => setListingForm((current) => ({
-                    ...current,
-                    category: event.target.value as MarketplaceCategory,
-                    condition: 'service',
-                    mileage_km: '',
-                  }))}
-                  className="h-9 w-full rounded-md border border-white/10 bg-moto-darker px-3 text-sm text-white"
-                >
-                  {availableSaleCategories.map((category) => (
-                    <option key={category.id} value={category.id}>{category.name}</option>
-                  ))}
+                <select value={listingForm.service_category} onChange={(event) => setListingForm((current) => ({ ...current, service_category: event.target.value as ServiceCategory }))} className="h-9 w-full rounded-md border border-white/10 bg-moto-darker px-3 text-sm text-white">
+                  {serviceCategories.filter((item) => item.id !== 'all').map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
                 </select>
               </label>
 
               <label>
                 <span className="mb-1 block text-sm text-gray-300">Estado</span>
-                <select
-                  value={listingForm.condition}
-                  onChange={(event) => setListingForm((current) => ({
-                    ...current,
-                    condition: event.target.value as MarketplaceCondition,
-                  }))}
-                  className="h-9 w-full rounded-md border border-white/10 bg-moto-darker px-3 text-sm text-white"
-                >
-                  {([['service', conditionLabels.service]] as Array<[MarketplaceCondition, string]>).map(([value, label]) => (
-                    <option key={value} value={value}>{label}</option>
-                  ))}
+                <select value={listingForm.service_status} onChange={(event) => setListingForm((current) => ({ ...current, service_status: event.target.value as ServiceStatus }))} className="h-9 w-full rounded-md border border-white/10 bg-moto-darker px-3 text-sm text-white">
+                  {(Object.entries(serviceStatusLabels) as Array<[ServiceStatus, string]>).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                 </select>
               </label>
 
@@ -1363,25 +1467,19 @@ export function Marketplace() {
                 <p className="mt-1 text-xs text-gray-500">Solo las cuentas Business pueden publicar; MotoCare no procesa pagos ni contrataciones.</p>
               </div>
 
-              <label>
-                <span className="mb-1 block text-sm text-gray-300">Ciudad</span>
-                <Input
-                  value={listingForm.city}
-                  onChange={(event) => setListingForm((current) => ({ ...current, city: event.target.value }))}
-                  className="border-white/10 bg-moto-darker"
-                  placeholder="Bogotá"
-                />
-              </label>
-
-              <label>
-                <span className="mb-1 block text-sm text-gray-300">Departamento</span>
-                <Input
-                  value={listingForm.department}
-                  onChange={(event) => setListingForm((current) => ({ ...current, department: event.target.value }))}
-                  className="border-white/10 bg-moto-darker"
-                  placeholder="Cundinamarca"
-                />
-              </label>
+              <ColombiaLocationFields
+                departmentCode={listingForm.department_code}
+                municipalityCode={listingForm.municipality_code}
+                className="grid gap-4 sm:col-span-2 sm:grid-cols-2"
+                required
+                onChange={(location) => setListingForm((current) => ({
+                  ...current,
+                  department_code: location.departmentCode,
+                  department: location.departmentName,
+                  municipality_code: location.municipalityCode,
+                  city: location.municipalityName,
+                }))}
+              />
 
               <label className="sm:col-span-2">
                 <span className="mb-1 block text-sm text-gray-300">Descripción</span>
@@ -1395,7 +1493,7 @@ export function Marketplace() {
                 />
               </label>
 
-              <div className="sm:col-span-2">
+              {!editingListingId ? <div className="sm:col-span-2">
                 <div className="mb-2 flex items-center justify-between gap-3">
                   <div>
                     <p className="text-sm text-gray-300">Imágenes del producto</p>
@@ -1449,11 +1547,11 @@ export function Marketplace() {
                     ))}
                   </div>
                 ) : null}
-              </div>
+              </div> : null}
             </div>
 
             <DialogFooter>
-              <Button
+              {!editingListingId ? <Button
                 type="button"
                 variant="outline"
                 disabled={isSavingListing}
@@ -1461,14 +1559,14 @@ export function Marketplace() {
                 className="border-white/10"
               >
                 Guardar borrador
-              </Button>
+              </Button> : null}
               <Button
                 type="submit"
                 disabled={isSavingListing}
                 className="bg-moto-orange text-moto-darker hover:bg-moto-orange-dark"
               >
                 {isSavingListing ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}
-                Enviar a revisión
+                {editingListingId ? 'Guardar cambios' : 'Enviar a revisión'}
               </Button>
             </DialogFooter>
           </form>

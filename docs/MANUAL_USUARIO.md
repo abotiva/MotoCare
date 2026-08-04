@@ -285,6 +285,10 @@ El directorio permite buscar talleres, gruas, montallantas y otros proveedores a
 
 Solo las cuentas **Business** pueden crear publicaciones de servicios. Pueden guardarlas como borrador o enviarlas a revision; un administrador debe aprobarlas antes de que sean visibles. Las ventas directas de motos, repuestos y accesorios permanecen deshabilitadas.
 
+Las categorias disponibles son **Grua**, **Taller de mecanica**, **Montallantas**, **Lavadero** y **Guia de ruta**. Un servicio puede estar **Activo**, **Inactivo** o **En promocion**. Los inactivos solo son visibles para su propietario y administradores.
+
+El propietario Business puede editar o eliminar sus servicios. El directorio permite filtrar por categoria, ciudad y estado. El nombre del proveedor abre su perfil comercial, donde se muestran telefono, direccion, mapa y servicios publicados.
+
 ## Ajustes
 
 El modulo **Ajustes** permite revisar informacion de cuenta y configurar preferencias basicas del MVP.

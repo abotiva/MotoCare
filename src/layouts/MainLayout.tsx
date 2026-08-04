@@ -149,7 +149,9 @@ export function MainLayout() {
       .channel(`notification-header-${userId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, () => void loadNotifications())
       .subscribe()
+    const refreshTimer = window.setInterval(() => void loadNotifications(), 30000)
     return () => {
+      window.clearInterval(refreshTimer)
       void client.removeChannel(channel)
     }
   }, [userId])
@@ -214,6 +216,7 @@ export function MainLayout() {
     >
       <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
       <span>{item.label}</span>
+      {item.path === '/app/notifications' && unreadNotifications > 0 ? <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-moto-orange px-1 text-[10px] font-bold text-moto-darker">{unreadNotifications > 99 ? '99+' : unreadNotifications}</span> : null}
     </NavLink>
   )
 
@@ -246,7 +249,7 @@ export function MainLayout() {
           </section>
           <section aria-labelledby="nav-account">
             <h2 id="nav-account" className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Cuenta</h2>
-            <div className="space-y-1">{accountItems.map(sidebarLink)}</div>
+            <div className="space-y-1">{accountItems.filter((item) => !(isBusiness && item.path === '/app/plan')).map(sidebarLink)}</div>
           </section>
           {isAdmin && sidebarLink({ path: '/app/admin', label: 'Administración', icon: ShieldCheck })}
         </nav>
@@ -319,7 +322,7 @@ export function MainLayout() {
         <div className="min-w-0 flex-1 overflow-x-hidden pb-20 lg:pb-0"><Outlet /></div>
 
         <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-moto-darker/98 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden" aria-label="Navegación móvil">
-          <div className={`grid h-[4.5rem] ${isBusiness ? 'grid-cols-3' : 'grid-cols-6'}`}>
+          <div className={`grid h-[4.5rem] ${isBusiness ? 'grid-cols-4' : 'grid-cols-6'}`}>
             <NavLink to="/app/home" className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium ${location.pathname === '/app/home' ? 'text-moto-orange' : 'text-gray-400'}`}>
               <Home className="h-5 w-5" /><span className="max-w-full truncate">Inicio</span>
             </NavLink>
@@ -334,6 +337,7 @@ export function MainLayout() {
             </NavLink>}
             <NavLink to="/app/marketplace" className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium ${location.pathname.startsWith('/app/marketplace') ? 'text-moto-orange' : 'text-gray-400'}`}><ShoppingBag className="h-5 w-5" /><span className="max-w-full truncate">Servicios</span></NavLink>
             {isBusiness && <NavLink to="/app/profile" className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium ${location.pathname === '/app/profile' ? 'text-moto-orange' : 'text-gray-400'}`}><User className="h-5 w-5" /><span>Perfil</span></NavLink>}
+            {isBusiness && <NavLink to="/app/notifications" className={`relative flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium ${location.pathname === '/app/notifications' ? 'text-moto-orange' : 'text-gray-400'}`}><span className="relative"><Bell className="h-5 w-5" />{unreadNotifications > 0 ? <span className="absolute -right-3 -top-2 grid h-4 min-w-4 place-items-center rounded-full bg-moto-orange px-1 text-[9px] font-bold text-moto-darker">{unreadNotifications > 9 ? '9+' : unreadNotifications}</span> : null}</span><span>Alertas</span></NavLink>}
             {!isBusiness && <button type="button" onClick={() => setIsQuickActionsOpen(true)} aria-label="Abrir acciones para registrar" aria-expanded={isQuickActionsOpen} className="relative flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-bold text-moto-orange">
               <span className="-mt-7 grid h-14 w-14 place-items-center rounded-full border-4 border-moto-darker bg-moto-orange text-moto-darker shadow-lg shadow-moto-orange/20"><Plus className="h-7 w-7" /></span>
               <span className="max-w-full truncate">Registrar</span>

@@ -3,6 +3,12 @@ export type Profile = {
   full_name: string | null
   username: string | null
   city: string | null
+  department_code: string | null
+  municipality_code: string | null
+  business_phone: string | null
+  business_address: string | null
+  business_latitude: number | null
+  business_longitude: number | null
   rider_type: string | null
   bio: string | null
   social_url: string | null
@@ -36,6 +42,8 @@ export type MarketplaceCategory = 'motorcycles' | 'parts' | 'gear' | 'services' 
 export type MarketplaceCondition = 'new' | 'used_like_new' | 'used_good' | 'used_fair' | 'service' | 'digital'
 
 export type MarketplaceListingStatus = 'draft' | 'pending_review' | 'active' | 'paused' | 'sold' | 'rejected' | 'archived'
+export type ServiceCategory = 'tow' | 'mechanic' | 'tire_shop' | 'car_wash' | 'route_guide'
+export type ServiceStatus = 'active' | 'inactive' | 'promotion'
 
 export type MarketplaceListingImage = {
   id: string
@@ -68,6 +76,10 @@ export type MarketplaceListing = {
   sold_at: string | null
   created_at: string
   updated_at: string
+  department_code: string | null
+  municipality_code: string | null
+  service_category: ServiceCategory | null
+  service_status: ServiceStatus
 }
 
 export type MarketplaceListingWithSeller = MarketplaceListing & {
@@ -77,6 +89,10 @@ export type MarketplaceListingWithSeller = MarketplaceListing & {
     city: string | null
     avatar_url: string | null
     is_premium: boolean
+    business_phone: string | null
+    business_address: string | null
+    business_latitude: number | null
+    business_longitude: number | null
   } | null
   marketplace_listing_images: MarketplaceListingImage[]
 }
@@ -270,6 +286,8 @@ export type Club = {
   name: string
   description: string | null
   city: string | null
+  department_code: string | null
+  municipality_code: string | null
   image_url: string | null
   accepts_join_requests: boolean
   moderation_status?: 'active' | 'suspended' | 'deleted'

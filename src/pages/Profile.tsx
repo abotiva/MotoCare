@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ImageViewer } from '@/components/ImageViewer'
+import { ColombiaLocationFields } from '@/components/ColombiaLocationFields'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { supabase } from '@/lib/supabase'
@@ -19,6 +20,12 @@ type ProfileForm = {
   full_name: string
   username: string
   city: string
+  department_code: string
+  municipality_code: string
+  business_phone: string
+  business_address: string
+  business_latitude: string
+  business_longitude: string
   rider_type: string
   bio: string
   social_url: string
@@ -150,6 +157,12 @@ export function Profile() {
     full_name: '',
     username: '',
     city: '',
+    department_code: '',
+    municipality_code: '',
+    business_phone: '',
+    business_address: '',
+    business_latitude: '',
+    business_longitude: '',
     rider_type: '',
     bio: '',
     social_url: '',
@@ -194,6 +207,12 @@ export function Profile() {
       full_name: profile?.full_name ?? '',
       username: profile?.username ?? '',
       city: profile?.city ?? '',
+      department_code: profile?.department_code ?? '',
+      municipality_code: profile?.municipality_code ?? '',
+      business_phone: profile?.business_phone ?? '',
+      business_address: profile?.business_address ?? '',
+      business_latitude: profile?.business_latitude?.toString() ?? '',
+      business_longitude: profile?.business_longitude?.toString() ?? '',
       rider_type: profile?.rider_type ?? '',
       bio: profile?.bio ?? '',
       social_url: profile?.social_url ?? '',
@@ -261,6 +280,12 @@ export function Profile() {
       full_name: form.full_name.trim(),
       username: cleanUsername || null,
       city: form.city.trim() || null,
+      department_code: form.department_code || null,
+      municipality_code: form.municipality_code || null,
+      business_phone: form.business_phone.trim() || null,
+      business_address: form.business_address.trim() || null,
+      business_latitude: form.business_latitude ? Number(form.business_latitude) : null,
+      business_longitude: form.business_longitude ? Number(form.business_longitude) : null,
       rider_type: form.rider_type.trim() || null,
       bio: form.bio.trim() || null,
       social_url: form.social_url.trim() || null,
@@ -382,7 +407,7 @@ export function Profile() {
             <div className="min-w-0 flex-1 text-left">
               <div className="mb-1 flex flex-wrap items-center gap-2 sm:mb-2 sm:gap-3">
                 <h1 className="w-full truncate text-xl font-bold leading-tight sm:w-auto sm:text-3xl">{visibleName}</h1>
-                <Badge className="bg-moto-orange text-moto-darker">{profile?.rider_type || 'Motero'}</Badge>
+                <Badge className="bg-moto-orange text-moto-darker">{isBusinessProfile ? 'Negocio' : profile?.rider_type || 'Motero'}</Badge>
                 <Badge className={profile?.is_public === false ? 'bg-white/10 text-gray-300' : 'bg-green-500/15 text-green-300'}>
                   {profile?.is_public === false ? 'Privado' : 'Público'}
                 </Badge>
@@ -443,7 +468,9 @@ export function Profile() {
         </Card>
       )}
 
-      <Card className="mb-5 border-white/5 bg-moto-gray py-0">
+      {isBusinessProfile ? <Card className="mb-5 border-violet-500/25 bg-violet-500/10 py-0"><CardContent className="p-5"><h2 className="text-lg font-semibold">Perfil comercial</h2><div className="mt-3 grid gap-3 text-sm sm:grid-cols-2"><div className="rounded-xl bg-moto-darker p-3"><span className="text-gray-500">Teléfono</span><p>{profile?.business_phone || 'Sin definir'}</p></div><div className="rounded-xl bg-moto-darker p-3"><span className="text-gray-500">Dirección</span><p>{profile?.business_address || profile?.city || 'Sin definir'}</p></div></div><Button asChild className="mt-4 bg-violet-500 text-white hover:bg-violet-400"><Link to={`/app/business/${user?.id}`}>Ver perfil público del negocio</Link></Button></CardContent></Card> : null}
+
+      <Card className={`${isBusinessProfile ? 'hidden' : ''} mb-5 border-white/5 bg-moto-gray py-0`}>
         <CardContent className="p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h2 className="flex items-center gap-2 text-lg font-semibold">
@@ -477,14 +504,14 @@ export function Profile() {
         </CardContent>
       </Card>
 
-      <div className="mb-4 grid grid-cols-4 gap-2 sm:mb-5 sm:gap-4">
+      <div className={`${isBusinessProfile ? 'hidden' : ''} mb-4 grid grid-cols-4 gap-2 sm:mb-5 sm:gap-4`}>
         <CompactMetricCard icon={UserRound} label="Tipo de motero" mobileLabel="Tipo" value={profile?.rider_type || 'Sin definir'} tone="orange" onClick={() => setShowEditProfile(true)} />
         <CompactMetricCard icon={Route} label="Rutas creadas" mobileLabel="Rutas" value={stats.routes} tone="green" onClick={() => setShowRoutesPreview(true)} />
         <CompactMetricCard icon={Route} label="Km en rutas" mobileLabel="Km" value={`${routes.reduce((total, route) => total + (route.distance_km ?? 0), 0).toLocaleString()} km`} tone="green" onClick={() => setShowRoutesPreview(true)} />
         <CompactMetricCard icon={UserRound} label="Publicaciones" mobileLabel="Posts" value={stats.posts} tone="yellow" onClick={() => navigate('/app/messages')} />
       </div>
 
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      <div className={`${isBusinessProfile ? 'hidden' : ''} grid gap-5 md:grid-cols-2 xl:grid-cols-3`}>
         <Card className="border-white/5 bg-moto-gray py-0">
           <CardContent className="p-5">
             <h2 className="mb-4 text-lg font-semibold">Resumen</h2>
@@ -627,15 +654,22 @@ export function Profile() {
                 placeholder="motero_colombia"
               />
             </label>
-            <label>
-              <span className="mb-1 block text-sm text-gray-400">Ciudad</span>
-              <input
-                className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white"
-                value={form.city}
-                onChange={(event) => setForm({ ...form, city: event.target.value })}
-                placeholder="Bogota"
-              />
-            </label>
+            <ColombiaLocationFields
+              departmentCode={form.department_code}
+              municipalityCode={form.municipality_code}
+              className="grid gap-4"
+              onChange={(location) => setForm((current) => ({
+                ...current,
+                department_code: location.departmentCode,
+                municipality_code: location.municipalityCode,
+                city: location.municipalityName,
+              }))}
+            />
+            {isBusinessProfile ? <>
+              <label><span className="mb-1 block text-sm text-gray-400">Número de teléfono</span><input type="tel" className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={form.business_phone} onChange={(event) => setForm({ ...form, business_phone: event.target.value })} placeholder="+57 300 000 0000" /></label>
+              <label><span className="mb-1 block text-sm text-gray-400">Dirección del negocio</span><input className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={form.business_address} onChange={(event) => setForm({ ...form, business_address: event.target.value })} placeholder="Calle, carrera y número" /></label>
+              <div className="grid grid-cols-2 gap-3"><label><span className="mb-1 block text-sm text-gray-400">Latitud</span><input type="number" step="any" className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={form.business_latitude} onChange={(event) => setForm({ ...form, business_latitude: event.target.value })} placeholder="4.7110" /></label><label><span className="mb-1 block text-sm text-gray-400">Longitud</span><input type="number" step="any" className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={form.business_longitude} onChange={(event) => setForm({ ...form, business_longitude: event.target.value })} placeholder="-74.0721" /></label></div>
+            </> : null}
             <label>
               <span className="mb-1 block text-sm text-gray-400">Bio corta</span>
               <textarea
@@ -656,7 +690,7 @@ export function Profile() {
                 placeholder="instagram.com/usuario"
               />
             </label>
-            <label>
+            {!isBusinessProfile ? <label>
               <span className="mb-1 block text-sm text-gray-400">Tipo de motero</span>
               <select
                 className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white"
@@ -671,8 +705,8 @@ export function Profile() {
                 <option value="Custom">Custom</option>
                 <option value="Trabajo">Trabajo</option>
               </select>
-            </label>
-            <label>
+            </label> : null}
+            {!isBusinessProfile ? <label>
               <span className="mb-1 block text-sm text-gray-400">Moto principal</span>
               <select
                 className="w-full rounded-lg border border-white/10 bg-moto-darker p-2 text-white"
@@ -687,7 +721,7 @@ export function Profile() {
                   </option>
                 ))}
               </select>
-            </label>
+            </label> : null}
             <label className="flex items-start justify-between gap-4 rounded-xl border border-white/10 bg-moto-darker p-3">
               <span>
                 <span className="flex items-center gap-2 text-sm font-medium">

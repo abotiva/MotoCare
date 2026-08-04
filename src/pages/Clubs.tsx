@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ImageViewer } from '@/components/ImageViewer'
+import { ColombiaLocationFields } from '@/components/ColombiaLocationFields'
 import { ClubSelector } from '@/features/clubs/components/ClubSelector'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
@@ -18,6 +19,8 @@ import type { Club, ClubInvitation, ClubMemberWithProfile, ClubPostWithAuthor, P
 type ClubForm = {
   name: string
   city: string
+  department_code: string
+  municipality_code: string
   description: string
   acceptsJoinRequests: boolean
 }
@@ -51,6 +54,8 @@ type ClubJoinRequestWithProfile = {
 const emptyClubForm: ClubForm = {
   name: '',
   city: '',
+  department_code: '',
+  municipality_code: '',
   description: '',
   acceptsJoinRequests: false,
 }
@@ -300,6 +305,8 @@ export function Clubs() {
     setClubForm({
       name: selectedClub.name,
       city: selectedClub.city ?? '',
+      department_code: selectedClub.department_code ?? '',
+      municipality_code: selectedClub.municipality_code ?? '',
       description: selectedClub.description ?? '',
       acceptsJoinRequests: selectedClub.accepts_join_requests,
     })
@@ -385,10 +392,14 @@ export function Clubs() {
     }
 
     let createdClub = club as Club
-    if (createForm.acceptsJoinRequests) {
+    if (createForm.acceptsJoinRequests || createForm.municipality_code) {
       const { data: configuredClub } = await supabase
         .from('clubs')
-        .update({ accepts_join_requests: true })
+        .update({
+          accepts_join_requests: createForm.acceptsJoinRequests,
+          department_code: createForm.department_code || null,
+          municipality_code: createForm.municipality_code || null,
+        })
         .eq('id', createdClub.id)
         .select('*')
         .single()
@@ -505,6 +516,8 @@ export function Clubs() {
       .update({
         name: clubForm.name.trim(),
         city: clubForm.city.trim() || null,
+        department_code: clubForm.department_code || null,
+        municipality_code: clubForm.municipality_code || null,
         description: clubForm.description.trim() || null,
         accepts_join_requests: clubForm.acceptsJoinRequests,
       })
@@ -1024,7 +1037,17 @@ export function Clubs() {
                   </h2>
                   <form className="grid gap-3 md:grid-cols-2" onSubmit={updateClub}>
                     <input className="min-w-0 rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={clubForm.name} onChange={(event) => setClubForm({ ...clubForm, name: event.target.value })} placeholder="Nombre" />
-                    <input className="min-w-0 rounded-lg border border-white/10 bg-moto-darker p-2 text-white" value={clubForm.city} onChange={(event) => setClubForm({ ...clubForm, city: event.target.value })} placeholder="Ciudad" />
+                    <ColombiaLocationFields
+                      departmentCode={clubForm.department_code}
+                      municipalityCode={clubForm.municipality_code}
+                      className="grid gap-3 md:col-span-2 md:grid-cols-2"
+                      onChange={(location) => setClubForm((current) => ({
+                        ...current,
+                        department_code: location.departmentCode,
+                        municipality_code: location.municipalityCode,
+                        city: location.municipalityName,
+                      }))}
+                    />
                     <textarea className="h-20 resize-none rounded-lg border border-white/10 bg-moto-darker p-2 text-white md:col-span-2" value={clubForm.description} onChange={(event) => setClubForm({ ...clubForm, description: event.target.value })} placeholder="Descripcion" />
                     <label className="flex items-center gap-2 rounded-lg border border-white/10 bg-moto-darker p-3 text-sm text-gray-200 md:col-span-2">
                       <input type="checkbox" checked={clubForm.acceptsJoinRequests} onChange={(event) => setClubForm({ ...clubForm, acceptsJoinRequests: event.target.checked })} className="h-4 w-4 accent-moto-orange" />
@@ -1218,10 +1241,17 @@ export function Clubs() {
               <span>Nombre del club</span>
               <input autoFocus className="w-full rounded-xl border border-white/10 bg-moto-darker px-3 py-2.5 text-white outline-none focus:border-moto-orange" value={createForm.name} onChange={(event) => setCreateForm({ ...createForm, name: event.target.value })} placeholder="Ej. Moteros de Bogotá" />
             </label>
-            <label className="block space-y-1.5 text-sm font-medium">
-              <span>Ciudad</span>
-              <input className="w-full rounded-xl border border-white/10 bg-moto-darker px-3 py-2.5 text-white outline-none focus:border-moto-orange" value={createForm.city} onChange={(event) => setCreateForm({ ...createForm, city: event.target.value })} placeholder="Ciudad principal" />
-            </label>
+            <ColombiaLocationFields
+              departmentCode={createForm.department_code}
+              municipalityCode={createForm.municipality_code}
+              className="grid gap-4"
+              onChange={(location) => setCreateForm((current) => ({
+                ...current,
+                department_code: location.departmentCode,
+                municipality_code: location.municipalityCode,
+                city: location.municipalityName,
+              }))}
+            />
             <label className="block space-y-1.5 text-sm font-medium">
               <span>Descripción</span>
               <textarea className="h-24 w-full resize-none rounded-xl border border-white/10 bg-moto-darker px-3 py-2.5 text-white outline-none focus:border-moto-orange" value={createForm.description} onChange={(event) => setCreateForm({ ...createForm, description: event.target.value })} placeholder="¿Qué identifica a este club?" />
