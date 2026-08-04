@@ -1217,14 +1217,12 @@ export function Marketplace() {
                   </p>
                 </div>
 
-                {(selectedListing.sellerPhone || selectedListing.sellerAddress) ? (
+                {(selectedListing.sellerPhone || selectedListing.sellerAddress || selectedListing.location) ? (
                   <div className="rounded-xl border border-white/10 bg-moto-darker p-4">
                     <h3 className="font-semibold">Contacto y ubicación</h3>
                     {selectedListing.sellerPhone ? <a href={`tel:${selectedListing.sellerPhone}`} className="mt-2 block text-sm text-moto-orange hover:underline">Teléfono: {selectedListing.sellerPhone}</a> : null}
                     {selectedListing.sellerAddress ? <p className="mt-1 text-sm text-gray-300">{selectedListing.sellerAddress}</p> : null}
-                    {selectedListing.sellerLatitude !== undefined && selectedListing.sellerLongitude !== undefined ? (
-                      <iframe title={`Ubicación de ${selectedListing.seller.name}`} className="mt-3 h-64 w-full rounded-xl border-0" loading="lazy" src={`https://www.google.com/maps?q=${selectedListing.sellerLatitude},${selectedListing.sellerLongitude}&z=15&output=embed`} />
-                    ) : null}
+                    <iframe title={`Ubicación de ${selectedListing.seller.name}`} className="mt-3 h-64 w-full rounded-xl border-0" loading="lazy" src={`https://www.google.com/maps?q=${encodeURIComponent(selectedListing.sellerLatitude !== undefined && selectedListing.sellerLongitude !== undefined ? `${selectedListing.sellerLatitude},${selectedListing.sellerLongitude}` : [selectedListing.sellerAddress, selectedListing.location].filter(Boolean).join(', '))}&z=15&output=embed`} />
                   </div>
                 ) : null}
 

@@ -149,7 +149,7 @@ export function MainLayout() {
       .channel(`notification-header-${userId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, () => void loadNotifications())
       .subscribe()
-    const refreshTimer = window.setInterval(() => void loadNotifications(), 30000)
+    const refreshTimer = window.setInterval(() => void loadNotifications(), 5 * 60 * 1000)
     return () => {
       window.clearInterval(refreshTimer)
       void client.removeChannel(channel)

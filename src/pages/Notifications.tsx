@@ -70,6 +70,7 @@ export function Notifications() {
   const moderationCount = useMemo(() => notifications.filter((item) => item.type === 'moderation_notice').length, [notifications])
   const storeCount = useMemo(() => notifications.filter((item) => item.type === 'marketplace_message').length, [notifications])
   const canUseAdvancedNotifications = effectivePlan === 'premium'
+  const isBusinessAccount = effectivePlan === 'business'
 
   const visibleNotifications = useMemo(() => {
     if (filter === 'unread') return notifications.filter((item) => !item.read_at)
@@ -201,10 +202,10 @@ export function Notifications() {
         </Button>
       </div>
 
-      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
+      <div className={`mb-5 grid grid-cols-2 gap-3 ${isBusinessAccount ? 'sm:grid-cols-3' : 'sm:grid-cols-5'}`}>
         <MetricCard icon={Bell} label="Pendientes" value={unreadCount} onClick={() => setFilter('unread')} />
-        <MetricCard icon={Route} label="Rutas" value={routeCount} onClick={() => setFilter('routes')} />
-        <MetricCard icon={Users} label="Clubes" value={clubCount} onClick={() => setFilter('clubs')} />
+        {!isBusinessAccount ? <MetricCard icon={Route} label="Rutas" value={routeCount} onClick={() => setFilter('routes')} /> : null}
+        {!isBusinessAccount ? <MetricCard icon={Users} label="Clubes" value={clubCount} onClick={() => setFilter('clubs')} /> : null}
         <MetricCard icon={Store} label="Tienda" value={storeCount} onClick={() => setFilter('store')} />
         <MetricCard icon={ShieldAlert} label="Moderación" value={moderationCount} onClick={() => setFilter('moderation')} />
       </div>
@@ -218,7 +219,7 @@ export function Notifications() {
             <div className="min-w-0">
               <p className="font-semibold">Alcance según licencia</p>
               <p className="text-sm leading-6 text-gray-400">
-                Free recibe alertas internas de mantenimiento. Premium habilita informes, clubes y alertas avanzadas; Business queda reservado para tiendas.
+                Free recibe alertas internas básicas. Premium habilita informes y alertas avanzadas; Business recibe avisos comerciales y mensajes de servicios.
               </p>
             </div>
           </div>
