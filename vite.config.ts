@@ -6,7 +6,7 @@ import packageJson from './package.json'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: './',
+  base: '/',
   cacheDir: 'node_modules/.vite',
   plugins: [react(), ...(mode === 'development' ? [inspectAttr()] : [])],
   define: {

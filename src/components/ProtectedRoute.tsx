@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { Loader2 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
+import { LegalConsentGate } from '@/components/legal/LegalConsentGate'
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, isLoading, isConfigured, authError, retryAuth } = useAuth()
@@ -57,5 +58,5 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     return <Navigate to="/login" replace state={{ from: location }} />
   }
 
-  return children
+  return <LegalConsentGate>{children}</LegalConsentGate>
 }

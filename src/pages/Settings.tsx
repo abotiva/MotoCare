@@ -10,6 +10,7 @@ import {
   Mail,
   Route,
   Shield,
+  Trash2,
   User,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -20,6 +21,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 
@@ -94,6 +96,7 @@ export function Settings() {
   const { user, profile, refreshProfile, signOut } = useAuth()
   const [preferences, setPreferences] = useState<Record<PreferenceKey, boolean>>(defaultPreferences)
   const [isSendingReset, setIsSendingReset] = useState(false)
+  const [isRequestingDeletion, setIsRequestingDeletion] = useState(false)
 
   const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Motero MotoCare Co'
   const username = profile?.username || user?.email?.split('@')[0] || 'motocare'
@@ -151,6 +154,15 @@ export function Settings() {
     }
 
     setIsSendingReset(false)
+  }
+
+  const requestAccountDeletion = async () => {
+    if (!supabase) return
+    setIsRequestingDeletion(true)
+    const { error } = await supabase.rpc('request_account_deletion')
+    if (error) toast.error('No pudimos registrar la solicitud', { description: error.message })
+    else toast.success('Solicitud registrada', { description: 'El equipo de MotoCare revisará la eliminación segura de la cuenta y sus datos.' })
+    setIsRequestingDeletion(false)
   }
 
   return (
@@ -229,6 +241,21 @@ export function Settings() {
                   <LogOut className="mr-2 h-4 w-4" />
                   Salir
                 </Button>
+              }
+            />
+            <ActionRow
+              label="Solicitar eliminación de cuenta"
+              description="Registra una solicitud formal. La eliminación no es inmediata y deberá procesarse de forma segura."
+              action={
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" className="w-full border-red-500/30 text-red-300 sm:w-auto"><Trash2 className="mr-2 h-4 w-4" />Solicitar eliminación</Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="border-white/10 bg-moto-gray text-white">
+                    <AlertDialogHeader><AlertDialogTitle>¿Solicitar eliminación de la cuenta?</AlertDialogTitle><AlertDialogDescription className="text-gray-300">Se registrará la fecha de la solicitud. El equipo deberá verificar y procesar los datos asociados antes de completar la eliminación.</AlertDialogDescription></AlertDialogHeader>
+                    <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction disabled={isRequestingDeletion} onClick={() => void requestAccountDeletion()} className="bg-red-600 text-white hover:bg-red-500">Confirmar solicitud</AlertDialogAction></AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               }
             />
           </SettingsGroup>

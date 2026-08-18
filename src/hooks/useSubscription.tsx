@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import type { UserPlan, UserPlanStatus, UserSubscription } from '@/types/database'
@@ -37,7 +38,17 @@ function effectivePlanFor(subscription: UserSubscription): UserPlan {
   return subscription.plan
 }
 
-export function useSubscription() {
+type SubscriptionContextValue = {
+  subscription: UserSubscription
+  plan: UserPlan
+  effectivePlan: UserPlan
+  isLoadingSubscription: boolean
+  hasPlan: (requiredPlan: UserPlan) => boolean
+}
+
+const SubscriptionContext = createContext<SubscriptionContextValue | null>(null)
+
+export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
   const userId = user?.id
   const [subscription, setSubscription] = useState<UserSubscription>(defaultSubscription)
@@ -76,7 +87,7 @@ export function useSubscription() {
 
   const effectivePlan = useMemo(() => effectivePlanFor(subscription), [subscription])
 
-  return {
+  const value = useMemo<SubscriptionContextValue>(() => ({
     subscription,
     plan: subscription.plan,
     effectivePlan,
@@ -84,5 +95,15 @@ export function useSubscription() {
     hasPlan(requiredPlan: UserPlan) {
       return planRank[effectivePlan] >= planRank[requiredPlan]
     },
+  }), [effectivePlan, isLoadingSubscription, subscription])
+
+  return <SubscriptionContext.Provider value={value}>{children}</SubscriptionContext.Provider>
+}
+
+export function useSubscription() {
+  const context = useContext(SubscriptionContext)
+  if (!context) {
+    throw new Error('useSubscription debe usarse dentro de SubscriptionProvider')
   }
+  return context
 }

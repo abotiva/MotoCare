@@ -26,8 +26,12 @@ Thumbs.db
 
 # Vite local cache
 .vite-cache/
+.vite-cache-local/
 .vite/
 .vercel
+
+# Temporary generated working files
+/tmp/
 
 # Generated exports
 exports/

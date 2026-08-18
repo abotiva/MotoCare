@@ -1,0 +1,229 @@
+{"kind":"deck","id":"pr/n05f2u","name":"Deck"}
+{"kind":"layout","layoutId":"f72a8ead-4bfc-4a51-92b4-344ab751d63d","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"85ddee9d-aa6b-4771-8d8b-a4cd9401be48","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/saz5hx","slide":1,"title":"M","textShapes":7}
+{"kind":"shape","id":"sh/ipgbuloj","slide":1,"bbox":[0,0,1280,720]}
+{"kind":"shape","id":"sh/3qpsnq54","slide":1,"bbox":[72,54,60,60]}
+{"kind":"textbox","id":"sh/g3e9sv6d","slide":1,"text":"M","textPreview":"M","textChars":1,"textLines":1,"bbox":[80,62,44,38]}
+{"kind":"textbox","id":"sh/ho7al0ny","slide":1,"text":"MotoCare","textPreview":"MotoCare","textChars":8,"textLines":1,"bbox":[148,61,190,38]}
+{"kind":"textbox","id":"sh/u1wrqlo7","slide":1,"text":"CO","textPreview":"CO","textChars":2,"textLines":1,"bbox":[283,93,52,18]}
+{"kind":"shape","id":"sh/v25sjqps","slide":1,"bbox":[76,220,110,5]}
+{"kind":"textbox","id":"sh/8ze9ob6h","slide":1,"text":"La historia de tu moto,\nsiempre contigo.","textPreview":"La historia de tu moto, | siempre contigo.","textChars":40,"textLines":2,"bbox":[72,252,700,142]}
+{"kind":"textbox","id":"sh/t0nahg72","slide":1,"text":"MotoCare Co organiza el cuidado, los documentos y las decisiones que acompañan cada kilómetro.","textPreview":"MotoCare Co organiza el cuidado, los documentos y las decisiones que acompañan cada kilómetro.","textChars":94,"textLines":1,"bbox":[76,420,650,78]}
+{"kind":"textbox","id":"sh/psvmtw3u","slide":1,"text":"PRESENTACIÓN GENERAL","textPreview":"PRESENTACIÓN GENERAL","textChars":20,"textLines":1,"bbox":[76,590,290,24]}
+{"kind":"textbox","id":"sh/orm50rm9","slide":1,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[1180,674,36,18]}
+{"kind":"image","id":"im/47uxsnix","slide":1,"name":"","geometry":"roundRect","alt":"Recurso gráfico propio de MotoCare sin personas","bbox":[0,0,1280,720]}
+{"kind":"notes","id":"nt/saz5hx","slide":1,"text":""}
+{"kind":"slide","id":"sl/sjrq76","slide":2,"title":"M","textShapes":14}
+{"kind":"shape","id":"sh/lwralkf6","slide":2,"bbox":[64,36,60,60]}
+{"kind":"textbox","id":"sh/ytgbapwv","slide":2,"text":"M","textPreview":"M","textChars":1,"textLines":1,"bbox":[72,44,44,38]}
+{"kind":"textbox","id":"sh/zu9sjaxg","slide":2,"text":"MotoCare","textPreview":"MotoCare","textChars":8,"textLines":1,"bbox":[140,43,190,38]}
+{"kind":"textbox","id":"sh/c7yt8fep","slide":2,"text":"CO","textPreview":"CO","textChars":2,"textLines":1,"bbox":[275,75,52,18]}
+{"kind":"textbox","id":"sh/x87ahkfa","slide":2,"text":"La información existe. El problema es encontrarla.","textPreview":"La información existe. El problema es encontrarla.","textChars":50,"textLines":1,"bbox":[64,112,1150,58]}
+{"kind":"textbox","id":"sh/a5gb65wj","slide":2,"text":"La vida de una moto suele quedar repartida entre papeles, chats, facturas y memoria.","textPreview":"La vida de una moto suele quedar repartida entre papeles, chats, facturas y memoria.","textChars":84,"textLines":1,"bbox":[64,174,1080,38]}
+{"kind":"textbox","id":"sh/b6psfax4","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1180,674,36,18]}
+{"kind":"shape","id":"sh/o3yt4vet","slide":2,"bbox":[64,258,548,132]}
+{"kind":"textbox","id":"sh/p47ad0fe","slide":2,"text":"MANTENIMIENTO","textPreview":"MANTENIMIENTO","textChars":13,"textLines":1,"bbox":[88,280,190,26]}
+{"kind":"textbox","id":"sh/x03edsbi","slide":2,"text":"Servicios sin historial consolidado.","textPreview":"Servicios sin historial consolidado.","textChars":36,"textLines":1,"bbox":[88,316,490,52]}
+{"kind":"shape","id":"sh/czud4nux","slide":2,"bbox":[650,258,548,132]}
+{"kind":"textbox","id":"sh/by1wbitc","slide":2,"text":"DOCUMENTOS","textPreview":"DOCUMENTOS","textChars":10,"textLines":1,"bbox":[674,280,190,26]}
+{"kind":"textbox","id":"sh/axsv2dcr","slide":2,"text":"Fechas críticas que dependen de recordatorios manuales.","textPreview":"Fechas críticas que dependen de recordatorios manuales.","textChars":55,"textLines":1,"bbox":[674,316,490,52]}
+{"kind":"shape","id":"sh/pwje98v6","slide":2,"bbox":[64,422,548,132]}
+{"kind":"textbox","id":"sh/ovad03ul","slide":2,"text":"GASTOS","textPreview":"GASTOS","textChars":6,"textLines":1,"bbox":[88,444,190,26]}
+{"kind":"textbox","id":"sh/na1w7ydg","slide":2,"text":"Costos dispersos que dificultan planear.","textPreview":"Costos dispersos que dificultan planear.","textChars":40,"textLines":1,"bbox":[88,480,490,52]}
+{"kind":"shape","id":"sh/29svydcv","slide":2,"bbox":[650,422,548,132]}
+{"kind":"textbox","id":"sh/18je58va","slide":2,"text":"RUTAS","textPreview":"RUTAS","textChars":5,"textLines":1,"bbox":[674,444,190,26]}
+{"kind":"textbox","id":"sh/07qdw3up","slide":2,"text":"Recorridos y planes guardados en herramientas separadas.","textPreview":"Recorridos y planes guardados en herramientas separadas.","textChars":56,"textLines":1,"bbox":[674,480,490,52]}
+{"kind":"notes","id":"nt/sjrq76","slide":2,"text":""}
+{"kind":"slide","id":"sl/cr2qtt","slide":3,"title":"M","textShapes":20}
+{"kind":"shape","id":"sh/61kfu907","slide":3,"bbox":[64,36,60,60]}
+{"kind":"textbox","id":"sh/tovy5oji","slide":3,"text":"M","textPreview":"M","textChars":1,"textLines":1,"bbox":[72,44,44,38]}
+{"kind":"textbox","id":"sh/snmxwjid","slide":3,"text":"MotoCare","textPreview":"MotoCare","textChars":8,"textLines":1,"bbox":[140,43,190,38]}
+{"kind":"textbox","id":"sh/fqdg7y1o","slide":3,"text":"CO","textPreview":"CO","textChars":2,"textLines":1,"bbox":[275,75,52,18]}
+{"kind":"textbox","id":"sh/up4fyt03","slide":3,"text":"MotoCare crea una historia digital alrededor de cada moto","textPreview":"MotoCare crea una historia digital alrededor de cada moto","textChars":57,"textLines":1,"bbox":[64,112,1150,58]}
+{"kind":"textbox","id":"sh/hsvy9oju","slide":3,"text":"Un punto de referencia para consultar, anticipar y tomar mejores decisiones.","textPreview":"Un punto de referencia para consultar, anticipar y tomar mejores decisiones.","textChars":76,"textLines":1,"bbox":[64,174,1080,38]}
+{"kind":"textbox","id":"sh/grmh03i9","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1180,674,36,18]}
+{"kind":"textbox","id":"sh/vu9gvu1k","slide":3,"text":"UNA MOTO","textPreview":"UNA MOTO","textChars":8,"textLines":1,"bbox":[92,284,210,34]}
+{"kind":"textbox","id":"sh/at0fmp0z","slide":3,"text":"Un perfil digital que reúne lo que cambia con el tiempo.","textPreview":"Un perfil digital que reúne lo que cambia con el tiempo.","textChars":56,"textLines":1,"bbox":[92,332,380,82]}
+{"kind":"textbox","id":"sh/gfu5wvyt","slide":3,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[560,250,38,24]}
+{"kind":"textbox","id":"sh/hg3650ze","slide":3,"text":"IDENTIDAD","textPreview":"IDENTIDAD","textChars":9,"textLines":1,"bbox":[610,250,160,24]}
+{"kind":"textbox","id":"sh/udsnulg3","slide":3,"text":"Datos esenciales y kilometraje.","textPreview":"Datos esenciales y kilometraje.","textChars":31,"textLines":1,"bbox":[785,250,390,32]}
+{"kind":"shape","id":"sh/velo3qho","slide":3,"bbox":[610,298,555,0]}
+{"kind":"textbox","id":"sh/4ju50fy5","slide":3,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[560,342,38,24]}
+{"kind":"textbox","id":"sh/5k3690zq","slide":3,"text":"CUIDADO","textPreview":"CUIDADO","textChars":7,"textLines":1,"bbox":[610,342,160,24]}
+{"kind":"textbox","id":"sh/ihcny5gz","slide":3,"text":"Mantenimientos, costos e historial.","textPreview":"Mantenimientos, costos e historial.","textChars":35,"textLines":1,"bbox":[785,342,390,32]}
+{"kind":"shape","id":"sh/3ilo7ahk","slide":3,"bbox":[610,390,555,0]}
+{"kind":"textbox","id":"sh/kna5oby1","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[560,434,38,24]}
+{"kind":"textbox","id":"sh/lojmxgz6","slide":3,"text":"VIGENCIA","textPreview":"VIGENCIA","textChars":8,"textLines":1,"bbox":[610,434,160,24]}
+{"kind":"textbox","id":"sh/18ru58ny","slide":3,"text":"Documentos, fechas y alertas.","textPreview":"Documentos, fechas y alertas.","textChars":29,"textLines":1,"bbox":[785,434,390,32]}
+{"kind":"shape","id":"sh/07idc3md","slide":3,"bbox":[610,482,555,0]}
+{"kind":"textbox","id":"sh/f69c3y5s","slide":3,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[560,526,38,24]}
+{"kind":"textbox","id":"sh/e5gbato7","slide":3,"text":"MOVIMIENTO","textPreview":"MOVIMIENTO","textChars":10,"textLines":1,"bbox":[610,526,160,24]}
+{"kind":"textbox","id":"sh/pwru9snu","slide":3,"text":"Rutas y experiencias.","textPreview":"Rutas y experiencias.","textChars":21,"textLines":1,"bbox":[785,526,390,32]}
+{"kind":"shape","id":"sh/ovidgnmp","slide":3,"bbox":[610,574,555,0]}
+{"kind":"notes","id":"nt/cr2qtt","slide":3,"text":""}
+{"kind":"slide","id":"sl/n3ldhq","slide":4,"title":"M","textShapes":15}
+{"kind":"shape","id":"sh/ed0fyhgv","slide":4,"bbox":[64,36,60,60]}
+{"kind":"textbox","id":"sh/1grytwzm","slide":4,"text":"M","textPreview":"M","textChars":1,"textLines":1,"bbox":[72,44,44,38]}
+{"kind":"textbox","id":"sh/0fix0ry1","slide":4,"text":"MotoCare","textPreview":"MotoCare","textChars":8,"textLines":1,"bbox":[140,43,190,38]}
+{"kind":"textbox","id":"sh/nitgvmhc","slide":4,"text":"CO","textPreview":"CO","textChars":2,"textLines":1,"bbox":[275,75,52,18]}
+{"kind":"textbox","id":"sh/mhkz21gr","slide":4,"text":"Empezar toma tres pasos; el valor crece con cada registro","textPreview":"Empezar toma tres pasos; el valor crece con cada registro","textChars":57,"textLines":1,"bbox":[64,112,1150,58]}
+{"kind":"textbox","id":"sh/94byxwzi","slide":4,"text":"MotoCare transforma datos cotidianos en continuidad y contexto.","textPreview":"MotoCare transforma datos cotidianos en continuidad y contexto.","textChars":63,"textLines":1,"bbox":[64,174,1080,38]}
+{"kind":"textbox","id":"sh/o32h4ryx","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1180,674,36,18]}
+{"kind":"shape","id":"sh/b6tgz6ho","slide":4,"bbox":[64,270,360,300]}
+{"kind":"textbox","id":"sh/a5kz61g3","slide":4,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[92,296,60,40]}
+{"kind":"textbox","id":"sh/sn2d0j6p","slide":4,"text":"REGISTRA","textPreview":"REGISTRA","textChars":8,"textLines":1,"bbox":[92,372,290,34]}
+{"kind":"textbox","id":"sh/tobeto7a","slide":4,"text":"Crea el perfil digital de la moto con sus datos esenciales.","textPreview":"Crea el perfil digital de la moto con sus datos esenciales.","textChars":59,"textLines":1,"bbox":[92,430,292,96]}
+{"kind":"shape","id":"sh/6lkvy9oj","slide":4,"bbox":[464,270,360,300]}
+{"kind":"textbox","id":"sh/7mtwrep4","slide":4,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[492,296,60,40]}
+{"kind":"textbox","id":"sh/gbmd4j6l","slide":4,"text":"CONSTRUYE","textPreview":"CONSTRUYE","textChars":9,"textLines":1,"bbox":[492,372,290,34]}
+{"kind":"textbox","id":"sh/hcvexon6","slide":4,"text":"Agrega servicios, documentos, fechas, kilometraje y costos.","textPreview":"Agrega servicios, documentos, fechas, kilometraje y costos.","textChars":59,"textLines":1,"bbox":[492,430,292,96]}
+{"kind":"shape","id":"sh/upkv2tov","slide":4,"bbox":[864,270,360,300]}
+{"kind":"textbox","id":"sh/fqtwvy50","slide":4,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[892,296,60,40]}
+{"kind":"textbox","id":"sh/4fmx836x","slide":4,"text":"ANTICIPA","textPreview":"ANTICIPA","textChars":8,"textLines":1,"bbox":[892,372,290,34]}
+{"kind":"textbox","id":"sh/pgve18ni","slide":4,"text":"Consulta el historial y actúa antes del próximo vencimiento.","textPreview":"Consulta el historial y actúa antes del próximo vencimiento.","textChars":60,"textLines":1,"bbox":[892,430,292,96]}
+{"kind":"notes","id":"nt/n3ldhq","slide":4,"text":""}
+{"kind":"slide","id":"sl/l98qdz","slide":5,"title":"M","textShapes":15}
+{"kind":"shape","id":"sh/kbaporeh","slide":5,"bbox":[64,36,60,60]}
+{"kind":"textbox","id":"sh/ja18vmdc","slide":5,"text":"M","textPreview":"M","textChars":1,"textLines":1,"bbox":[72,44,44,38]}
+{"kind":"textbox","id":"sh/y9s7mhwr","slide":5,"text":"MotoCare","textPreview":"MotoCare","textChars":8,"textLines":1,"bbox":[140,43,190,38]}
+{"kind":"textbox","id":"sh/tg3q1wve","slide":5,"text":"CO","textPreview":"CO","textChars":2,"textLines":1,"bbox":[275,75,52,18]}
+{"kind":"textbox","id":"sh/8fupsret","slide":5,"text":"El mantenimiento deja de ser un recuerdo aislado","textPreview":"El mantenimiento deja de ser un recuerdo aislado","textChars":48,"textLines":1,"bbox":[64,112,1150,58]}
+{"kind":"textbox","id":"sh/7el8zmd8","slide":5,"text":"Cada servicio alimenta una hoja de vida consultable y útil.","textPreview":"Cada servicio alimenta una hoja de vida consultable y útil.","textChars":59,"textLines":1,"bbox":[64,174,1080,38]}
+{"kind":"textbox","id":"sh/6dc7qhwn","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1180,674,36,18]}
+{"kind":"textbox","id":"sh/g3upwbep","slide":5,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[558,258,48,34]}
+{"kind":"textbox","id":"sh/elor2lcr","slide":5,"text":"Registra cada intervención","textPreview":"Registra cada intervención","textChars":26,"textLines":1,"bbox":[616,256,552,34]}
+{"kind":"textbox","id":"sh/zmxsbqdc","slide":5,"text":"Tipo de servicio, fecha, kilometraje, costo y observaciones.","textPreview":"Tipo de servicio, fecha, kilometraje, costo y observaciones.","textChars":60,"textLines":1,"bbox":[616,296,552,58]}
+{"kind":"textbox","id":"sh/0n6t4vux","slide":5,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[558,374,48,34]}
+{"kind":"textbox","id":"sh/1ofad0vi","slide":5,"text":"Conserva la secuencia","textPreview":"Conserva la secuencia","textChars":21,"textLines":1,"bbox":[616,372,552,34]}
+{"kind":"textbox","id":"sh/mpob6lc3","slide":5,"text":"Consulta qué se hizo, cuándo se hizo y qué viene después.","textPreview":"Consulta qué se hizo, cuándo se hizo y qué viene después.","textChars":57,"textLines":1,"bbox":[616,412,552,58]}
+{"kind":"textbox","id":"sh/nqxsfqd8","slide":5,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[558,490,48,34]}
+{"kind":"textbox","id":"sh/or6t8vut","slide":5,"text":"Planea con contexto","textPreview":"Planea con contexto","textChars":19,"textLines":1,"bbox":[616,488,552,34]}
+{"kind":"textbox","id":"sh/9szah0ve","slide":5,"text":"Los registros permiten entender el gasto y preparar el próximo servicio.","textPreview":"Los registros permiten entender el gasto y preparar el próximo servicio.","textChars":72,"textLines":1,"bbox":[616,528,552,58]}
+{"kind":"image","id":"im/snehsvu9","slide":5,"name":"","geometry":"roundRect","alt":"Recurso gráfico propio de MotoCare sin personas","bbox":[64,238,438,424]}
+{"kind":"notes","id":"nt/l98qdz","slide":5,"text":""}
+{"kind":"slide","id":"sl/14oqk3","slide":6,"title":"M","textShapes":17}
+{"kind":"shape","id":"sh/jypkretw","slide":6,"bbox":[64,36,60,60]}
+{"kind":"textbox","id":"sh/kzy10jah","slide":6,"text":"M","textPreview":"M","textChars":1,"textLines":1,"bbox":[72,44,44,38]}
+{"kind":"textbox","id":"sh/5072tob2","slide":6,"text":"MotoCare","textPreview":"MotoCare","textChars":8,"textLines":1,"bbox":[140,43,190,38]}
+{"kind":"textbox","id":"sh/a9gju9sf","slide":6,"text":"CO","textPreview":"CO","textChars":2,"textLines":1,"bbox":[275,75,52,18]}
+{"kind":"textbox","id":"sh/vapknet0","slide":6,"text":"Las fechas importantes necesitan anticipación, no memoria","textPreview":"Las fechas importantes necesitan anticipación, no memoria","textChars":57,"textLines":1,"bbox":[64,112,1150,58]}
+{"kind":"textbox","id":"sh/wvy1wjal","slide":6,"text":"MotoCare reúne documentos y objetivos por fecha o kilometraje.","textPreview":"MotoCare reúne documentos y objetivos por fecha o kilometraje.","textChars":62,"textLines":1,"bbox":[64,174,1080,38]}
+{"kind":"textbox","id":"sh/xw72pob6","slide":6,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1180,674,36,18]}
+{"kind":"textbox","id":"sh/m5wjqps3","slide":6,"text":"DOCUMENTOS","textPreview":"DOCUMENTOS","textChars":10,"textLines":1,"bbox":[68,260,220,28]}
+{"kind":"textbox","id":"sh/n650juto","slide":6,"text":"SOAT · TECNOMECÁNICA · SOPORTES","textPreview":"SOAT · TECNOMECÁNICA · SOPORTES","textChars":31,"textLines":1,"bbox":[68,306,490,40]}
+{"kind":"textbox","id":"sh/vi1sby5w","slide":6,"text":"Información asociada a la cuenta y disponible cuando se necesita.","textPreview":"Información asociada a la cuenta y disponible cuando se necesita.","textChars":65,"textLines":1,"bbox":[68,366,470,66]}
+{"kind":"shape","id":"sh/uhsb2tob","slide":6,"bbox":[650,246,520,318]}
+{"kind":"textbox","id":"sh/hkjad8nm","slide":6,"text":"PRÓXIMOS HITOS","textPreview":"PRÓXIMOS HITOS","textChars":14,"textLines":1,"bbox":[684,278,250,26]}
+{"kind":"textbox","id":"sh/gjat436h","slide":6,"text":"18 DÍAS","textPreview":"18 DÍAS","textChars":7,"textLines":1,"bbox":[684,334,120,28]}
+{"kind":"textbox","id":"sh/361sfy5s","slide":6,"text":"Vencimiento de documento","textPreview":"Vencimiento de documento","textChars":24,"textLines":1,"bbox":[832,334,300,28]}
+{"kind":"textbox","id":"sh/ilsb6do7","slide":6,"text":"420 KM","textPreview":"420 KM","textChars":6,"textLines":1,"bbox":[684,402,120,28]}
+{"kind":"textbox","id":"sh/583ah8ny","slide":6,"text":"Próximo cambio de aceite","textPreview":"Próximo cambio de aceite","textChars":24,"textLines":1,"bbox":[832,402,300,28]}
+{"kind":"textbox","id":"sh/47ut836d","slide":6,"text":"FECHA","textPreview":"FECHA","textChars":5,"textLines":1,"bbox":[684,470,120,28]}
+{"kind":"textbox","id":"sh/jahs3e5o","slide":6,"text":"Mantenimiento programado","textPreview":"Mantenimiento programado","textChars":24,"textLines":1,"bbox":[832,470,300,28]}
+{"kind":"shape","id":"sh/yp8ru9o3","slide":6,"bbox":[68,508,490,58]}
+{"kind":"textbox","id":"sh/mhgnylcn","slide":6,"text":"MENOS OLVIDOS. MÁS CONTINUIDAD.","textPreview":"MENOS OLVIDOS. MÁS CONTINUIDAD.","textChars":31,"textLines":1,"bbox":[88,523,450,26]}
+{"kind":"notes","id":"nt/14oqk3","slide":6,"text":""}
+{"kind":"slide","id":"sl/6butot","slide":7,"title":"M","textShapes":15}
+{"kind":"shape","id":"sh/4vmlgnix","slide":7,"bbox":[64,36,60,60]}
+{"kind":"textbox","id":"sh/jut4ni1c","slide":7,"text":"M","textPreview":"M","textChars":1,"textLines":1,"bbox":[72,44,44,38]}
+{"kind":"textbox","id":"sh/itk3ed0r","slide":7,"text":"MotoCare","textPreview":"MotoCare","textChars":8,"textLines":1,"bbox":[140,43,190,38]}
+{"kind":"textbox","id":"sh/hsbml8j6","slide":7,"text":"CO","textPreview":"CO","textChars":2,"textLines":1,"bbox":[275,75,52,18]}
+{"kind":"textbox","id":"sh/wr2lc3il","slide":7,"text":"La planificación de rutas también forma parte del ecosistema","textPreview":"La planificación de rutas también forma parte del ecosistema","textChars":60,"textLines":1,"bbox":[64,112,1150,58]}
+{"kind":"textbox","id":"sh/vqt4jy10","slide":7,"text":"Recorridos privados, archivos GPX y descubrimiento para volver a rodar.","textPreview":"Recorridos privados, archivos GPX y descubrimiento para volver a rodar.","textChars":71,"textLines":1,"bbox":[64,174,1080,38]}
+{"kind":"textbox","id":"sh/upk3at0v","slide":7,"text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1180,674,36,18]}
+{"kind":"textbox","id":"sh/8n2l83ip","slide":7,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[64,270,48,34]}
+{"kind":"textbox","id":"sh/ux8fqt0f","slide":7,"text":"Importa y visualiza","textPreview":"Importa y visualiza","textChars":19,"textLines":1,"bbox":[122,268,532,34]}
+{"kind":"textbox","id":"sh/vyhgzy10","slide":7,"text":"Carga recorridos GPX y revísalos sobre el mapa.","textPreview":"Carga recorridos GPX y revísalos sobre el mapa.","textChars":47,"textLines":1,"bbox":[122,308,532,58]}
+{"kind":"textbox","id":"sh/gzqxs3il","slide":7,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[64,388,48,34]}
+{"kind":"textbox","id":"sh/hkzy1oj6","slide":7,"text":"Organiza tus planes","textPreview":"Organiza tus planes","textChars":19,"textLines":1,"bbox":[122,386,532,34]}
+{"kind":"textbox","id":"sh/6tofm90j","slide":7,"text":"Guarda rutas privadas vinculadas a tu cuenta.","textPreview":"Guarda rutas privadas vinculadas a tu cuenta.","textChars":45,"textLines":1,"bbox":[122,426,532,58]}
+{"kind":"textbox","id":"sh/7uxgve1o","slide":7,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[64,506,48,34]}
+{"kind":"textbox","id":"sh/8v6xoji9","slide":7,"text":"Comparte y descubre","textPreview":"Comparte y descubre","textChars":19,"textLines":1,"bbox":[122,504,532,34]}
+{"kind":"textbox","id":"sh/twzyxoju","slide":7,"text":"Las licencias habilitadas amplían la experiencia hacia la comunidad.","textPreview":"Las licencias habilitadas amplían la experiencia hacia la comunidad.","textChars":68,"textLines":1,"bbox":[122,544,532,58]}
+{"kind":"image","id":"im/snmxc369","slide":7,"name":"","geometry":"roundRect","alt":"Recurso gráfico propio de MotoCare sin personas","bbox":[744,232,438,430]}
+{"kind":"notes","id":"nt/6butot","slide":7,"text":""}
+{"kind":"slide","id":"sl/j8pw2m","slide":8,"title":"M","textShapes":11}
+{"kind":"shape","id":"sh/wn2d0bid","slide":8,"bbox":[64,36,60,60]}
+{"kind":"textbox","id":"sh/vmtwr6hs","slide":8,"text":"M","textPreview":"M","textChars":1,"textLines":1,"bbox":[72,44,44,38]}
+{"kind":"textbox","id":"sh/ulkvy107","slide":8,"text":"MotoCare","textPreview":"MotoCare","textChars":8,"textLines":1,"bbox":[140,43,190,38]}
+{"kind":"textbox","id":"sh/9kbepwzm","slide":8,"text":"CO","textPreview":"CO","textChars":2,"textLines":1,"bbox":[275,75,52,18]}
+{"kind":"textbox","id":"sh/8j2dwbi1","slide":8,"text":"El marketplace conecta necesidades reales de la comunidad","textPreview":"El marketplace conecta necesidades reales de la comunidad","textChars":57,"textLines":1,"bbox":[64,112,1150,58]}
+{"kind":"textbox","id":"sh/7itwn6hg","slide":8,"text":"Un espacio para motos, repuestos, equipamiento, servicios y rutas.","textPreview":"Un espacio para motos, repuestos, equipamiento, servicios y rutas.","textChars":66,"textLines":1,"bbox":[64,174,1080,38]}
+{"kind":"textbox","id":"sh/mxkvu10b","slide":8,"text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1180,674,36,18]}
+{"kind":"textbox","id":"sh/sfmx8vil","slide":8,"text":"COMPRAR","textPreview":"COMPRAR","textChars":7,"textLines":1,"bbox":[556,260,180,28]}
+{"kind":"textbox","id":"sh/yhsz614j","slide":8,"text":"Explorar publicaciones y contactar vendedores está abierto a la comunidad.","textPreview":"Explorar publicaciones y contactar vendedores está abierto a la comunidad.","textChars":74,"textLines":1,"bbox":[556,300,560,62]}
+{"kind":"shape","id":"sh/ji1gf6lo","slide":8,"bbox":[556,395,560,0]}
+{"kind":"textbox","id":"sh/kjah8bm9","slide":8,"text":"PUBLICAR","textPreview":"PUBLICAR","textChars":8,"textLines":1,"bbox":[556,432,180,28]}
+{"kind":"textbox","id":"sh/lkjyhg3u","slide":8,"text":"La publicación se vincula al tipo de cuenta y pasa por controles de revisión.","textPreview":"La publicación se vincula al tipo de cuenta y pasa por controles de revisión.","textChars":77,"textLines":1,"bbox":[556,472,560,62]}
+{"kind":"textbox","id":"sh/at8z2147","slide":8,"text":"MotoCare actúa como punto de encuentro; la confianza exige reglas claras.","textPreview":"MotoCare actúa como punto de encuentro; la confianza exige reglas claras.","textChars":73,"textLines":1,"bbox":[556,584,560,42]}
+{"kind":"image","id":"im/8bmdkjmt","slide":8,"name":"","geometry":"roundRect","alt":"Recurso gráfico propio de MotoCare sin personas","bbox":[64,232,430,430]}
+{"kind":"notes","id":"nt/j8pw2m","slide":8,"text":""}
+{"kind":"slide","id":"sl/hlgzzi","slide":9,"title":"M","textShapes":21}
+{"kind":"shape","id":"sh/m1cjyd4n","slide":9,"bbox":[64,36,60,60]}
+{"kind":"textbox","id":"sh/9o32ts3e","slide":9,"text":"M","textPreview":"M","textChars":1,"textLines":1,"bbox":[72,44,44,38]}
+{"kind":"textbox","id":"sh/8nu10n2t","slide":9,"text":"MotoCare","textPreview":"MotoCare","textChars":8,"textLines":1,"bbox":[140,43,190,38]}
+{"kind":"textbox","id":"sh/vqlkvil4","slide":9,"text":"CO","textPreview":"CO","textChars":2,"textLines":1,"bbox":[275,75,52,18]}
+{"kind":"textbox","id":"sh/apcj2dkz","slide":9,"text":"La utilidad individual se amplía cuando aparece la comunidad","textPreview":"La utilidad individual se amplía cuando aparece la comunidad","textChars":60,"textLines":1,"bbox":[64,112,1150,58]}
+{"kind":"textbox","id":"sh/xsn2xs3a","slide":9,"text":"La moto es el centro; las conexiones crecen alrededor de ella.","textPreview":"La moto es el centro; las conexiones crecen alrededor de ella.","textChars":62,"textLines":1,"bbox":[64,174,1080,38]}
+{"kind":"textbox","id":"sh/wre14n2p","slide":9,"text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[1180,674,36,18]}
+{"kind":"shape","id":"sh/ju5kz2lg","slide":9,"bbox":[64,274,210,286]}
+{"kind":"textbox","id":"sh/itwj6xkv","slide":9,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[84,298,42,24]}
+{"kind":"textbox","id":"sh/cfy5cjil","slide":9,"text":"MI MOTO","textPreview":"MI MOTO","textChars":7,"textLines":1,"bbox":[84,360,170,34]}
+{"kind":"textbox","id":"sh/xg7mloz6","slide":9,"text":"Hoja de vida, documentos, mantenimientos y recordatorios.","textPreview":"Hoja de vida, documentos, mantenimientos y recordatorios.","textChars":57,"textLines":1,"bbox":[84,414,170,100]}
+{"kind":"shape","id":"sh/adwna90f","slide":9,"bbox":[298,274,210,286]}
+{"kind":"textbox","id":"sh/bep4jeh0","slide":9,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[318,298,42,24]}
+{"kind":"textbox","id":"sh/kjy5g3ih","slide":9,"text":"RUTAS","textPreview":"RUTAS","textChars":5,"textLines":1,"bbox":[318,360,170,34]}
+{"kind":"textbox","id":"sh/lk7mp8z2","slide":9,"text":"Planeación, recorridos guardados y experiencias.","textPreview":"Planeación, recorridos guardados y experiencias.","textChars":48,"textLines":1,"bbox":[318,414,170,100]}
+{"kind":"shape","id":"sh/yhgnet0r","slide":9,"bbox":[532,274,210,286]}
+{"kind":"textbox","id":"sh/zip4nyhc","slide":9,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[552,298,42,24]}
+{"kind":"textbox","id":"sh/87i5k3it","slide":9,"text":"COMUNIDAD","textPreview":"COMUNIDAD","textChars":9,"textLines":1,"bbox":[552,360,170,34]}
+{"kind":"textbox","id":"sh/98rmt8ze","slide":9,"text":"Publicaciones, aprendizajes y actividad compartida.","textPreview":"Publicaciones, aprendizajes y actividad compartida.","textChars":51,"textLines":1,"bbox":[552,414,170,100]}
+{"kind":"shape","id":"sh/hs3eh4n6","slide":9,"bbox":[766,274,210,286]}
+{"kind":"textbox","id":"sh/wrudozml","slide":9,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[786,298,42,24]}
+{"kind":"textbox","id":"sh/vqlcfe50","slide":9,"text":"CLUBES","textPreview":"CLUBES","textChars":6,"textLines":1,"bbox":[786,360,170,34]}
+{"kind":"textbox","id":"sh/upcvm9ov","slide":9,"text":"Miembros, invitaciones y organización de rodadas.","textPreview":"Miembros, invitaciones y organización de rodadas.","textChars":49,"textLines":1,"bbox":[786,414,170,100]}
+{"kind":"shape","id":"sh/5gneloni","slide":9,"bbox":[1000,274,210,286]}
+{"kind":"textbox","id":"sh/4vedsjmx","slide":9,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1020,298,42,24]}
+{"kind":"textbox","id":"sh/julwje5c","slide":9,"text":"TIENDA","textPreview":"TIENDA","textChars":6,"textLines":1,"bbox":[1020,360,170,34]}
+{"kind":"textbox","id":"sh/itcvq94r","slide":9,"text":"Bienes, servicios y rutas dentro del ecosistema.","textPreview":"Bienes, servicios y rutas dentro del ecosistema.","textChars":48,"textLines":1,"bbox":[1020,414,170,100]}
+{"kind":"notes","id":"nt/hlgzzi","slide":9,"text":""}
+{"kind":"slide","id":"sl/63jklb","slide":10,"title":"M","textShapes":18}
+{"kind":"shape","id":"sh/sv2tw32t","slide":10,"bbox":[64,36,60,60]}
+{"kind":"textbox","id":"sh/ruts3yl8","slide":10,"text":"M","textPreview":"M","textChars":1,"textLines":1,"bbox":[72,44,44,38]}
+{"kind":"textbox","id":"sh/6tkbudkn","slide":10,"text":"MotoCare","textPreview":"MotoCare","textChars":8,"textLines":1,"bbox":[140,43,190,38]}
+{"kind":"textbox","id":"sh/5sra1832","slide":10,"text":"CO","textPreview":"CO","textChars":2,"textLines":1,"bbox":[275,75,52,18]}
+{"kind":"textbox","id":"sh/4rits32h","slide":10,"text":"La confianza se diseña desde la cuenta hasta la comunidad","textPreview":"La confianza se diseña desde la cuenta hasta la comunidad","textChars":57,"textLines":1,"bbox":[64,112,1150,58]}
+{"kind":"textbox","id":"sh/j69szylc","slide":10,"text":"Protección, trazabilidad y moderación forman parte de la experiencia.","textPreview":"Protección, trazabilidad y moderación forman parte de la experiencia.","textChars":69,"textLines":1,"bbox":[64,174,1080,38]}
+{"kind":"textbox","id":"sh/i50bqtkr","slide":10,"text":"10","textPreview":"10","textChars":2,"textLines":1,"bbox":[1180,674,36,18]}
+{"kind":"textbox","id":"sh/h4raxo36","slide":10,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[72,246,38,26]}
+{"kind":"textbox","id":"sh/w3i9oj2l","slide":10,"text":"ACCESO","textPreview":"ACCESO","textChars":6,"textLines":1,"bbox":[132,246,270,26]}
+{"kind":"textbox","id":"sh/iporylcv","slide":10,"text":"La información permanece asociada a la cuenta y protegida mediante autenticación.","textPreview":"La información permanece asociada a la cuenta y protegida mediante autenticación.","textChars":81,"textLines":1,"bbox":[420,246,740,46]}
+{"kind":"shape","id":"sh/jqxsrqdg","slide":10,"bbox":[132,308,1028,0]}
+{"kind":"textbox","id":"sh/kr6t0bu1","slide":10,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[72,340,38,26]}
+{"kind":"textbox","id":"sh/5sfatgvm","slide":10,"text":"CONTROL","textPreview":"CONTROL","textChars":7,"textLines":1,"bbox":[132,340,270,26]}
+{"kind":"textbox","id":"sh/a14ru1cz","slide":10,"text":"Cada usuario conserva contexto sobre sus motos, registros y publicaciones.","textPreview":"Cada usuario conserva contexto sobre sus motos, registros y publicaciones.","textChars":74,"textLines":1,"bbox":[420,340,740,46]}
+{"kind":"shape","id":"sh/v2dsn6dk","slide":10,"bbox":[132,402,1028,0]}
+{"kind":"textbox","id":"sh/wn69wbu5","slide":10,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[72,434,38,26]}
+{"kind":"textbox","id":"sh/xofapgvq","slide":10,"text":"MODERACIÓN","textPreview":"MODERACIÓN","textChars":10,"textLines":1,"bbox":[132,434,270,26]}
+{"kind":"textbox","id":"sh/mx4rq1cn","slide":10,"text":"Reportes y revisión ayudan a cuidar la convivencia y el marketplace.","textPreview":"Reportes y revisión ayudan a cuidar la convivencia y el marketplace.","textChars":68,"textLines":1,"bbox":[420,434,740,46]}
+{"kind":"shape","id":"sh/nydsj6d8","slide":10,"bbox":[132,496,1028,0]}
+{"kind":"textbox","id":"sh/b29or2t0","slide":10,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[72,528,38,26]}
+{"kind":"textbox","id":"sh/q107ixsf","slide":10,"text":"COMUNICACIÓN RESPONSABLE","textPreview":"COMUNICACIÓN RESPONSABLE","textChars":24,"textLines":1,"bbox":[132,528,270,26]}
+{"kind":"textbox","id":"sh/d4bqtsb6","slide":10,"text":"Las piezas públicas deben usar recursos propios, licenciados o con autorización verificable.","textPreview":"Las piezas públicas deben usar recursos propios, licenciados o con autorización verificable.","textChars":92,"textLines":1,"bbox":[420,528,740,46]}
+{"kind":"shape","id":"sh/c3ipk7al","slide":10,"bbox":[132,590,1028,0]}
+{"kind":"notes","id":"nt/63jklb","slide":10,"text":""}
+{"kind":"slide","id":"sl/04ejeh","slide":11,"title":"M","textShapes":7}
+{"kind":"shape","id":"sh/ril0z6tk","slide":11,"bbox":[0,0,1280,720]}
+{"kind":"shape","id":"sh/6hcz61sz","slide":11,"bbox":[72,54,60,60]}
+{"kind":"textbox","id":"sh/18ni5gbm","slide":11,"text":"M","textPreview":"M","textChars":1,"textLines":1,"bbox":[80,62,44,38]}
+{"kind":"textbox","id":"sh/g7ehcba1","slide":11,"text":"MotoCare","textPreview":"MotoCare","textChars":8,"textLines":1,"bbox":[148,61,190,38]}
+{"kind":"textbox","id":"sh/f6l036tg","slide":11,"text":"CO","textPreview":"CO","textChars":2,"textLines":1,"bbox":[283,93,52,18]}
+{"kind":"shape","id":"sh/e5cza1sb","slide":11,"bbox":[76,226,110,5]}
+{"kind":"textbox","id":"sh/hcjytcbi","slide":11,"text":"Cuidar mejor empieza\npor tener la historia completa.","textPreview":"Cuidar mejor empieza | por tener la historia completa.","textChars":52,"textLines":2,"bbox":[72,258,760,142]}
+{"kind":"textbox","id":"sh/wbah07ux","slide":11,"text":"Crea el perfil digital de tu moto y convierte cada registro en tranquilidad para el próximo kilómetro.","textPreview":"Crea el perfil digital de tu moto y convierte cada registro en tranquilidad para el próximo kilómetro.","textChars":102,"textLines":1,"bbox":[76,426,650,78]}
+{"kind":"shape","id":"sh/2x07u9g7","slide":11,"bbox":[76,560,310,58]}
+{"kind":"textbox","id":"sh/3y983ehs","slide":11,"text":"CREAR MI CUENTA GRATIS","textPreview":"CREAR MI CUENTA GRATIS","textChars":22,"textLines":1,"bbox":[92,576,278,25]}
+{"kind":"textbox","id":"sh/ozipwjyx","slide":11,"text":"11","textPreview":"11","textChars":2,"textLines":1,"bbox":[1180,674,36,18]}
+{"kind":"image","id":"im/5c3upgza","slide":11,"name":"","geometry":"roundRect","alt":"Recurso gráfico propio de MotoCare sin personas","bbox":[0,0,1280,720]}
+{"kind":"notes","id":"nt/04ejeh","slide":11,"text":""}

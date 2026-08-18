@@ -18,6 +18,10 @@
   - subir documentos de SOAT, tecnomecanica y otros soportes
 - Tarjetas de metricas navegables en Perfil, Rutas, Comunidad, Notificaciones y Administracion.
 - CRUD administrativo del catalogo `maintenance_suggestions`, protegido por `is_current_user_admin()`.
+- Marketplace conectado a Supabase con revisión administrativa.
+- Publicación de rutas Premium gratuitas o de pago.
+- Límite transaccional de cinco rutas gratuitas por mes.
+- GPX privado con URL firmada y derechos mensuales con vencimiento.
 
 ## Configuracion
 
@@ -25,6 +29,7 @@
 2. Abrir Supabase SQL Editor y ejecutar `supabase/schema.sql`.
    - Si ya habias ejecutado el esquema antes de agregar Storage, ejecuta tambien `supabase/storage_migration.sql`.
    - Para habilitar la gestion administrativa del catalogo en una base existente, ejecuta `supabase/admin_catalog_crud_migration.sql`.
+   - Para rutas Premium, ejecuta en orden `supabase/marketplace_migration.sql`, `supabase/premium_routes_monthly_migration.sql` y `supabase/premium_route_gpx_expiry_migration.sql`.
 3. Copiar `.env.example` a `.env`.
 4. Completar:
 

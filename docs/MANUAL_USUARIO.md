@@ -261,6 +261,29 @@ Funciones disponibles:
 
 En esta version, el fundador del club administra miembros. Los mensajes privados del club solo se cargan para usuarios que pertenecen al club.
 
+## Tienda y rutas Premium
+
+La tienda permite consultar publicaciones de motos, repuestos, equipamiento, servicios, rutas Premium y packs.
+
+Las rutas pueden aparecer:
+
+- con un precio de venta;
+- como parte de la selección gratuita mensual para usuarios Premium.
+
+Para reclamar una ruta gratuita, el usuario debe tener una licencia Premium o Business activa. Después de agregarla, aparece en **Rutas Premium > Mis rutas**.
+
+Desde **Mis rutas** se puede descargar el archivo GPX. La descarga se realiza mediante un enlace temporal y el archivo no queda expuesto públicamente.
+
+El acceso gratuito dura hasta el inicio del mes siguiente. Cuando vence:
+
+- la ruta sale del listado activo;
+- ya no se puede volver a descargar;
+- aparece un mensaje para comprarla si se desea conservar el acceso.
+
+MotoCare no puede borrar una copia del GPX que el usuario ya haya descargado y guardado fuera de la aplicación.
+
+Consulta la explicación completa en `docs/RUTAS_PREMIUM_Y_GPX.md`.
+
 ## Explorar
 
 El modulo **Explorar** fue retirado de la navegacion activa. El descubrimiento de rutas publicas, rutas guardadas y contenido comunitario quedara reservado para licencias Premium en una etapa posterior.

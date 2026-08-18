@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowRight, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { MotoCareLogo } from '@/components/MotoCareLogo'
 import { useAuth } from '@/contexts/AuthContext'
+import { Checkbox } from '@/components/ui/checkbox'
+import { LEGAL_DOCUMENTS } from '@/lib/legal'
 
 export function Login() {
   const { signIn, signUp, user, isConfigured } = useAuth()
@@ -17,6 +19,8 @@ export function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [termsAccepted, setTermsAccepted] = useState(false)
+  const [privacyAccepted, setPrivacyAccepted] = useState(false)
 
   const redirectTo = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? '/app/home'
 
@@ -31,7 +35,13 @@ export function Login() {
 
     try {
       if (mode === 'signup') {
-        await signUp(email, password, fullName)
+        if (!termsAccepted || !privacyAccepted) throw new Error('Debes aceptar ambos documentos legales para crear la cuenta.')
+        await signUp(email, password, fullName, {
+          termsAccepted: true,
+          privacyAccepted: true,
+          termsVersion: LEGAL_DOCUMENTS.terms.version,
+          privacyVersion: LEGAL_DOCUMENTS.privacy.version,
+        })
       } else {
         await signIn(email, password)
       }
@@ -108,6 +118,21 @@ export function Login() {
                 />
               </label>
 
+              {mode === 'signup' && (
+                <fieldset className="space-y-3 rounded-xl border border-white/10 bg-moto-darker/50 p-4">
+                  <legend className="px-1 text-sm font-medium text-gray-300">Consentimientos obligatorios</legend>
+                  <div className="flex items-start gap-3">
+                    <Checkbox id="accept-terms" checked={termsAccepted} onCheckedChange={(value) => setTermsAccepted(value === true)} />
+                    <label htmlFor="accept-terms" className="text-sm leading-5 text-gray-300">Acepto los <Link to={LEGAL_DOCUMENTS.terms.path} target="_blank" className="text-moto-orange underline">Términos y Condiciones</Link> <span className="text-gray-500">({LEGAL_DOCUMENTS.terms.version})</span>.</label>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Checkbox id="accept-privacy" checked={privacyAccepted} onCheckedChange={(value) => setPrivacyAccepted(value === true)} />
+                    <label htmlFor="accept-privacy" className="text-sm leading-5 text-gray-300">He leído la <Link to={LEGAL_DOCUMENTS.privacy.path} target="_blank" className="text-moto-orange underline">Política de Privacidad</Link> <span className="text-gray-500">({LEGAL_DOCUMENTS.privacy.version})</span>.</label>
+                  </div>
+                  <p className="text-xs text-amber-200">Versiones de prueba en estado borrador; requerirán nueva aceptación cuando sean aprobadas.</p>
+                </fieldset>
+              )}
+
               <label className="block">
                 <span className="mb-1 block text-sm text-gray-400">Contraseña</span>
                 <input
@@ -125,7 +150,7 @@ export function Login() {
 
               <Button
                 type="submit"
-                disabled={isSubmitting || !isConfigured}
+                disabled={isSubmitting || !isConfigured || (mode === 'signup' && (!termsAccepted || !privacyAccepted))}
                 className="w-full bg-moto-orange py-6 text-moto-darker hover:bg-moto-orange-dark"
               >
                 {isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <ArrowRight className="mr-2 h-5 w-5" />}
@@ -139,6 +164,8 @@ export function Login() {
                 setError(null)
                 const nextMode = mode === 'login' ? 'signup' : 'login'
                 setMode(nextMode)
+                setTermsAccepted(false)
+                setPrivacyAccepted(false)
                 setSearchParams(nextMode === 'signup' ? { mode: 'signup' } : {}, { replace: true })
               }}
             >

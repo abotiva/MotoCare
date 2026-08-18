@@ -25,7 +25,7 @@ La diferencia principal no debe ser solo "mas funciones", sino el tipo de usuari
 | Historial de mantenimiento | Limitado | Completo | Completo por moto, cliente o miembro |
 | Recordatorios | Basicos | Avanzados por kilometraje y fecha | Avanzados para varias motos/personas |
 | Estadisticas | Basicas o no disponibles | Gastos, kilometraje y servicios | Reportes operativos y comparativos |
-| Rutas | Uso limitado | Rutas guardadas ilimitadas | Rutas y gestion para grupos/clubes |
+| Rutas | Uso limitado | Hasta 5 rutas seleccionadas gratis al mes, acceso durante el mes y compra de rutas adicionales | Beneficios Premium y gestion para grupos/clubes |
 | Comunidad | Ver y participar | Participacion completa | Visibilidad destacada |
 | Clubes | Unirse a clubes | Crear y administrar clubes pequenos | Gestion avanzada de clubes grandes |
 | Marketplace | Ver publicaciones y comprar | Publicar como persona natural | Publicar como negocio, aliado o perfil comercial |
@@ -78,6 +78,9 @@ Para el motero individual que quiere controlar bien sus motos, mantenimientos, r
 - Registro de gastos por mantenimiento.
 - Estadisticas de kilometraje, servicios y costos.
 - Rutas guardadas ilimitadas.
+- Acceso a la selección mensual de hasta cinco rutas o packs gratuitos.
+- Descarga protegida de archivos GPX mientras el derecho mensual esté vigente.
+- Compra de rutas para conservar el acceso después del vencimiento.
 - Crear y administrar clubes pequenos.
 - Publicaciones en marketplace como persona natural.
 - Perfil publico mejorado.
@@ -162,6 +165,7 @@ Buenas funciones para Premium:
 - multiples motos personales;
 - recordatorios inteligentes;
 - rutas ilimitadas;
+- selección mensual de rutas Premium con GPX privado;
 - estadisticas;
 - perfil mejorado;
 - sin publicidad.
@@ -353,3 +357,9 @@ create table if not exists public.user_subscriptions (
 ```
 
 Recomendacion: usar `user_subscriptions` si se piensa conectar pagos, renovaciones, pruebas gratis o historial comercial.
+
+## Regla vigente de rutas Premium
+
+MotoCare puede ofrecer hasta cinco rutas o packs gratuitos por mes calendario. Los usuarios Premium y Business activos pueden reclamarlos durante ese mes. El derecho gratuito vence al inicio del mes siguiente; para conservar la ruta y seguir descargando su GPX, se requiere una compra o una asignación permanente.
+
+El detalle técnico y operativo está en `docs/RUTAS_PREMIUM_Y_GPX.md`.

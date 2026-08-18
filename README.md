@@ -15,7 +15,9 @@ Estado actual: **MVP Alpha**. No es una version publica 1.0.
 - Comunidad: publicaciones, imagenes, likes, comentarios y rutas adjuntas. Esta funcionalidad queda orientada a Premium.
 - Clubes: crear club, editar informacion, imagen, miembros y mensajes privados. Esta funcionalidad queda orientada a Premium.
 - Explorar: modulo retirado de la navegacion activa; las rutas comunitarias se reservaran para Premium.
-- Tienda/Marketplace: pantalla visual en estado proximamente.
+- Tienda/Marketplace conectado a Supabase, con publicaciones, moderacion, imagenes, mensajes, rutas Premium y packs.
+- Hasta 5 rutas o packs gratuitos por mes para usuarios Premium, con opcion alternativa de venta.
+- Carga privada de archivos GPX, descarga mediante URL firmada y acceso mensual con vencimiento.
 - Ajustes basicos de cuenta y preferencias locales.
 - Panel administrativo con gestion de licencias, moderacion y CRUD del catalogo de mantenimientos.
 
@@ -23,7 +25,7 @@ Estado actual: **MVP Alpha**. No es una version publica 1.0.
 
 - Usuarios Free: hoja de vida de la moto, mantenimientos realizados, pendientes programados y documentos.
 - Usuarios Premium: informes de mantenimiento y modulos avanzados como rutas, comunidad, clubes y tienda.
-- Business: licencia futura para tiendas y aliados; el alcance queda por definir y no se aplica en el MVP actual.
+- Business: publicacion comercial sin el limite mensual de publicaciones personales y acceso a beneficios Premium.
 
 El menu principal prioriza Inicio, Hoja de vida, Mantenimientos, Programados, Documentos y Reportes. Rutas, Comunidad, Clubes y Tienda quedan agrupados como funciones Premium.
 
@@ -63,12 +65,18 @@ Para bases existentes, revisar y ejecutar las migraciones necesarias en `supabas
 - `route_dates_migration.sql`
 - `route_motorcycle_migration.sql`
 - `notifications_migration.sql`
+- `legal_consent_migration.sql`
 - `saved_routes_migration.sql`
 - `post_images_migration.sql`
 - `storage_migration.sql`
 - `storage_delete_policy_migration.sql`
 - `clubs_migration.sql`
 - `admin_catalog_crud_migration.sql`
+- `marketplace_migration.sql`
+- `admin_marketplace_review_migration.sql`
+- `performance_optimization_migration.sql`
+- `premium_routes_monthly_migration.sql`
+- `premium_route_gpx_expiry_migration.sql`
 
 La migracion `admin_catalog_crud_migration.sql` permite crear, editar, activar, desactivar y eliminar elementos del catalogo exclusivamente a usuarios registrados en `public.app_admins`.
 
@@ -99,5 +107,7 @@ npm run build
 
 ## Documentacion
 
+- [Índice general de documentación](docs/README.md)
 - `docs/MANUAL_USUARIO.md`
 - `docs/MANUAL_ADMINISTRADOR.md`
+- `docs/RUTAS_PREMIUM_Y_GPX.md`

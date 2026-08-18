@@ -323,6 +323,33 @@ Para habilitar rutas adjuntas en mensajes privados de club, ejecutar:
 
 `supabase/club_private_routes_migration.sql`
 
+## Administracion de rutas Premium
+
+Las rutas comerciales se crean desde **Tienda > Crear publicación**, usando las categorías **Rutas Premium** o **Packs**.
+
+Cada publicación exige:
+
+- título y descripción;
+- precio de venta o la marca **Gratis para usuarios Premium este mes**;
+- archivo GPX de máximo 10 MB;
+- imágenes y datos de ubicación cuando correspondan.
+
+El beneficio mensual admite como máximo cinco rutas o packs gratuitos por mes calendario en hora de Bogotá. La base de datos fuerza el precio a cero y rechaza el sexto cupo. Una publicación rechazada libera su cupo.
+
+Los GPX se guardan en el bucket privado `premium-route-files`. No deben copiarse a buckets públicos ni reemplazarse por enlaces públicos.
+
+Los accesos mensuales vencen al comenzar el mes siguiente. La ruta se retira del listado activo del usuario y se bloquea una nueva descarga. Los accesos originados por compra o asignación administrativa pueden permanecer sin vencimiento.
+
+Para habilitar esta función en una base existente, ejecutar:
+
+```text
+supabase/marketplace_migration.sql
+supabase/premium_routes_monthly_migration.sql
+supabase/premium_route_gpx_expiry_migration.sql
+```
+
+El procedimiento operativo, las tablas y las políticas están documentados en `docs/RUTAS_PREMIUM_Y_GPX.md`.
+
 ## Explorar
 
 El modulo **Explorar** fue retirado de la navegacion activa. Las tablas relacionadas (`routes` con `visibility = community`, `saved_routes` y publicaciones con rutas adjuntas) se conservan para una futura experiencia Premium, pero no se presentan como seccion principal del MVP actual.

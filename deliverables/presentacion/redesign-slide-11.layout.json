@@ -1,0 +1,628 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/04ejeh",
+    "id": "04ejeh",
+    "slide": 11,
+    "layoutId": "85ddee9d-aa6b-4771-8d8b-a4cd9401be48",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "f72a8ead-4bfc-4a51-92b4-344ab751d63d",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#090D12",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "85ddee9d-aa6b-4771-8d8b-a4cd9401be48",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "f72a8ead-4bfc-4a51-92b4-344ab751d63d",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "f72a8ead-4bfc-4a51-92b4-344ab751d63d",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/5c3upgza",
+      "id": "1",
+      "bbox": [
+        0,
+        0,
+        1280,
+        720
+      ],
+      "geometry": "roundRect",
+      "alt": "Recurso gráfico propio de MotoCare sin personas",
+      "contentType": "image/png",
+      "imageFit": "cover",
+      "imageMask": {
+        "geometry": "roundRect",
+        "adjustmentList": [
+          {
+            "name": "adj",
+            "formula": "val 2222"
+          }
+        ]
+      },
+      "asset": {
+        "assetId": "d83ef8cb-36c1-4726-a308-cd7daba4046a",
+        "contentType": "image/png",
+        "byteLength": 2082970
+      }
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ril0z6tk",
+      "id": "2",
+      "bbox": [
+        0,
+        0,
+        1280,
+        720
+      ],
+      "geometry": "rect",
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6hcz61sz",
+      "id": "3",
+      "bbox": [
+        72,
+        54,
+        60,
+        60
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#090D12",
+      "lineColor": "#A6CE39",
+      "lineWidth": 1
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/18ni5gbm",
+      "id": "4",
+      "bbox": [
+        80,
+        62,
+        44,
+        38
+      ],
+      "geometry": "rect",
+      "text": "M",
+      "textPreview": "M",
+      "resolvedFontSize": 32,
+      "resolvedTextStyle": {
+        "fontSize": 32,
+        "typeface": "+mn-lt",
+        "color": "#F6F8F2",
+        "bold": true,
+        "alignment": "center",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "M"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "M",
+          "resolvedTextStyle": {
+            "fontSize": 32,
+            "color": "#F6F8F2",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "M",
+              "fontSize": 32,
+              "color": "#F6F8F2",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/g7ehcba1",
+      "id": "5",
+      "bbox": [
+        148,
+        61,
+        190,
+        38
+      ],
+      "geometry": "rect",
+      "text": "MotoCare",
+      "textPreview": "MotoCare",
+      "resolvedFontSize": 28,
+      "resolvedTextStyle": {
+        "fontSize": 28,
+        "typeface": "+mn-lt",
+        "color": "#F6F8F2",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "MotoCare"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "MotoCare",
+          "resolvedTextStyle": {
+            "fontSize": 28,
+            "color": "#F6F8F2",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "MotoCare",
+              "fontSize": 28,
+              "color": "#F6F8F2",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/f6l036tg",
+      "id": "6",
+      "bbox": [
+        283,
+        93,
+        52,
+        18
+      ],
+      "geometry": "rect",
+      "text": "CO",
+      "textPreview": "CO",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "fontSize": 12,
+        "typeface": "+mn-lt",
+        "color": "#A6CE39",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "CO"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "CO",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "color": "#A6CE39",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "CO",
+              "fontSize": 12,
+              "color": "#A6CE39",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/e5cza1sb",
+      "id": "7",
+      "bbox": [
+        76,
+        226,
+        110,
+        5
+      ],
+      "geometry": "rect",
+      "fillColor": "#A6CE39",
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/hcjytcbi",
+      "id": "8",
+      "bbox": [
+        72,
+        258,
+        760,
+        142
+      ],
+      "geometry": "rect",
+      "text": "Cuidar mejor empieza\npor tener la historia completa.",
+      "textPreview": "Cuidar mejor empieza | por tener la historia completa.",
+      "resolvedFontSize": 51,
+      "resolvedTextStyle": {
+        "fontSize": 51,
+        "typeface": "+mn-lt",
+        "color": "#F6F8F2",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Cuidar mejor empieza"
+          },
+          {
+            "index": 2,
+            "text": "por tener la historia completa."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Cuidar mejor empieza",
+          "resolvedTextStyle": {
+            "fontSize": 51,
+            "color": "#F6F8F2",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Cuidar mejor empieza",
+              "fontSize": 51,
+              "color": "#F6F8F2",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "por tener la historia completa.",
+          "resolvedTextStyle": {
+            "fontSize": 51,
+            "color": "#F6F8F2",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "por tener la historia completa.",
+              "fontSize": 51,
+              "color": "#F6F8F2",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/wbah07ux",
+      "id": "9",
+      "bbox": [
+        76,
+        426,
+        650,
+        78
+      ],
+      "geometry": "rect",
+      "text": "Crea el perfil digital de tu moto y convierte cada registro en tranquilidad para el próximo kilómetro.",
+      "textPreview": "Crea el perfil digital de tu moto y convierte cada registro en tranquilidad para el próximo kilómetro.",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "color": "#F6F8F2",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Crea el perfil digital de tu moto y convierte cada registro en"
+          },
+          {
+            "index": 2,
+            "text": "tranquilidad para el próximo kilómetro."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Crea el perfil digital de tu moto y convierte cada registro en tranquilidad para el próximo kilómetro.",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "color": "#F6F8F2",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Crea el perfil digital de tu moto y convierte cada registro en tranquilidad para el próximo kilómetro.",
+              "fontSize": 22,
+              "color": "#F6F8F2",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/2x07u9g7",
+      "id": "10",
+      "bbox": [
+        76,
+        560,
+        310,
+        58
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#A6CE39",
+      "lineColor": "#A6CE39",
+      "lineWidth": 1
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3y983ehs",
+      "id": "11",
+      "bbox": [
+        92,
+        576,
+        278,
+        25
+      ],
+      "geometry": "rect",
+      "text": "CREAR MI CUENTA GRATIS",
+      "textPreview": "CREAR MI CUENTA GRATIS",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "fontSize": 17,
+        "typeface": "+mn-lt",
+        "color": "#090D12",
+        "bold": true,
+        "alignment": "center",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "CREAR MI CUENTA GRATIS"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "CREAR MI CUENTA GRATIS",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "color": "#090D12",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "CREAR MI CUENTA GRATIS",
+              "fontSize": 17,
+              "color": "#090D12",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ozipwjyx",
+      "id": "12",
+      "bbox": [
+        1180,
+        674,
+        36,
+        18
+      ],
+      "geometry": "rect",
+      "text": "11",
+      "textPreview": "11",
+      "resolvedFontSize": 11,
+      "resolvedTextStyle": {
+        "fontSize": 11,
+        "typeface": "+mn-lt",
+        "color": "#F6F8F2",
+        "bold": true,
+        "alignment": "right",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "11"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "11",
+          "resolvedTextStyle": {
+            "fontSize": 11,
+            "color": "#F6F8F2",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "11",
+              "fontSize": 11,
+              "color": "#F6F8F2",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

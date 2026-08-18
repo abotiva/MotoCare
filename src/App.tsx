@@ -6,6 +6,7 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import { AdminRoute } from './components/AdminRoute'
 import { InstallPrompt } from './components/InstallPrompt'
 import { Toaster } from './components/ui/sonner'
+import { SubscriptionProvider } from './hooks/useSubscription'
 
 const MainLayout = lazy(() => import('./layouts/MainLayout').then((module) => ({ default: module.MainLayout })))
 const LandingPage = lazy(() => import('./pages/LandingPage').then((module) => ({ default: module.LandingPage })))
@@ -25,6 +26,7 @@ const Settings = lazy(() => import('./pages/Settings').then((module) => ({ defau
 const Admin = lazy(() => import('./pages/Admin').then((module) => ({ default: module.Admin })))
 const Notifications = lazy(() => import('./pages/Notifications').then((module) => ({ default: module.Notifications })))
 const Terms = lazy(() => import('./pages/Terms').then((module) => ({ default: module.Terms })))
+const Privacy = lazy(() => import('./pages/Privacy').then((module) => ({ default: module.Privacy })))
 
 function PageLoader() {
   return (
@@ -41,9 +43,11 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/terms" element={<Terms />} />
+          <Route path="/terms" element={<Navigate to="/legal/terminos" replace />} />
+          <Route path="/legal/terminos" element={<Terms />} />
+          <Route path="/legal/privacidad" element={<Privacy />} />
 
-          <Route path="/app" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+          <Route path="/app" element={<ProtectedRoute><SubscriptionProvider><MainLayout /></SubscriptionProvider></ProtectedRoute>}>
             <Route index element={<Navigate to="/app/home" replace />} />
             <Route path="home" element={<Home />} />
             <Route path="routes" element={<SectionMenu kind="routes" />} />

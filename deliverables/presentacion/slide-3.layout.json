@@ -1,0 +1,682 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/uzpmgq",
+    "id": "uzpmgq",
+    "slide": 3,
+    "layoutId": "235422b1-fc1b-48dc-b664-36052e5f70ab",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "614ef6ff-4596-44b3-bf46-74089c1922dd",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#17191D",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "235422b1-fc1b-48dc-b664-36052e5f70ab",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "614ef6ff-4596-44b3-bf46-74089c1922dd",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "614ef6ff-4596-44b3-bf46-74089c1922dd",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/apcbep0r",
+      "id": "1",
+      "bbox": [
+        72,
+        46,
+        42,
+        42
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#17191D",
+      "lineColor": "#A6CE39",
+      "lineWidth": 2
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/xs3ap4j2",
+      "id": "2",
+      "bbox": [
+        77,
+        48,
+        32,
+        30
+      ],
+      "geometry": "rect",
+      "text": "M",
+      "textPreview": "M",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "color": "#F7F7F5",
+        "bold": true,
+        "alignment": "center",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "M"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "M",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "color": "#F7F7F5",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "M",
+              "fontSize": 24,
+              "color": "#F7F7F5",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/wrutgzih",
+      "id": "3",
+      "bbox": [
+        126,
+        49,
+        72,
+        30
+      ],
+      "geometry": "rect",
+      "text": "Moto",
+      "textPreview": "Moto",
+      "resolvedFontSize": 21,
+      "resolvedTextStyle": {
+        "fontSize": 21,
+        "typeface": "+mn-lt",
+        "color": "#F7F7F5",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Moto"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Moto",
+          "resolvedTextStyle": {
+            "fontSize": 21,
+            "color": "#F7F7F5",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Moto",
+              "fontSize": 21,
+              "color": "#F7F7F5",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/nm1sju10",
+      "id": "4",
+      "bbox": [
+        194,
+        49,
+        70,
+        30
+      ],
+      "geometry": "rect",
+      "text": "Care",
+      "textPreview": "Care",
+      "resolvedFontSize": 21,
+      "resolvedTextStyle": {
+        "fontSize": 21,
+        "typeface": "+mn-lt",
+        "color": "#A6CE39",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Care"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Care",
+          "resolvedTextStyle": {
+            "fontSize": 21,
+            "color": "#A6CE39",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Care",
+              "fontSize": 21,
+              "color": "#A6CE39",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/m1sbap0f",
+      "id": "5",
+      "bbox": [
+        72,
+        118,
+        1136,
+        64
+      ],
+      "geometry": "rect",
+      "text": "Una experiencia diseñada para acompañarte",
+      "textPreview": "Una experiencia diseñada para acompañarte",
+      "resolvedFontSize": 42,
+      "resolvedTextStyle": {
+        "fontSize": 42,
+        "typeface": "+mn-lt",
+        "color": "#F7F7F5",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Una experiencia diseñada para acompañarte"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Una experiencia diseñada para acompañarte",
+          "resolvedTextStyle": {
+            "fontSize": 42,
+            "color": "#F7F7F5",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Una experiencia diseñada para acompañarte",
+              "fontSize": 42,
+              "color": "#F7F7F5",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9o3alkj6",
+      "id": "6",
+      "bbox": [
+        72,
+        182,
+        1050,
+        42
+      ],
+      "geometry": "rect",
+      "text": "Información útil, organizada alrededor de tu moto y de la carretera.",
+      "textPreview": "Información útil, organizada alrededor de tu moto y de la carretera.",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#B8BCC3",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Información útil, organizada alrededor de tu moto y de la carretera."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Información útil, organizada alrededor de tu moto y de la carretera.",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#B8BCC3",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Información útil, organizada alrededor de tu moto y de la carretera.",
+              "fontSize": 20,
+              "color": "#B8BCC3",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/lcza9g7i",
+      "id": "7",
+      "bbox": [
+        695,
+        222,
+        485,
+        428
+      ],
+      "geometry": "roundRect",
+      "alt": "Imagen de MotoCare",
+      "contentType": "image/jpeg",
+      "imageFit": "cover",
+      "imageMask": {
+        "geometry": "roundRect",
+        "adjustmentList": [
+          {
+            "name": "adj",
+            "formula": "val 3738"
+          }
+        ]
+      },
+      "asset": {
+        "assetId": "69a244b7-72b5-4956-bc5d-158a51eb6be7",
+        "contentType": "image/jpeg",
+        "byteLength": 72288
+      }
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7i5cveh4",
+      "id": "8",
+      "bbox": [
+        78,
+        278,
+        480,
+        48
+      ],
+      "geometry": "rect",
+      "text": "Todo empieza en tu garaje",
+      "textPreview": "Todo empieza en tu garaje",
+      "resolvedFontSize": 32,
+      "resolvedTextStyle": {
+        "fontSize": 32,
+        "typeface": "+mn-lt",
+        "color": "#F7F7F5",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Todo empieza en tu garaje"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Todo empieza en tu garaje",
+          "resolvedTextStyle": {
+            "fontSize": 32,
+            "color": "#F7F7F5",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Todo empieza en tu garaje",
+              "fontSize": 32,
+              "color": "#F7F7F5",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6xwbm90j",
+      "id": "9",
+      "bbox": [
+        78,
+        346,
+        500,
+        132
+      ],
+      "geometry": "rect",
+      "text": "Registra tu moto y construye una hoja de vida que crece contigo: servicios, kilometraje, documentos y próximos hitos.",
+      "textPreview": "Registra tu moto y construye una hoja de vida que crece contigo: servicios, kilometraje, documentos y próximos hitos.",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "color": "#B8BCC3",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 3,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Registra tu moto y construye una hoja de vida que"
+          },
+          {
+            "index": 2,
+            "text": "crece contigo: servicios, kilometraje, documentos y"
+          },
+          {
+            "index": 3,
+            "text": "próximos hitos."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Registra tu moto y construye una hoja de vida que crece contigo: servicios, kilometraje, documentos y próximos hitos.",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "color": "#B8BCC3",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Registra tu moto y construye una hoja de vida que crece contigo: servicios, kilometraje, documentos y próximos hitos.",
+              "fontSize": 22,
+              "color": "#B8BCC3",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kna98ni5",
+      "id": "10",
+      "bbox": [
+        78,
+        528,
+        420,
+        25
+      ],
+      "geometry": "rect",
+      "text": "MENOS OLVIDOS · MÁS CONFIANZA",
+      "textPreview": "MENOS OLVIDOS · MÁS CONFIANZA",
+      "resolvedFontSize": 15,
+      "resolvedTextStyle": {
+        "fontSize": 15,
+        "typeface": "+mn-lt",
+        "color": "#A6CE39",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "MENOS OLVIDOS · MÁS CONFIANZA"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "MENOS OLVIDOS · MÁS CONFIANZA",
+          "resolvedTextStyle": {
+            "fontSize": 15,
+            "color": "#A6CE39",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "MENOS OLVIDOS · MÁS CONFIANZA",
+              "fontSize": 15,
+              "color": "#A6CE39",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/loja1szq",
+      "id": "11",
+      "bbox": [
+        1180,
+        674,
+        40,
+        20
+      ],
+      "geometry": "rect",
+      "text": "03",
+      "textPreview": "03",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "fontSize": 12,
+        "typeface": "+mn-lt",
+        "color": "#B8BCC3",
+        "bold": true,
+        "alignment": "right",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "03"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "03",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "color": "#B8BCC3",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "03",
+              "fontSize": 12,
+              "color": "#B8BCC3",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

@@ -20,6 +20,33 @@ export type Profile = {
 
 export type UserPlan = 'free' | 'pro' | 'premium' | 'business'
 
+export type LegalDocument = {
+  id: string
+  document_type: 'terms' | 'privacy'
+  title: string
+  version: string
+  status: 'draft' | 'published' | 'retired'
+  effective_at: string | null
+  requires_reacceptance: boolean
+  content_hash: string | null
+  created_at: string
+}
+
+export type LegalAcceptance = {
+  id: string
+  user_id: string
+  document_id: string
+  accepted_at: string
+  source: 'signup' | 'reauthentication'
+}
+
+export type AccountDeletionRequest = {
+  user_id: string
+  status: 'pending' | 'processing' | 'completed' | 'cancelled'
+  requested_at: string
+  completed_at: string | null
+}
+
 export type UserPlanStatus = 'active' | 'trialing' | 'past_due' | 'canceled'
 
 export type UserSubscription = {

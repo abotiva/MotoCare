@@ -1,0 +1,824 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/j8pw2m",
+    "id": "j8pw2m",
+    "slide": 8,
+    "layoutId": "85ddee9d-aa6b-4771-8d8b-a4cd9401be48",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "f72a8ead-4bfc-4a51-92b4-344ab751d63d",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#11151A",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "85ddee9d-aa6b-4771-8d8b-a4cd9401be48",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "f72a8ead-4bfc-4a51-92b4-344ab751d63d",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "f72a8ead-4bfc-4a51-92b4-344ab751d63d",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/wn2d0bid",
+      "id": "1",
+      "bbox": [
+        64,
+        36,
+        60,
+        60
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#090D12",
+      "lineColor": "#A6CE39",
+      "lineWidth": 1
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/vmtwr6hs",
+      "id": "2",
+      "bbox": [
+        72,
+        44,
+        44,
+        38
+      ],
+      "geometry": "rect",
+      "text": "M",
+      "textPreview": "M",
+      "resolvedFontSize": 32,
+      "resolvedTextStyle": {
+        "fontSize": 32,
+        "typeface": "+mn-lt",
+        "color": "#F6F8F2",
+        "bold": true,
+        "alignment": "center",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "M"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "M",
+          "resolvedTextStyle": {
+            "fontSize": 32,
+            "color": "#F6F8F2",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "M",
+              "fontSize": 32,
+              "color": "#F6F8F2",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ulkvy107",
+      "id": "3",
+      "bbox": [
+        140,
+        43,
+        190,
+        38
+      ],
+      "geometry": "rect",
+      "text": "MotoCare",
+      "textPreview": "MotoCare",
+      "resolvedFontSize": 28,
+      "resolvedTextStyle": {
+        "fontSize": 28,
+        "typeface": "+mn-lt",
+        "color": "#F6F8F2",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "MotoCare"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "MotoCare",
+          "resolvedTextStyle": {
+            "fontSize": 28,
+            "color": "#F6F8F2",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "MotoCare",
+              "fontSize": 28,
+              "color": "#F6F8F2",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/9kbepwzm",
+      "id": "4",
+      "bbox": [
+        275,
+        75,
+        52,
+        18
+      ],
+      "geometry": "rect",
+      "text": "CO",
+      "textPreview": "CO",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "fontSize": 12,
+        "typeface": "+mn-lt",
+        "color": "#A6CE39",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "CO"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "CO",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "color": "#A6CE39",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "CO",
+              "fontSize": 12,
+              "color": "#A6CE39",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8j2dwbi1",
+      "id": "5",
+      "bbox": [
+        64,
+        112,
+        1150,
+        58
+      ],
+      "geometry": "rect",
+      "text": "El marketplace conecta necesidades reales de la comunidad",
+      "textPreview": "El marketplace conecta necesidades reales de la comunidad",
+      "resolvedFontSize": 39,
+      "resolvedTextStyle": {
+        "fontSize": 39,
+        "typeface": "+mn-lt",
+        "color": "#F6F8F2",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "El marketplace conecta necesidades reales de la comunidad"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "El marketplace conecta necesidades reales de la comunidad",
+          "resolvedTextStyle": {
+            "fontSize": 39,
+            "color": "#F6F8F2",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "El marketplace conecta necesidades reales de la comunidad",
+              "fontSize": 39,
+              "color": "#F6F8F2",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7itwn6hg",
+      "id": "6",
+      "bbox": [
+        64,
+        174,
+        1080,
+        38
+      ],
+      "geometry": "rect",
+      "text": "Un espacio para motos, repuestos, equipamiento, servicios y rutas.",
+      "textPreview": "Un espacio para motos, repuestos, equipamiento, servicios y rutas.",
+      "resolvedFontSize": 19,
+      "resolvedTextStyle": {
+        "fontSize": 19,
+        "typeface": "+mn-lt",
+        "color": "#AAB2BC",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Un espacio para motos, repuestos, equipamiento, servicios y rutas."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Un espacio para motos, repuestos, equipamiento, servicios y rutas.",
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "color": "#AAB2BC",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Un espacio para motos, repuestos, equipamiento, servicios y rutas.",
+              "fontSize": 19,
+              "color": "#AAB2BC",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/mxkvu10b",
+      "id": "7",
+      "bbox": [
+        1180,
+        674,
+        36,
+        18
+      ],
+      "geometry": "rect",
+      "text": "08",
+      "textPreview": "08",
+      "resolvedFontSize": 11,
+      "resolvedTextStyle": {
+        "fontSize": 11,
+        "typeface": "+mn-lt",
+        "color": "#AAB2BC",
+        "bold": true,
+        "alignment": "right",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "08"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "08",
+          "resolvedTextStyle": {
+            "fontSize": 11,
+            "color": "#AAB2BC",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "08",
+              "fontSize": 11,
+              "color": "#AAB2BC",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/8bmdkjmt",
+      "id": "8",
+      "bbox": [
+        64,
+        232,
+        430,
+        430
+      ],
+      "geometry": "roundRect",
+      "alt": "Recurso gráfico propio de MotoCare sin personas",
+      "contentType": "image/png",
+      "imageFit": "cover",
+      "imageMask": {
+        "geometry": "roundRect",
+        "adjustmentList": [
+          {
+            "name": "adj",
+            "formula": "val 3721"
+          }
+        ]
+      },
+      "asset": {
+        "assetId": "fa082104-9a7f-4acd-b90e-c2053449c2d7",
+        "contentType": "image/png",
+        "byteLength": 1082448
+      }
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/sfmx8vil",
+      "id": "9",
+      "bbox": [
+        556,
+        260,
+        180,
+        28
+      ],
+      "geometry": "rect",
+      "text": "COMPRAR",
+      "textPreview": "COMPRAR",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#A6CE39",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "COMPRAR"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "COMPRAR",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#A6CE39",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "COMPRAR",
+              "fontSize": 16,
+              "color": "#A6CE39",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/yhsz614j",
+      "id": "10",
+      "bbox": [
+        556,
+        300,
+        560,
+        62
+      ],
+      "geometry": "rect",
+      "text": "Explorar publicaciones y contactar vendedores está abierto a la comunidad.",
+      "textPreview": "Explorar publicaciones y contactar vendedores está abierto a la comunidad.",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "color": "#F6F8F2",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Explorar publicaciones y contactar vendedores está abierto"
+          },
+          {
+            "index": 2,
+            "text": "a la comunidad."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Explorar publicaciones y contactar vendedores está abierto a la comunidad.",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "color": "#F6F8F2",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Explorar publicaciones y contactar vendedores está abierto a la comunidad.",
+              "fontSize": 22,
+              "color": "#F6F8F2",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ji1gf6lo",
+      "id": "11",
+      "bbox": [
+        556,
+        395,
+        560,
+        0
+      ],
+      "geometry": "line",
+      "lineColor": "#313842",
+      "lineWidth": 1
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kjah8bm9",
+      "id": "12",
+      "bbox": [
+        556,
+        432,
+        180,
+        28
+      ],
+      "geometry": "rect",
+      "text": "PUBLICAR",
+      "textPreview": "PUBLICAR",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#A6CE39",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "PUBLICAR"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "PUBLICAR",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#A6CE39",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "PUBLICAR",
+              "fontSize": 16,
+              "color": "#A6CE39",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/lkjyhg3u",
+      "id": "13",
+      "bbox": [
+        556,
+        472,
+        560,
+        62
+      ],
+      "geometry": "rect",
+      "text": "La publicación se vincula al tipo de cuenta y pasa por controles de revisión.",
+      "textPreview": "La publicación se vincula al tipo de cuenta y pasa por controles de revisión.",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "color": "#F6F8F2",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "La publicación se vincula al tipo de cuenta y pasa por"
+          },
+          {
+            "index": 2,
+            "text": "controles de revisión."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "La publicación se vincula al tipo de cuenta y pasa por controles de revisión.",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "color": "#F6F8F2",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "La publicación se vincula al tipo de cuenta y pasa por controles de revisión.",
+              "fontSize": 22,
+              "color": "#F6F8F2",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/at8z2147",
+      "id": "14",
+      "bbox": [
+        556,
+        584,
+        560,
+        42
+      ],
+      "geometry": "rect",
+      "text": "MotoCare actúa como punto de encuentro; la confianza exige reglas claras.",
+      "textPreview": "MotoCare actúa como punto de encuentro; la confianza exige reglas claras.",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "fontSize": 17,
+        "typeface": "+mn-lt",
+        "color": "#AAB2BC",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "MotoCare actúa como punto de encuentro; la confianza exige reglas claras."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "MotoCare actúa como punto de encuentro; la confianza exige reglas claras.",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "color": "#AAB2BC",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "MotoCare actúa como punto de encuentro; la confianza exige reglas claras.",
+              "fontSize": 17,
+              "color": "#AAB2BC",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

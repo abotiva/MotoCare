@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
 import type { Profile } from '@/types/database'
+import type { SignupLegalConsent } from '@/lib/legal'
 
 type AuthContextValue = {
   session: Session | null
@@ -12,7 +13,7 @@ type AuthContextValue = {
   isConfigured: boolean
   authError: string | null
   signIn: (email: string, password: string) => Promise<void>
-  signUp: (email: string, password: string, fullName: string) => Promise<void>
+  signUp: (email: string, password: string, fullName: string, legalConsent: SignupLegalConsent) => Promise<void>
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
   retryAuth: () => Promise<void>
@@ -149,7 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
       },
-      async signUp(email, password, fullName) {
+      async signUp(email, password, fullName, legalConsent) {
         if (!supabase) throw new Error('Supabase no esta configurado.')
         setAuthError(null)
         const { error } = await supabase.auth.signUp({
@@ -158,6 +159,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           options: {
             data: {
               full_name: fullName,
+              terms_accepted: legalConsent.termsAccepted,
+              terms_version: legalConsent.termsVersion,
+              privacy_accepted: legalConsent.privacyAccepted,
+              privacy_version: legalConsent.privacyVersion,
             },
           },
         })

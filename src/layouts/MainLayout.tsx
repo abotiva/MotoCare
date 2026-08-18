@@ -14,6 +14,7 @@ import {
   Settings,
   ShoppingBag,
   LogOut,
+  Loader2,
   ShieldCheck,
   Star,
   Store,
@@ -125,7 +126,7 @@ export function MainLayout() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
   const { user, profile, signOut } = useAuth()
-  const { effectivePlan } = useSubscription()
+  const { effectivePlan, isLoadingSubscription } = useSubscription()
   const location = useLocation()
   const userId = user?.id
 
@@ -248,6 +249,14 @@ export function MainLayout() {
       document.removeEventListener('visibilitychange', handleVisibility)
     }
   }, [userId])
+
+  if (isLoadingSubscription) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-moto-dark text-moto-orange" role="status" aria-label="Cargando licencia">
+        <Loader2 className="h-8 w-8 animate-spin" aria-hidden="true" />
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-dvh overflow-x-hidden bg-moto-dark text-white">

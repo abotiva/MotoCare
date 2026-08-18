@@ -1,0 +1,759 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/ayqqi1",
+    "id": "ayqqi1",
+    "slide": 4,
+    "layoutId": "235422b1-fc1b-48dc-b664-36052e5f70ab",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "614ef6ff-4596-44b3-bf46-74089c1922dd",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#17191D",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "235422b1-fc1b-48dc-b664-36052e5f70ab",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "614ef6ff-4596-44b3-bf46-74089c1922dd",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "614ef6ff-4596-44b3-bf46-74089c1922dd",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8ry1w3ex",
+      "id": "1",
+      "bbox": [
+        72,
+        46,
+        42,
+        42
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#17191D",
+      "lineColor": "#A6CE39",
+      "lineWidth": 2
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7qp03ydc",
+      "id": "2",
+      "bbox": [
+        77,
+        48,
+        32,
+        30
+      ],
+      "geometry": "rect",
+      "text": "M",
+      "textPreview": "M",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "color": "#F7F7F5",
+        "bold": true,
+        "alignment": "center",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "M"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "M",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "color": "#F7F7F5",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "M",
+              "fontSize": 24,
+              "color": "#F7F7F5",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6pgjutwr",
+      "id": "3",
+      "bbox": [
+        126,
+        49,
+        72,
+        30
+      ],
+      "geometry": "rect",
+      "text": "Moto",
+      "textPreview": "Moto",
+      "resolvedFontSize": 21,
+      "resolvedTextStyle": {
+        "fontSize": 21,
+        "typeface": "+mn-lt",
+        "color": "#F7F7F5",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Moto"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Moto",
+          "resolvedTextStyle": {
+            "fontSize": 21,
+            "color": "#F7F7F5",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Moto",
+              "fontSize": 21,
+              "color": "#F7F7F5",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/loni1ov6",
+      "id": "4",
+      "bbox": [
+        194,
+        49,
+        70,
+        30
+      ],
+      "geometry": "rect",
+      "text": "Care",
+      "textPreview": "Care",
+      "resolvedFontSize": 21,
+      "resolvedTextStyle": {
+        "fontSize": 21,
+        "typeface": "+mn-lt",
+        "color": "#A6CE39",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Care"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Care",
+          "resolvedTextStyle": {
+            "fontSize": 21,
+            "color": "#A6CE39",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Care",
+              "fontSize": 21,
+              "color": "#A6CE39",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kne1sjel",
+      "id": "5",
+      "bbox": [
+        72,
+        118,
+        1136,
+        64
+      ],
+      "geometry": "rect",
+      "text": "Anticiparse también es cuidar",
+      "textPreview": "Anticiparse también es cuidar",
+      "resolvedFontSize": 42,
+      "resolvedTextStyle": {
+        "fontSize": 42,
+        "typeface": "+mn-lt",
+        "color": "#F7F7F5",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Anticiparse también es cuidar"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Anticiparse también es cuidar",
+          "resolvedTextStyle": {
+            "fontSize": 42,
+            "color": "#F7F7F5",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Anticiparse también es cuidar",
+              "fontSize": 42,
+              "color": "#F7F7F5",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/jm50zed0",
+      "id": "6",
+      "bbox": [
+        72,
+        182,
+        1050,
+        42
+      ],
+      "geometry": "rect",
+      "text": "MotoCare convierte el historial en recordatorios claros y decisiones oportunas.",
+      "textPreview": "MotoCare convierte el historial en recordatorios claros y decisiones oportunas.",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "fontSize": 20,
+        "typeface": "+mn-lt",
+        "color": "#B8BCC3",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "MotoCare convierte el historial en recordatorios claros y decisiones oportunas."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "MotoCare convierte el historial en recordatorios claros y decisiones oportunas.",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "color": "#B8BCC3",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "MotoCare convierte el historial en recordatorios claros y decisiones oportunas.",
+              "fontSize": 20,
+              "color": "#B8BCC3",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/jaloz6p0",
+      "id": "7",
+      "bbox": [
+        72,
+        245,
+        450,
+        390
+      ],
+      "geometry": "roundRect",
+      "alt": "Imagen de MotoCare",
+      "contentType": "image/jpeg",
+      "imageFit": "cover",
+      "imageMask": {
+        "geometry": "roundRect",
+        "adjustmentList": [
+          {
+            "name": "adj",
+            "formula": "val 4103"
+          }
+        ]
+      },
+      "asset": {
+        "assetId": "2ff5c54f-b1fd-46e4-a55a-6636c8dcbe32",
+        "contentType": "image/jpeg",
+        "byteLength": 44720
+      }
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/xknixofa",
+      "id": "8",
+      "bbox": [
+        590,
+        260,
+        480,
+        45
+      ],
+      "geometry": "rect",
+      "text": "Mantenimiento",
+      "textPreview": "Mantenimiento",
+      "resolvedFontSize": 34,
+      "resolvedTextStyle": {
+        "fontSize": 34,
+        "typeface": "+mn-lt",
+        "color": "#F7F7F5",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Mantenimiento"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Mantenimiento",
+          "resolvedTextStyle": {
+            "fontSize": 34,
+            "color": "#F7F7F5",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Mantenimiento",
+              "fontSize": 34,
+              "color": "#F7F7F5",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/wjehojep",
+      "id": "9",
+      "bbox": [
+        590,
+        330,
+        570,
+        210
+      ],
+      "geometry": "rect",
+      "text": "• Registra servicios y costos\n• Consulta el historial de la moto\n• Controla kilometraje y fechas\n• Recibe alertas antes del próximo hito",
+      "textPreview": "• Registra servicios y costos | • Consulta el historial de la moto | • Controla kilometraje y fechas | • Recibe alertas antes del próximo...",
+      "resolvedFontSize": 24,
+      "resolvedTextStyle": {
+        "fontSize": 24,
+        "typeface": "+mn-lt",
+        "color": "#B8BCC3",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 4,
+        "lines": [
+          {
+            "index": 1,
+            "text": "• Registra servicios y costos"
+          },
+          {
+            "index": 2,
+            "text": "• Consulta el historial de la moto"
+          },
+          {
+            "index": 3,
+            "text": "• Controla kilometraje y fechas"
+          },
+          {
+            "index": 4,
+            "text": "• Recibe alertas antes del próximo hito"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "• Registra servicios y costos",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "color": "#B8BCC3",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "• Registra servicios y costos",
+              "fontSize": 24,
+              "color": "#B8BCC3",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "• Consulta el historial de la moto",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "color": "#B8BCC3",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "• Consulta el historial de la moto",
+              "fontSize": 24,
+              "color": "#B8BCC3",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 3,
+          "text": "• Controla kilometraje y fechas",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "color": "#B8BCC3",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "• Controla kilometraje y fechas",
+              "fontSize": 24,
+              "color": "#B8BCC3",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 4,
+          "text": "• Recibe alertas antes del próximo hito",
+          "resolvedTextStyle": {
+            "fontSize": 24,
+            "color": "#B8BCC3",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "• Recibe alertas antes del próximo hito",
+              "fontSize": 24,
+              "color": "#B8BCC3",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/atw7u18b",
+      "id": "10",
+      "bbox": [
+        590,
+        560,
+        420,
+        52
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#A6CE39",
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/bu5o36pw",
+      "id": "11",
+      "bbox": [
+        610,
+        571,
+        380,
+        26
+      ],
+      "geometry": "rect",
+      "text": "Tu hoja de vida, siempre al día",
+      "textPreview": "Tu hoja de vida, siempre al día",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#17191D",
+        "bold": true,
+        "alignment": "center",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Tu hoja de vida, siempre al día"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Tu hoja de vida, siempre al día",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#17191D",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Tu hoja de vida, siempre al día",
+              "fontSize": 18,
+              "color": "#17191D",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/wvypwbqh",
+      "id": "12",
+      "bbox": [
+        1180,
+        674,
+        40,
+        20
+      ],
+      "geometry": "rect",
+      "text": "04",
+      "textPreview": "04",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "fontSize": 12,
+        "typeface": "+mn-lt",
+        "color": "#B8BCC3",
+        "bold": true,
+        "alignment": "right",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "04"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "04",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "color": "#B8BCC3",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "04",
+              "fontSize": 12,
+              "color": "#B8BCC3",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}
