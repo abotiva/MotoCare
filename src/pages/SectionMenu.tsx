@@ -2,7 +2,6 @@ import type { LucideIcon } from 'lucide-react'
 import {
   ArrowRight,
   Compass,
-  Crown,
   MapPinned,
   MessageCircle,
   PlusCircle,
@@ -34,7 +33,7 @@ const sectionMenus: Record<SectionMenuKind, MenuContent> = {
   routes: {
     eyebrow: 'Todo para tu próxima rodada',
     title: 'Rutas',
-    description: 'Elige qué quieres hacer: preparar un recorrido, descubrir rutas de otros moteros o acceder a rutas premium.',
+    description: 'Elige qué quieres hacer: preparar un recorrido o descubrir rutas compartidas por otros moteros.',
     icon: MapPinned,
     options: [
       {
@@ -52,14 +51,6 @@ const sectionMenus: Record<SectionMenuKind, MenuContent> = {
         icon: Compass,
         iconClass: 'bg-emerald-400 text-emerald-950',
         accent: 'from-emerald-500/20 to-emerald-500/5',
-      },
-      {
-        title: 'Rutas premium',
-        description: 'Encuentra rutas seleccionadas, archivos GPX y recorridos listos para viajar.',
-        to: '/app/premium-routes',
-        icon: Crown,
-        iconClass: 'bg-amber-400 text-amber-950',
-        accent: 'from-amber-500/20 to-amber-500/5',
       },
     ],
   },

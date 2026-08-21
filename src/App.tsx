@@ -17,7 +17,6 @@ const Explore = lazy(() => import('./pages/Explore').then((module) => ({ default
 const Map = lazy(() => import('./pages/Map').then((module) => ({ default: module.Map })))
 const RouteDetail = lazy(() => import('./pages/RouteDetail').then((module) => ({ default: module.RouteDetail })))
 const Marketplace = lazy(() => import('./pages/Marketplace').then((module) => ({ default: module.Marketplace })))
-const PremiumRoutes = lazy(() => import('./pages/PremiumRoutes').then((module) => ({ default: module.PremiumRoutes })))
 const Messages = lazy(() => import('./pages/Messages').then((module) => ({ default: module.Messages })))
 const Clubs = lazy(() => import('./pages/Clubs').then((module) => ({ default: module.Clubs })))
 const Profile = lazy(() => import('./pages/Profile').then((module) => ({ default: module.Profile })))
@@ -56,7 +55,7 @@ function App() {
             <Route path="explore" element={<Explore />} />
             <Route path="map" element={<Map />} />
             <Route path="routes/:routeId" element={<RouteDetail />} />
-            <Route path="premium-routes" element={<PremiumRoutes />} />
+            <Route path="premium-routes" element={<Navigate to="/app/routes" replace />} />
             <Route path="marketplace" element={<Marketplace />} />
             <Route path="messages" element={<Messages />} />
             <Route path="clubs/manage" element={<Clubs />} />
