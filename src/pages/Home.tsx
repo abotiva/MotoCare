@@ -7,6 +7,7 @@ import { HomeMotorcycleHero } from '@/components/home/HomeMotorcycleHero'
 import { HomeQuickActions } from '@/components/home/HomeQuickActions'
 import { HomeStatusSection } from '@/components/home/HomeStatusSection'
 import { useAuth } from '@/contexts/AuthContext'
+import { usePrimaryMotorcycle } from '@/hooks/usePrimaryMotorcycle'
 import { supabase } from '@/lib/supabase'
 import type { MaintenanceRecord, Motorcycle, Reminder } from '@/types/database'
 
@@ -15,32 +16,20 @@ const emptyHomeData: HomeData = { motorcycle: null, reminders: [], latestMainten
 
 export function Home() {
   const { user, profile } = useAuth()
+  const { motorcycle: primaryMotorcycle, isLoading: isLoadingMotorcycle, error: motorcycleError, refresh: refreshMotorcycle } = usePrimaryMotorcycle()
   const [data, setData] = useState<HomeData>(emptyHomeData)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const loadDashboard = useCallback(async () => {
-    if (!supabase || !user) {
+    if (!supabase || !user || !primaryMotorcycle) {
       setData(emptyHomeData)
       setIsLoading(false)
       return
     }
     setIsLoading(true)
     setError(null)
-    const { data: motorcycles, error: motorcyclesError } = await supabase
-      .from('motorcycles').select('*').eq('owner_id', user.id).order('created_at', { ascending: true }).limit(10)
-    if (motorcyclesError) {
-      setError('No pudimos cargar la información de tu moto.')
-      setIsLoading(false)
-      return
-    }
-    const availableMotorcycles = (motorcycles ?? []) as Motorcycle[]
-    const motorcycle = availableMotorcycles.find((item) => item.id === profile?.primary_motorcycle_id) ?? availableMotorcycles[0] ?? null
-    if (!motorcycle) {
-      setData(emptyHomeData)
-      setIsLoading(false)
-      return
-    }
+    const motorcycle = primaryMotorcycle
     const [remindersResult, maintenanceResult] = await Promise.all([
       supabase.from('reminders').select('*').eq('owner_id', user.id).eq('motorcycle_id', motorcycle.id).eq('status', 'pending').order('due_date', { ascending: true, nullsFirst: false }).limit(12),
       supabase.from('maintenance_records').select('*').eq('owner_id', user.id).eq('motorcycle_id', motorcycle.id).order('service_date', { ascending: false }).limit(1).maybeSingle(),
@@ -48,12 +37,14 @@ export function Home() {
     if (remindersResult.error || maintenanceResult.error) setError('Tu moto está disponible, pero no pudimos cargar todos sus próximos eventos.')
     setData({ motorcycle, reminders: (remindersResult.data ?? []) as Reminder[], latestMaintenance: (maintenanceResult.data as MaintenanceRecord | null) ?? null })
     setIsLoading(false)
-  }, [profile?.primary_motorcycle_id, user])
+  }, [primaryMotorcycle, user])
 
   useEffect(() => { void loadDashboard() }, [loadDashboard])
   const displayName = useMemo(() => profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'motero', [profile?.full_name, user?.email])
 
-  if (isLoading) return (
+  const dashboardError = motorcycleError ?? error
+
+  if (isLoadingMotorcycle || isLoading) return (
     <div className="mx-auto max-w-6xl p-4 pb-24 sm:p-6 lg:pb-8">
       <div className="grid min-h-[65dvh] place-items-center" role="status" aria-live="polite">
         <div className="text-center"><Loader2 className="mx-auto h-9 w-9 animate-spin text-moto-orange" aria-hidden="true" /><p className="mt-4 text-sm text-gray-400">Preparando el estado de tu moto…</p></div>
@@ -61,12 +52,12 @@ export function Home() {
     </div>
   )
 
-  if (!data.motorcycle && error) return (
+  if (!data.motorcycle && dashboardError) return (
     <div className="mx-auto max-w-3xl p-4 pb-24 sm:p-6 lg:pb-8">
       <Card className="border-red-500/20 bg-moto-gray"><CardContent className="p-6 text-center sm:p-10">
         <AlertTriangle className="mx-auto h-10 w-10 text-red-300" aria-hidden="true" /><h1 className="mt-4 text-2xl font-bold">No pudimos preparar tu inicio</h1>
-        <p className="mt-2 text-sm leading-6 text-gray-400">{error}</p>
-        <Button className="mt-6 bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => void loadDashboard()}><RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />Intentar de nuevo</Button>
+        <p className="mt-2 text-sm leading-6 text-gray-400">{dashboardError}</p>
+        <Button className="mt-6 bg-moto-orange text-moto-darker hover:bg-moto-orange-dark" onClick={() => void refreshMotorcycle()}><RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />Intentar de nuevo</Button>
       </CardContent></Card>
     </div>
   )

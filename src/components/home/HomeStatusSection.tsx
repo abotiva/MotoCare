@@ -2,30 +2,17 @@ import { AlertTriangle, CalendarClock, CheckCircle2, FileText, Gauge, History, W
 import { Link } from 'react-router-dom'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
+import { daysUntil, formatDate, formatMileage, formatRelativeDate } from '@/lib/formatters'
 import type { MaintenanceRecord, Motorcycle, Reminder } from '@/types/database'
 
 type StatusItem = { id: string; title: string; detail: string; urgent: boolean; icon: typeof Wrench }
 
-function daysUntil(date: string | null) {
-  if (!date) return null
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  return Math.ceil((new Date(`${date}T00:00:00`).getTime() - today.getTime()) / 86_400_000)
-}
-
-function dateDetail(date: string) {
-  const days = daysUntil(date) ?? 0
-  if (days < 0) return `Vencido hace ${Math.abs(days)} días`
-  if (days === 0) return 'Para hoy'
-  return `En ${days} días`
-}
-
 function reminderDetail(reminder: Reminder, mileage: number) {
   if (reminder.due_mileage !== null) {
     const distance = reminder.due_mileage - mileage
-    return distance <= 0 ? `Vencido por ${Math.abs(distance).toLocaleString('es-CO')} km` : `En ${distance.toLocaleString('es-CO')} km`
+    return distance <= 0 ? `Vencido por ${formatMileage(Math.abs(distance))}` : `En ${formatMileage(distance)}`
   }
-  if (reminder.due_date) return dateDetail(reminder.due_date)
+  if (reminder.due_date) return formatRelativeDate(reminder.due_date)
   return 'Sin fecha o kilometraje definido'
 }
 
@@ -48,8 +35,8 @@ export function HomeStatusSection({ motorcycle, reminders, latestMaintenance }: 
     }
   })
   const documentItems: StatusItem[] = []
-  if (motorcycle.soat_expires_on) documentItems.push({ id: 'soat', title: 'SOAT', detail: dateDetail(motorcycle.soat_expires_on), urgent: (daysUntil(motorcycle.soat_expires_on) ?? 31) <= 30, icon: FileText })
-  if (motorcycle.technical_review_expires_on) documentItems.push({ id: 'technical-review', title: 'Tecnomecánica', detail: dateDetail(motorcycle.technical_review_expires_on), urgent: (daysUntil(motorcycle.technical_review_expires_on) ?? 31) <= 30, icon: FileText })
+  if (motorcycle.soat_expires_on) documentItems.push({ id: 'soat', title: 'SOAT', detail: formatRelativeDate(motorcycle.soat_expires_on), urgent: (daysUntil(motorcycle.soat_expires_on) ?? 31) <= 30, icon: FileText })
+  if (motorcycle.technical_review_expires_on) documentItems.push({ id: 'technical-review', title: 'Tecnomecánica', detail: formatRelativeDate(motorcycle.technical_review_expires_on), urgent: (daysUntil(motorcycle.technical_review_expires_on) ?? 31) <= 30, icon: FileText })
   const seenTitles = new Set(reminderItems.map((item) => item.title.toLowerCase()))
   const items = [...reminderItems, ...documentItems.filter((item) => !seenTitles.has(item.title.toLowerCase()))].sort((a, b) => Number(b.urgent) - Number(a.urgent)).slice(0, 5)
   const urgentCount = items.filter((item) => item.urgent).length
@@ -73,6 +60,6 @@ export function HomeStatusSection({ motorcycle, reminders, latestMaintenance }: 
       </div></CardContent></Card>}
     </section>
 
-    {latestMaintenance && <section aria-label="Último mantenimiento"><div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm"><History className="h-5 w-5 shrink-0 text-moto-orange" aria-hidden="true" /><p className="min-w-0 text-gray-300">Último registro: <strong className="text-white">{latestMaintenance.service_type}</strong> <span className="whitespace-nowrap">· {latestMaintenance.service_date}</span></p></div></section>}
+    {latestMaintenance && <section aria-label="Último mantenimiento"><div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm"><History className="h-5 w-5 shrink-0 text-moto-orange" aria-hidden="true" /><p className="min-w-0 text-gray-300">Último registro: <strong className="text-white">{latestMaintenance.service_type}</strong> <span className="whitespace-nowrap">· {formatDate(latestMaintenance.service_date)}</span></p></div></section>}
   </div>
 }

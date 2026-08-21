@@ -2,7 +2,7 @@ import { BookOpen, Compass, MapPinned, Wrench } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 const actions = [
-  { label: 'Registrar mantenimiento', detail: 'Guarda un servicio realizado', to: '/app/my-bikes#history', icon: Wrench, primary: true },
+  { label: 'Registrar mantenimiento', detail: 'Guarda un servicio realizado', to: '/app/my-bikes?action=add-maintenance#history', icon: Wrench, primary: true },
   { label: 'Salir de ruta', detail: 'Prepara tu próximo recorrido', to: '/app/map', icon: MapPinned, primary: false },
   { label: 'Explorar lugares', detail: 'Descubre rutas de la comunidad', to: '/app/explore', icon: Compass, primary: false },
   { label: 'Ver mi historia', detail: 'Consulta la hoja de vida', to: '/app/my-bikes#history', icon: BookOpen, primary: false },

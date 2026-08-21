@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
   BarChart3,
@@ -207,6 +207,7 @@ export function MyBikes() {
   const { user, profile } = useAuth()
   const { hasPlan, effectivePlan, isLoadingSubscription } = useSubscription()
   const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [activeTab, setActiveTab] = useState<BikeTab>(() => tabFromHash(location.hash))
   const [motorcycles, setMotorcycles] = useState<Motorcycle[]>([])
   const [records, setRecords] = useState<MaintenanceRecord[]>([])
@@ -638,7 +639,7 @@ export function MyBikes() {
     setIsSaving(false)
   }
 
-  const openCreateService = () => {
+  const openCreateService = useCallback(() => {
     if (!selectedBike) return
     const firstSuggestion = maintenanceSuggestions[0]
     setServiceForm({
@@ -652,7 +653,15 @@ export function MyBikes() {
       next_due_date: firstSuggestion?.recommended_interval_days ? dateAfterDays(firstSuggestion.recommended_interval_days) : '',
     })
     setShowAddService(true)
-  }
+  }, [maintenanceSuggestions, selectedBike])
+
+  useEffect(() => {
+    if (searchParams.get('action') !== 'add-maintenance' || !selectedBike || isLoading) return
+    const nextParams = new URLSearchParams(searchParams)
+    nextParams.delete('action')
+    setSearchParams(nextParams, { replace: true })
+    openCreateService()
+  }, [isLoading, openCreateService, searchParams, selectedBike, setSearchParams])
 
   const applyServiceSuggestion = (suggestionId: string) => {
     const suggestion = maintenanceSuggestions.find((item) => item.id === suggestionId)
