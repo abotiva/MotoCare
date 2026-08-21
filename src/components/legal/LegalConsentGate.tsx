@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Loader2, ShieldCheck } from 'lucide-react'
+import { Loader2, RefreshCw, ShieldCheck } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { LEGAL_DOCUMENTS } from '@/lib/legal'
 import { supabase } from '@/lib/supabase'
 
 type PendingDocument = { id: string; document_type: 'terms' | 'privacy'; title: string; version: string }
@@ -16,9 +17,25 @@ export function LegalConsentGate({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null)
 
   const loadPending = useCallback(async () => {
+    setLoading(true)
+    setError(null)
     if (!supabase) { setLoading(false); return }
     const { data, error: queryError } = await supabase.rpc('get_pending_legal_documents')
-    if (queryError) { setError('No fue posible validar las aceptaciones legales.'); setLoading(false); return }
+    if (queryError) {
+      const hasPublishedLocalDocuments = Object.values(LEGAL_DOCUMENTS).some((document) => document.status === 'published')
+
+      // Legal infrastructure may not be installed yet in early environments. Draft
+      // documents never require reacceptance, so they must not lock users out.
+      if (!hasPublishedLocalDocuments) {
+        setPending([])
+        setLoading(false)
+        return
+      }
+
+      setError('No fue posible validar las aceptaciones legales.')
+      setLoading(false)
+      return
+    }
     setPending((data ?? []) as PendingDocument[])
     setLoading(false)
   }, [])
@@ -50,9 +67,15 @@ export function LegalConsentGate({ children }: { children: ReactNode }) {
           return <label key={document.id} className="mt-5 flex items-start gap-3"><Checkbox checked={accepted[document.id] ?? false} onCheckedChange={(value) => setAccepted((current) => ({ ...current, [document.id]: value === true }))} /><span className="text-sm">Acepto <Link className="text-moto-orange underline" to={path} target="_blank">{document.title} versión {document.version}</Link>.</span></label>
         })}
         {error && <p role="alert" className="mt-4 text-sm text-red-300">{error}</p>}
-        <Button className="mt-6 w-full bg-moto-orange text-moto-darker" disabled={!allAccepted || saving || pending.length === 0} onClick={() => void submit()}>{saving ? 'Guardando…' : 'Aceptar y continuar'}</Button>
+        {error && pending.length === 0 ? (
+          <Button className="mt-6 w-full bg-moto-orange text-moto-darker" disabled={loading} onClick={() => void loadPending()}>
+            <RefreshCw className="mr-2 h-4 w-4" aria-hidden="true" />
+            Reintentar validación
+          </Button>
+        ) : (
+          <Button className="mt-6 w-full bg-moto-orange text-moto-darker" disabled={!allAccepted || saving || pending.length === 0} onClick={() => void submit()}>{saving ? 'Guardando…' : 'Aceptar y continuar'}</Button>
+        )}
       </section>
     </main>
   )
 }
-
