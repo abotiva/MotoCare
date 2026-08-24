@@ -449,7 +449,7 @@ export function Profile() {
         </CardContent>
       </Card>
 
-      <div className="mb-4 grid grid-cols-4 gap-2 sm:mb-5 sm:gap-4">
+      <div className="mb-4 grid grid-cols-2 gap-2 min-[390px]:grid-cols-4 sm:mb-5 sm:gap-4">
         <CompactMetricCard icon={UserRound} label="Tipo de motero" mobileLabel="Tipo" value={profile?.rider_type || 'Sin definir'} tone="orange" onClick={() => setShowEditProfile(true)} />
         <CompactMetricCard icon={Route} label="Rutas creadas" mobileLabel="Rutas" value={stats.routes} tone="green" onClick={() => setShowRoutesPreview(true)} />
         <CompactMetricCard icon={Route} label="Km en rutas" mobileLabel="Km" value={`${routes.reduce((total, route) => total + (route.distance_km ?? 0), 0).toLocaleString()} km`} tone="green" onClick={() => setShowRoutesPreview(true)} />

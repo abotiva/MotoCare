@@ -43,7 +43,35 @@
   }
   #root {
     min-height: 100dvh;
+    min-width: 0;
   }
+
+  img,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+  }
+}
+
+/* Prevent long labels and controls from forcing app screens beyond a phone viewport. */
+.app-responsive-scope {
+  width: 100%;
+  min-width: 0;
+  max-width: 100vw;
+}
+
+.app-responsive-scope :where(.grid) > * {
+  min-width: 0;
+}
+
+.app-responsive-scope :where(p, h1, h2, h3, h4, dd, a, button, label) {
+  overflow-wrap: break-word;
+}
+
+.app-responsive-scope :where(input, select, textarea) {
+  max-width: 100%;
+  min-width: 0;
 }
 
 @layer utilities {
@@ -63,6 +91,8 @@
 
 @media (max-width: 640px) {
   [role='dialog'] {
+    width: calc(100vw - 1rem);
+    max-width: calc(100vw - 1rem);
     max-height: calc(100dvh - 1.5rem);
     overflow-y: auto;
   }

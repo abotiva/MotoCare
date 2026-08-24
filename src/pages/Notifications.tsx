@@ -275,7 +275,7 @@ export function Notifications() {
 
 function MetricCard({ icon: Icon, label, value, onClick }: { icon: LucideIcon; label: string; value: number; onClick: () => void }) {
   return (
-    <Card className="border-white/5 bg-moto-gray py-0 transition-colors hover:border-moto-orange/40 hover:bg-white/[0.04]">
+    <Card className="min-w-0 border-white/5 bg-moto-gray py-0 transition-colors hover:border-moto-orange/40 hover:bg-white/[0.04]">
       <CardContent className="p-0">
         <button
           type="button"
@@ -286,13 +286,13 @@ function MetricCard({ icon: Icon, label, value, onClick }: { icon: LucideIcon; l
           }}
           aria-label={`Ver detalle de ${label}`}
         >
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
             <div className="grid h-10 w-10 place-items-center rounded-xl bg-moto-orange/20">
               <Icon className="h-5 w-5 text-moto-orange" />
             </div>
-            <div>
-              <p className="text-xs text-gray-400 sm:text-sm">{label}</p>
-              <p className="text-xl font-bold">{value}</p>
+            <div className="min-w-0">
+              <p className="truncate text-xs text-gray-400 sm:text-sm">{label}</p>
+              <p className="truncate text-xl font-bold">{value}</p>
             </div>
           </div>
         </button>

@@ -659,7 +659,7 @@ export function Map() {
         </Button>
       </div>
 
-      <div className="mb-4 grid grid-cols-4 gap-2 sm:mb-5 sm:gap-4">
+      <div className="mb-4 grid grid-cols-2 gap-2 min-[390px]:grid-cols-4 sm:mb-5 sm:gap-4">
         <CompactMetricCard icon={Route} label="Mis rutas" mobileLabel="Rutas" value={myRoutes.length} tone="orange" onClick={() => setSelectedMetric('routes')} />
         <CompactMetricCard icon={Navigation} label="Km planeados" mobileLabel="Km" value={`${totalKm.toLocaleString()} km`} tone="green" onClick={() => setSelectedMetric('kilometers')} />
         <CompactMetricCard icon={Eye} label="Mis compartidas" mobileLabel="Compart." value={sharedCount} tone="yellow" onClick={() => setSelectedMetric('shared')} />

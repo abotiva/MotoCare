@@ -517,7 +517,11 @@ export function MainLayout() {
           </div>
         </header>
 
-        <div ref={contentRef} className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto" tabIndex={-1}>
+        <div
+          ref={contentRef}
+          className="app-responsive-scope min-w-0 flex-1 overflow-x-hidden overflow-y-auto"
+          tabIndex={-1}
+        >
           <Outlet />
         </div>
 

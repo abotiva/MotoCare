@@ -466,7 +466,7 @@ export function Admin() {
         </Badge>
       </div>
 
-      <div className="mb-4 grid grid-cols-4 gap-2 sm:mb-5 sm:gap-4 xl:grid-cols-10">
+      <div className="mb-4 grid grid-cols-2 gap-2 min-[390px]:grid-cols-4 sm:mb-5 sm:gap-4 lg:grid-cols-5 xl:grid-cols-10">
         <MetricCard icon={Users} label="Usuarios" value={overview.users} detail={`${overview.private_users} privados`} onClick={() => openAdminDetail('usuarios')} />
         <MetricCard icon={CreditCard} label="Free" value={overview.free_users} detail="Usuarios base" onClick={() => openAdminDetail('usuarios', 'free')} />
         <MetricCard icon={CreditCard} label="Premium" value={overview.premium_users + overview.pro_users} detail="Incluye Pro legado" onClick={() => openAdminDetail('usuarios', 'premium')} />

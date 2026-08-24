@@ -699,7 +699,7 @@ export function Community() {
         </div>
       </div>
 
-      <div className="mb-4 grid grid-cols-3 gap-2 sm:mb-5 sm:gap-4">
+      <div className="mb-4 grid grid-cols-2 gap-2 min-[390px]:grid-cols-3 sm:mb-5 sm:gap-4">
         <CompactMetricCard icon={Users} label="Publicaciones" mobileLabel="Posts" value={posts.length} tone="orange" onClick={() => setSelectedMetric('posts')} />
         <CompactMetricCard icon={Send} label="Mías" mobileLabel="Mías" value={myPostsCount} tone="green" onClick={() => setSelectedMetric('mine')} />
         <CompactMetricCard icon={RouteIcon} label="Rutas publicadas" mobileLabel="Rutas" value={routePostsCount} tone="sky" onClick={() => setSelectedMetric('routes')} />
