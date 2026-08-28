@@ -448,7 +448,7 @@ export function MainLayout() {
                 </button>
 
                 {isNotificationsOpen && (
-                  <div className="absolute right-0 top-12 z-50 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-white/10 bg-moto-darker shadow-2xl">
+                  <div className="fixed inset-x-4 top-20 z-50 overflow-hidden rounded-2xl border border-white/10 bg-moto-darker shadow-2xl sm:absolute sm:left-auto sm:right-0 sm:top-12 sm:w-[min(22rem,calc(100vw-2rem))]">
                     <div className="flex items-center justify-between gap-3 border-b border-white/10 p-4">
                       <div>
                         <p className="font-semibold">Notificaciones</p>
